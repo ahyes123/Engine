@@ -618,17 +618,17 @@ bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std:
 			result.myFrames.push_back(animFrame);
 		}
 
-		std::wstring name = std::wstring(std::wstring(fileName.begin(), fileName.end()));
-		model->GetSkeleton()->myName = someFilePath;
+		std::wstring name = std::wstring(std::wstring(ansiFileName.begin(), ansiFileName.end()));
+		model->GetSkeleton()->myName = name;
 		model->AddAnimation(result);
 		for (size_t i = 0; i < model->GetAnimNames().size(); i++)
 		{
-			if (model->GetAnimNames()[i] == someFilePath)
+			if (model->GetAnimNames()[i] == name)
 			{
 				return true;
 			}
 		}
-		model->AddAnimName(someFilePath);
+		model->AddAnimName(name);
 		return true;
 	}
 	return false;
