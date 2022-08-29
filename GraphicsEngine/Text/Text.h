@@ -32,8 +32,8 @@ class Text : public SceneObject
 
 	private:
 		TextData myTextData = {};
-		std::wstring myText;
-		std::wstring myName;
+		std::wstring myText = L"Text";
+		std::wstring myName = L"Text";
 		std::shared_ptr<Font> myFont;
 		bool myIs2D;
 		int myId;

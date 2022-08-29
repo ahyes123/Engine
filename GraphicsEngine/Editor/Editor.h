@@ -3,6 +3,8 @@
 #include "../GraphicsEngine/Scene/Transform.h"
 #include "../External/entt/entity/entity.hpp"
 #include "../Scene/SceneObject.h"
+#include "../Tools/json.hpp"
+#include "../Scene/Scene.h"
 class ModelInstance;
 
 class Editor
@@ -23,6 +25,8 @@ public:
 	static void EditorActionHandler();
 	static void SaveModels();
 	static void LoadModels();
+	static void SaveTexts(nlohmann::json& aJson);
+	static void LoadTexts();
 	static void SaveSettings();
 	static void LoadSettings();
 

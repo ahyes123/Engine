@@ -5,7 +5,6 @@
 #include "../GraphicsEngine.h"
 #include <filesystem>
 #include <fstream>
-#include "../GraphicsEngine/Tools/json.hpp"
 #include "../Scene/SceneHandler.h"
 #include "../Tools/Timer.h"
 
@@ -137,6 +136,35 @@ void Editor::SaveModels()
 				int id = ids[k];
 				j[num]["Components"][std::to_string(k)] = id;
 			}
+			/*entt::registry& reg = scene->GetRegistry();
+			std::vector<entt::entity>& entitys = scene->GetEntitys();
+			std::vector<int> ids;
+
+			if (reg.any_of<ModelComponent>(entitys[i]))
+			{
+				ids.push_back(0);
+			}
+			if (reg.any_of<PlayerComponent>(entitys[i]))
+			{
+				ids.push_back(1);
+			}
+			if (reg.any_of<TransformComponent>(entitys[i]))
+			{
+				ids.push_back(2);
+			}
+			if (reg.any_of<ParticleSystemComponent>(entitys[i]))
+			{
+				ids.push_back(3);
+			}
+			if (reg.any_of<TextComponent>(entitys[i]))
+			{
+				ids.push_back(4);
+			}
+			for (size_t k = 0; k < ids.size(); k++)
+			{
+				int id = ids[k];
+				j[num]["Components"][std::to_string(k)] = id;
+			}*/
 
 			if (mdl->HasBones())
 			{
@@ -151,6 +179,7 @@ void Editor::SaveModels()
 				}
 			}
 		}
+		SaveTexts(j);
 		std::ofstream oStream(path + sceneName.string());
 		oStream << j;
 	}
@@ -171,6 +200,7 @@ void Editor::LoadModels()
 
 		entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
 		entt::entity entity = reg.create();
+		
 		for (size_t k = 0; k < j[num]["Components"].size(); k++)
 		{
 			int compId = j[num]["Components"][std::to_string(k)];
@@ -280,6 +310,14 @@ void Editor::LoadModels()
 		//scene->AddGameObject(mdl);
 		//id++;
 	}
+}
+
+void Editor::SaveTexts(nlohmann::json& aJson)
+{
+}
+
+void Editor::LoadTexts()
+{
 }
 
 void Editor::SaveSettings()

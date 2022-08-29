@@ -12,6 +12,7 @@
 #include <fstream>
 #include "../Engine/ComponentHandler.h"
 #include "../Particle/ParticleAssetHandler.h"
+#include "../Text/TextFactory.h"
 
 using std::filesystem::directory_iterator;
 using namespace CommonUtilities;
@@ -144,6 +145,12 @@ void EditorInterface::SceneHierchy()
 			{
 				createParticleSystem = true;
 				//AddParticleSystem(ParticleAssetHandler::CreateParticleSystem(L"Json/BaseParticleSystem.json"));
+			}
+			if (ImGui::MenuItem("Text Element"))
+			{
+				std::shared_ptr<Text> text = TextFactory::CreateText(L"Text", 1, 12, true);
+				text->SetPosition({ 0,0,0 });
+				SceneHandler::GetActiveScene()->AddText(text);
 			}
 			ImGui::EndMenu();
 		}
