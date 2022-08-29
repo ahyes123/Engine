@@ -12,6 +12,7 @@
 #include "Texture/TextureAssetHandler.h"
 #include "UtilityFunctions.hpp"
 #include "../Scene/SceneHandler.h"
+#include <filesystem>
 
 std::unordered_map<std::wstring, std::shared_ptr<Model>> ModelAssetHandler::myModelRegistry;
 std::unordered_map<std::wstring, std::shared_ptr<Material>> ModelAssetHandler::myMaterialRegistry;
@@ -578,7 +579,12 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModelWithAnimation(const s
 
 bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std::wstring& someFilePath)
 {
-	const std::string ansiFileName = std::string(someFilePath.begin(), someFilePath.end());
+	std::string fileName = std::string(someFilePath.begin(), someFilePath.end());
+	size_t index = fileName.find("Animations\\");
+	fileName = fileName.substr(index, fileName.size());
+	std::string ansiFileName = _SOLUTIONDIR;
+	ansiFileName += "Bin/" + fileName;
+
 
 	TGA::FBXAnimation tgaAnimation;
 
@@ -612,7 +618,8 @@ bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std:
 			result.myFrames.push_back(animFrame);
 		}
 
-		model->GetSkeleton()->myName = result.myName;
+		std::wstring name = std::wstring(std::wstring(fileName.begin(), fileName.end()));
+		model->GetSkeleton()->myName = someFilePath;
 		model->AddAnimation(result);
 		for (size_t i = 0; i < model->GetAnimNames().size(); i++)
 		{
