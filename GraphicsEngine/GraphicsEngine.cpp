@@ -94,7 +94,7 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 	if (uMsg == WM_DESTROY || uMsg == WM_CLOSE)
 	{
 #ifdef _DEBUG
-		Editor::SaveModels();
+		Editor::SaveScenes();
 		Editor::SaveSettings();
 #endif // _DEBUG
 		PostQuitMessage(0);

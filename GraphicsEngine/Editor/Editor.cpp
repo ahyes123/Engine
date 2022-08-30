@@ -64,12 +64,13 @@ void Editor::EditorActionHandler()
 	}
 }
 
-void Editor::SaveModels()
+void Editor::SaveScenes()
 {
-	using nlohmann::json;
-	const std::string path = _SOLUTIONDIR"Bin/Json/Scenes/";
 	for (size_t i = 0; i < SceneHandler::GetScenes().size(); i++)
 	{
+		std::shared_ptr<Scene> scene = SceneHandler::GetScenes()[i];
+		nlohmann::json json;
+		const std::string path = _SOLUTIONDIR"Bin/Json/Scenes/";
 		bool isFileFound = false;
 		std::filesystem::path sceneName(SceneHandler::GetScenes()[i]->GetSceneName() + L".json");
 		for (const auto& file : directory_iterator(path))
@@ -89,99 +90,123 @@ void Editor::SaveModels()
 		{
 			std::cout << "File Found" << std::endl;
 		}
-		std::shared_ptr<Scene> scene = SceneHandler::GetScenes()[i];
 		const int size = scene->GetModels().size();
-		json j;
-		j["SceneName"] = sceneName.string();
-		j["Size"] = size;
-		for (size_t i = 0; i < size; i++)
+		json["SceneName"] = sceneName.string();
+		json["Size"] = size;
+
+		std::string num = std::to_string(0);
+		SaveModels(scene, json, num);
+
+		std::ofstream oStream(path + sceneName.string());
+		oStream << json;
+	}
+}
+
+void Editor::LoadScenes()
+{
+}
+
+void Editor::SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene)
+{
+	std::vector<int> ids;
+	entt::registry& reg = aScene->GetRegistry();
+
+	if (reg.any_of<ModelComponent>(aEntity))
+	{
+		std::filesystem::path name(reg.get<ModelComponent>(aEntity).myModel->GetName());
+		aJson[aNum]["Name"] = name;
+		ids.push_back(0);
+	}
+	if (reg.any_of<PlayerComponent>(aEntity))
+	{
+		ids.push_back(1);
+	}
+	if (reg.any_of<TransformComponent>(aEntity))
+	{
+		Transform& transform = reg.get<TransformComponent>(aEntity).myTransform;
+		aJson[aNum]["Position"] = { transform.GetPosition().x, transform.GetPosition().y, transform.GetPosition().z };
+		aJson[aNum]["Scale"] = { transform.GetScale().x, transform.GetScale().y, transform.GetScale().z };
+		aJson[aNum]["Rotation"] = { transform.GetRotation().x,transform.GetRotation().y, transform.GetRotation().z };
+		ids.push_back(2);
+	}
+	if (reg.any_of<ParticleSystemComponent>(aEntity))
+	{
+		std::filesystem::path name(reg.get<ParticleSystemComponent>(aEntity).myParticleSystem->GetName());
+		aJson[aNum]["Name"] = name;
+		ids.push_back(3);
+	}
+	if (reg.any_of<TextComponent>(aEntity))
+	{
+		std::filesystem::path name(reg.get<TextComponent>(aEntity).myText->GetName());
+		aJson[aNum]["Name"] = name;
+		ids.push_back(4);
+	}
+	for (size_t k = 0; k < ids.size(); k++)
+	{
+		int id = ids[k];
+		aJson[aNum]["Components"][std::to_string(k)] = id;
+	}
+}
+
+void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string& aNum)
+{
+	for (size_t i = 0; i < aScene->GetModels().size(); i++)
+	{
+		std::shared_ptr<ModelInstance> mdl = aScene->GetModels()[i];
+		std::filesystem::path path(mdl->GetPath());
+		aJson[aNum]["ModelPath"] = path;
+		aJson[aNum]["IsAnim"] = mdl->HasBones();
+		if (mdl->HasBones())
 		{
-			std::shared_ptr<ModelInstance> mdl = scene->GetModels()[i];
-			std::filesystem::path path(mdl->GetPath());
-			std::filesystem::path name(mdl->GetName());
-			std::string num = std::to_string(i);
-			j[num]["ModelPath"] = path;
-			j[num]["Name"] = name;
-			j[num]["Position"] = { mdl->GetTransform().GetPosition().x, mdl->GetTransform().GetPosition().y, mdl->GetTransform().GetPosition().z };
-			j[num]["Scale"] = { mdl->GetTransform().GetScale().x, mdl->GetTransform().GetScale().y, mdl->GetTransform().GetScale().z };
-			j[num]["Rotation"] = { mdl->GetTransform().GetRotation().x, mdl->GetTransform().GetRotation().y, mdl->GetTransform().GetRotation().z };
-			j[num]["IsAnim"] = mdl->HasBones();
-
-			entt::registry& reg = scene->GetRegistry();
-			std::vector<entt::entity>& entitys = scene->GetEntitys();
-			std::vector<int> ids;
-
-			if (reg.any_of<ModelComponent>(entitys[i]))
+			std::filesystem::path animName(mdl->GetCurrentAnimation().myName);
+			aJson[aNum]["AnimationPaths"]["0"] = animName;
+			//mdl->RemoveAnimName(mdl->GetCurrentAnimation().myName);
+			for (size_t k = 0; k < mdl->GetAnimNames().size(); k++)
 			{
-				ids.push_back(0);
-			}
-			if (reg.any_of<PlayerComponent>(entitys[i]))
-			{
-				ids.push_back(1);
-			}
-			if (reg.any_of<TransformComponent>(entitys[i]))
-			{
-				ids.push_back(2);
-			}
-			if (reg.any_of<ParticleSystemComponent>(entitys[i]))
-			{
-				ids.push_back(3);
-			}
-			if (reg.any_of<TextComponent>(entitys[i]))
-			{
-				ids.push_back(4);
-			}
-			for (size_t k = 0; k < ids.size(); k++)
-			{
-				int id = ids[k];
-				j[num]["Components"][std::to_string(k)] = id;
-			}
-			/*entt::registry& reg = scene->GetRegistry();
-			std::vector<entt::entity>& entitys = scene->GetEntitys();
-			std::vector<int> ids;
-
-			if (reg.any_of<ModelComponent>(entitys[i]))
-			{
-				ids.push_back(0);
-			}
-			if (reg.any_of<PlayerComponent>(entitys[i]))
-			{
-				ids.push_back(1);
-			}
-			if (reg.any_of<TransformComponent>(entitys[i]))
-			{
-				ids.push_back(2);
-			}
-			if (reg.any_of<ParticleSystemComponent>(entitys[i]))
-			{
-				ids.push_back(3);
-			}
-			if (reg.any_of<TextComponent>(entitys[i]))
-			{
-				ids.push_back(4);
-			}
-			for (size_t k = 0; k < ids.size(); k++)
-			{
-				int id = ids[k];
-				j[num]["Components"][std::to_string(k)] = id;
-			}*/
-
-			if (mdl->HasBones())
-			{
-				std::filesystem::path animName(mdl->GetCurrentAnimation().myName);
-				j[num]["AnimationPaths"]["0"] = animName;
-				//mdl->RemoveAnimName(mdl->GetCurrentAnimation().myName);
-				for (size_t k = 0; k < mdl->GetAnimNames().size(); k++)
+				if (animName != mdl->GetAnimNames()[k])
 				{
+					static int id = 1;
 					std::wstring animNames = mdl->GetAnimNames()[k];
 					std::filesystem::path modelName(animNames);
-					j[num]["AnimationPaths"][std::to_string(k + 1)] = modelName;
+					aJson[aNum]["AnimationPaths"][std::to_string(id)] = modelName;
+					id++;
 				}
 			}
 		}
-		SaveTexts(j);
-		std::ofstream oStream(path + sceneName.string());
-		oStream << j;
+
+		entt::entity& entity = aScene->GetEntitys()[i];
+
+		SaveComponents(aJson, aNum, entity, aScene);
+
+		/*entt::registry& reg = scene->GetRegistry();
+		std::vector<entt::entity>& entitys = scene->GetEntitys();
+		std::vector<int> ids;
+
+		if (reg.any_of<ModelComponent>(entitys[i]))
+		{
+			ids.push_back(0);
+		}
+		if (reg.any_of<PlayerComponent>(entitys[i]))
+		{
+			ids.push_back(1);
+		}
+		if (reg.any_of<TransformComponent>(entitys[i]))
+		{
+			ids.push_back(2);
+		}
+		if (reg.any_of<ParticleSystemComponent>(entitys[i]))
+		{
+			ids.push_back(3);
+		}
+		if (reg.any_of<TextComponent>(entitys[i]))
+		{
+			ids.push_back(4);
+		}
+		for (size_t k = 0; k < ids.size(); k++)
+		{
+			int id = ids[k];
+			j[num]["Components"][std::to_string(k)] = id;
+		}*/
 	}
 }
 
@@ -200,7 +225,7 @@ void Editor::LoadModels()
 
 		entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
 		entt::entity entity = reg.create();
-		
+
 		for (size_t k = 0; k < j[num]["Components"].size(); k++)
 		{
 			int compId = j[num]["Components"][std::to_string(k)];

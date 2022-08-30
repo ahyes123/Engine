@@ -23,7 +23,10 @@ public:
 	};
 	static void AddEditorAction(const EditorActions& anAction);
 	static void EditorActionHandler();
-	static void SaveModels();
+	static void SaveScenes();
+	static void LoadScenes();
+	static void SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene);
+	static void SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string& aNum);
 	static void LoadModels();
 	static void SaveTexts(nlohmann::json& aJson);
 	static void LoadTexts();
