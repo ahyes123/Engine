@@ -25,14 +25,18 @@ public:
 	static void EditorActionHandler();
 	static void SaveScenes();
 	static void LoadScenes();
-	static void SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene);
-	static void SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string& aNum);
-	static void LoadModels();
-	static void SaveTexts(nlohmann::json& aJson);
-	static void LoadTexts();
 	static void SaveSettings();
 	static void LoadSettings();
 
 private:
 	static std::vector<EditorActions> myEditorActions;
+
+	static void SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum);
+	static void LoadModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum);
+	static void SaveTexts(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum);
+	static void LoadTexts(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum);
+	static void SaveParticleSystems(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum);
+	static void LoadParticleSystems(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum);
+	static void SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene);
+	static void LoadComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene);
 };

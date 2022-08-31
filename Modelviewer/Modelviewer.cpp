@@ -94,7 +94,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 		Timer::Update();
 #ifdef _DEBUG
-		DebugInformation::ShowFPSText();
+		//DebugInformation::ShowFPSText();
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();

@@ -58,37 +58,6 @@ void EditorInterface::SceneHierchy()
 			}
 		}
 
-		if (createParticleSystem)
-		{
-			ImGui::OpenPopup("File Name");
-			if (ImGui::BeginPopup("File Name"))
-			{
-				char curValue[256];
-				static char prevValue[256];
-				memset(curValue, 0, sizeof(curValue));
-				memcpy(curValue, prevValue, sizeof(prevValue));
-
-				if (ImGui::InputText("File Name", curValue, sizeof(curValue)))
-				{
-					memcpy(prevValue, curValue, sizeof(curValue));
-				}
-				std::filesystem::path name(prevValue);
-				if (InputHandler::GetKeyIsPressed(VK_RETURN))
-				{
-					std::filesystem::path fileName("Json/" + name.string() + ".json");
-					std::shared_ptr<ParticleSystem> system = ParticleAssetHandler::CreateParticleSystem(fileName);
-					SceneHandler::GetActiveScene()->AddParticleSystem(system);
-					createParticleSystem = false;
-				}
-				if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
-				{
-					createParticleSystem = false;
-				}
-
-				ImGui::EndPopup();
-			}
-		}
-
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("New Scene"))
@@ -143,14 +112,16 @@ void EditorInterface::SceneHierchy()
 			}
 			if (ImGui::MenuItem("Particle System"))
 			{
-				createParticleSystem = true;
-				//AddParticleSystem(ParticleAssetHandler::CreateParticleSystem(L"Json/BaseParticleSystem.json"));
+				entt::entity entity = SceneHandler::GetActiveScene()->GetRegistry().create();
+				EmitterSettingsData data;
+				std::shared_ptr<ParticleSystem> system = ParticleAssetHandler::CreateParticleSystem(data);
+				SceneHandler::GetActiveScene()->AddParticleSystem(system, entity);
 			}
 			if (ImGui::MenuItem("Text Element"))
 			{
+				entt::entity entity = SceneHandler::GetActiveScene()->GetRegistry().create();
 				std::shared_ptr<Text> text = TextFactory::CreateText(L"Text", 1, 12, true);
-				text->SetPosition({ 0,0,0 });
-				SceneHandler::GetActiveScene()->AddText(text);
+				SceneHandler::GetActiveScene()->AddText(text, entity);
 			}
 			ImGui::EndMenu();
 		}
@@ -278,10 +249,10 @@ void EditorInterface::SceneHierchy()
 			float imguiPos[3] = { 0 };
 			float imguiRot[3] = { 0 };
 			float imguiScale[3] = { 0 };
-			Vector3f position = scene->GetSceneObjects()[selectedItem]->GetTransform().GetPosition();
-			Vector3f rotation = scene->GetSceneObjects()[selectedItem]->GetTransform().GetRotation();
-			Vector3f scale = scene->GetSceneObjects()[selectedItem]->GetTransform().GetScale();
-			static Transform oldTransform = scene->GetSceneObjects()[selectedItem]->GetTransform();
+			Vector3f position = transform.GetPosition();
+			Vector3f rotation = transform.GetRotation();
+			Vector3f scale = transform.GetScale();
+			static Transform oldTransform = transform;
 			memcpy(imguiPos, &position, sizeof(Vector3f));
 			memcpy(imguiRot, &rotation, sizeof(Vector3f));
 			memcpy(imguiScale, &scale, sizeof(Vector3f));
@@ -373,6 +344,61 @@ void EditorInterface::SceneHierchy()
 			{
 				text->SetIs2D(is2D);
 			}
+		}
+		if (scene->GetRegistry().any_of<ParticleSystemComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
+		{
+			bool isDirty = false;
+			std::shared_ptr<ParticleSystem> system = scene->GetRegistry().get<ParticleSystemComponent>
+				(scene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem;
+			EmitterSettingsData& data = system->GetEmitters()[0].GetEmitterSettings();
+
+			if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, INT_MAX))
+			{
+				isDirty = true;
+				if (data.SpawnRate <= 0)
+				{
+					data.SpawnRate = 0.1f;
+				}
+			}
+			if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, INT_MAX))
+			{
+				isDirty = true;
+				if (data.LifeTime <= 0)
+				{
+					data.LifeTime = 0.1f;
+				}
+			}
+
+			float startVelocity[3] = { data.StartVelocity.x, data.StartVelocity.y, data.StartVelocity.z };
+			ImGui::DragFloat3("Start Velocity", startVelocity, 1, -INT_MAX, INT_MAX);
+			data.StartVelocity = { startVelocity[0], startVelocity[1], startVelocity[2] };
+			float endVelocity[3] = { data.EndVelocity.x, data.EndVelocity.y, data.EndVelocity.z };
+			ImGui::DragFloat3("End Velocity", endVelocity, 1, -INT_MAX, INT_MAX);
+			data.EndVelocity = { endVelocity[0], endVelocity[1], endVelocity[2] };
+
+			ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, INT_MAX);
+			ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
+			ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
+
+			float startColor[4] = { data.StartColor.x, data.StartColor.y, data.StartColor.z, data.StartColor.w };
+			ImGui::DragFloat4("Start Color", startColor, 0.01f, 0, 1);
+			data.StartColor = { startColor[0], startColor[1], startColor[2], startColor[3] };
+			float endColor[4] = { data.EndColor.x, data.EndColor.y, data.EndColor.z, data.EndColor.w };
+			ImGui::DragFloat4("End Color", endColor, 0.01f, 0, 1);
+			data.EndColor = { endColor[0], endColor[1], endColor[2], endColor[3] };
+
+			ImGui::Checkbox("Looping", &data.Looping);
+			ImGui::Checkbox("HasDuration", &data.HasDuration);
+			if (data.HasDuration)
+				ImGui::DragFloat("Duration", &data.Duration, 1, 0, INT_MAX);
+
+			if (ImGui::Button("Refresh System"))
+			{
+				system->GetEmitters()[0].RefreshSystem();
+			}
+
+			if (isDirty)
+				system->GetEmitters()[0].RefreshValues(data);
 		}
 
 		entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();

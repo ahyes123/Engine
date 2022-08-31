@@ -7,7 +7,8 @@
 #include <fstream>
 #include "../Scene/SceneHandler.h"
 #include "../Tools/Timer.h"
-
+#include "../Text/TextFactory.h"
+#include "../Particle/ParticleAssetHandler.h"
 
 #include "../Engine/ComponentHandler.h"
 #include "../Engine/Player.h"
@@ -55,9 +56,9 @@ void Editor::EditorActionHandler()
 				if (reg.any_of<ModelComponent>(action.oldEntity))
 					SceneHandler::GetActiveScene()->AddModelInstance(reg.get<ModelComponent>(action.oldEntity).myModel, &action.oldEntity);
 				if (reg.any_of<ParticleSystemComponent>(action.oldEntity))
-					SceneHandler::GetActiveScene()->AddParticleSystem(reg.get<ParticleSystemComponent>(action.oldEntity).myParticleSystem, &action.oldEntity);
+					SceneHandler::GetActiveScene()->AddParticleSystem(reg.get<ParticleSystemComponent>(action.oldEntity).myParticleSystem, action.oldEntity);
 				if (reg.any_of<TextComponent>(action.oldEntity))
-					SceneHandler::GetActiveScene()->AddText(reg.get<TextComponent>(action.oldEntity).myText, &action.oldEntity);
+					SceneHandler::GetActiveScene()->AddText(reg.get<TextComponent>(action.oldEntity).myText, action.oldEntity);
 			}
 			myEditorActions.erase(myEditorActions.begin() + myEditorActions.size() - 1);
 		}
@@ -90,12 +91,13 @@ void Editor::SaveScenes()
 		{
 			std::cout << "File Found" << std::endl;
 		}
-		const int size = scene->GetModels().size();
 		json["SceneName"] = sceneName.string();
-		json["Size"] = size;
+		json["Size"] = scene->GetSceneObjects().size();
 
-		std::string num = std::to_string(0);
+		int num = 0;
 		SaveModels(scene, json, num);
+		SaveTexts(scene, json, num);
+		SaveParticleSystems(scene, json, num);
 
 		std::ofstream oStream(path + sceneName.string());
 		oStream << json;
@@ -104,6 +106,31 @@ void Editor::SaveScenes()
 
 void Editor::LoadScenes()
 {
+	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
+	nlohmann::json json;
+	std::ifstream ifStream(L"Json/Scenes/" + scene->GetSceneName() + L".json");
+	if (ifStream.fail())
+		return;
+	ifStream >> json;
+	for (size_t i = 0; i < json["Size"]; i++)
+	{
+		std::string num = std::to_string(i);
+		for (size_t j = 0; j < json[num]["Components"].size(); j++)
+		{
+			switch (static_cast<int>(json[num]["Components"][std::to_string(j)]))
+			{
+			case 0: //ModelComponent
+				LoadModels(scene, json, num);
+				break;
+			case 3: //ParticleSystem
+				LoadParticleSystems(scene, json, num);
+				break;
+			case 4: //TextComponent
+				LoadTexts(scene, json, num);
+				break;
+			}
+		}
+	}
 }
 
 void Editor::SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene)
@@ -148,19 +175,38 @@ void Editor::SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::enti
 	}
 }
 
-void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string& aNum)
+void Editor::LoadComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene)
+{
+	for (size_t k = 0; k < aJson[aNum]["Components"].size(); k++)
+	{
+		int compId = aJson[aNum]["Components"][std::to_string(k)];
+		ComponentHandler::AddComponent(compId, aEntity);
+	}
+	entt::registry& reg = aScene->GetRegistry();
+	if (reg.any_of<TransformComponent>(aEntity))
+	{
+		Vector3f position = { aJson[aNum]["Position"][0], aJson[aNum]["Position"][1], aJson[aNum]["Position"][2] };
+		Vector3f scale = { aJson[aNum]["Scale"][0], aJson[aNum]["Scale"][1], aJson[aNum]["Scale"][2] };
+		Vector3f rotation = { aJson[aNum]["Rotation"][0], aJson[aNum]["Rotation"][1], aJson[aNum]["Rotation"][2] };
+		reg.get<TransformComponent>(aEntity).myTransform.SetPosition(position);
+		reg.get<TransformComponent>(aEntity).myTransform.SetScale(scale);
+		reg.get<TransformComponent>(aEntity).myTransform.SetRotation(rotation);
+	}
+}
+
+void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum)
 {
 	for (size_t i = 0; i < aScene->GetModels().size(); i++)
 	{
+		std::string num = std::to_string(aNum);
 		std::shared_ptr<ModelInstance> mdl = aScene->GetModels()[i];
 		std::filesystem::path path(mdl->GetPath());
-		aJson[aNum]["ModelPath"] = path;
-		aJson[aNum]["IsAnim"] = mdl->HasBones();
+		aJson[num]["ModelPath"] = path;
+		aJson[num]["IsAnim"] = mdl->HasBones();
 		if (mdl->HasBones())
 		{
 			std::filesystem::path animName(mdl->GetCurrentAnimation().myName);
-			aJson[aNum]["AnimationPaths"]["0"] = animName;
-			//mdl->RemoveAnimName(mdl->GetCurrentAnimation().myName);
+			aJson[num]["AnimationPaths"]["0"] = animName;
 			for (size_t k = 0; k < mdl->GetAnimNames().size(); k++)
 			{
 				if (animName != mdl->GetAnimNames()[k])
@@ -168,181 +214,147 @@ void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, st
 					static int id = 1;
 					std::wstring animNames = mdl->GetAnimNames()[k];
 					std::filesystem::path modelName(animNames);
-					aJson[aNum]["AnimationPaths"][std::to_string(id)] = modelName;
+					aJson[num]["AnimationPaths"][std::to_string(id)] = modelName;
 					id++;
 				}
 			}
 		}
-
-		entt::entity& entity = aScene->GetEntitys()[i];
-
-		SaveComponents(aJson, aNum, entity, aScene);
-
-		/*entt::registry& reg = scene->GetRegistry();
-		std::vector<entt::entity>& entitys = scene->GetEntitys();
-		std::vector<int> ids;
-
-		if (reg.any_of<ModelComponent>(entitys[i]))
-		{
-			ids.push_back(0);
-		}
-		if (reg.any_of<PlayerComponent>(entitys[i]))
-		{
-			ids.push_back(1);
-		}
-		if (reg.any_of<TransformComponent>(entitys[i]))
-		{
-			ids.push_back(2);
-		}
-		if (reg.any_of<ParticleSystemComponent>(entitys[i]))
-		{
-			ids.push_back(3);
-		}
-		if (reg.any_of<TextComponent>(entitys[i]))
-		{
-			ids.push_back(4);
-		}
-		for (size_t k = 0; k < ids.size(); k++)
-		{
-			int id = ids[k];
-			j[num]["Components"][std::to_string(k)] = id;
-		}*/
+		entt::entity& entity = aScene->GetEntitys(ObjectType::Model)[i];
+		SaveComponents(aJson, num, entity, aScene);
+		aNum++;
 	}
 }
 
-void Editor::LoadModels()
+void Editor::LoadModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum)
 {
-	using nlohmann::json;
-	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
-	json j;
-	std::ifstream ifStream(L"Json/Scenes/" + scene->GetSceneName() + L".json");
-	if (ifStream.fail())
-		return;
-	ifStream >> j;
-	for (size_t i = 0; i < j["Size"]; i++)
+	entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+	entt::entity entity = reg.create();
+
+	LoadComponents(aJson, aNum, entity, aScene);
+
+	if (reg.all_of<ModelComponent, TransformComponent>(entity))
 	{
-		std::string num = std::to_string(i);
-
-		entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
-		entt::entity entity = reg.create();
-
-		for (size_t k = 0; k < j[num]["Components"].size(); k++)
+		bool isAnim = aJson[aNum]["IsAnim"];
+		std::string modelPath = aJson[aNum]["ModelPath"];
+		std::filesystem::path modelName(modelPath);
+		std::string name = aJson[aNum]["Name"];
+		std::filesystem::path nameOfModel(name);
+		if (modelPath == "Cube")
 		{
-			int compId = j[num]["Components"][std::to_string(k)];
-			ComponentHandler::AddComponent(compId, entity);
+			reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::CreateCube(L"Cube");
 		}
-
-
-		std::string name = j[num]["Name"];
-		if (reg.any_of<TransformComponent>(entity))
+		else if (!isAnim)
 		{
-			Vector3f position = { j[num]["Position"][0], j[num]["Position"][1], j[num]["Position"][2] };
-			Vector3f scale = { j[num]["Scale"][0], j[num]["Scale"][1], j[num]["Scale"][2] };
-			Vector3f rotation = { j[num]["Rotation"][0], j[num]["Rotation"][1], j[num]["Rotation"][2] };
-
-			if (reg.any_of<ModelComponent>(entity))
+			reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::LoadModel(modelName);
+		}
+		else
+		{
+			std::string name = aJson[aNum]["AnimationPaths"]["0"];
+			std::filesystem::path firstAnimName(name);
+			reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::LoadModelWithAnimation(modelName, firstAnimName);
+			for (size_t i = 1; i < aJson[aNum]["AnimationPaths"].size(); i++)
 			{
-				std::string modelPath = j[num]["ModelPath"];
-				bool isAnim = j[num]["IsAnim"];
-				std::filesystem::path modelName(modelPath);
-				std::filesystem::path nameOfModel(name);
-				if (modelPath == "Cube")
-				{
-					reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::CreateCube(L"Cube");
-				}
-				else if (!isAnim)
-				{
-					reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::LoadModel(modelName);
-				}
-				else
-				{
-					std::string name = j[num]["AnimationPaths"]["0"];
-					std::filesystem::path firstAnimName(name);
-					reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::LoadModelWithAnimation(modelName, firstAnimName);
-					for (size_t i = 1; i < j[num]["AnimationPaths"].size(); i++)
-					{
-						name = j[num]["AnimationPaths"][std::to_string(i)];
-						std::filesystem::path animName(name);
-						ModelAssetHandler::LoadAnimation(modelName, animName);
-					}
-				}
-				reg.get<TransformComponent>(entity).myTransform.SetPosition(position);
-				reg.get<TransformComponent>(entity).myTransform.SetScale(scale);
-				reg.get<TransformComponent>(entity).myTransform.SetRotation(rotation);
-				reg.get<ModelComponent>(entity).myModel->SetName(nameOfModel);
-				reg.get<ModelComponent>(entity).myModel->SetTransform(reg.get<TransformComponent>(entity).myTransform);
-				scene->AddModelInstance(reg.get<ModelComponent>(entity).myModel, &entity);
-			}
-			if (reg.any_of<ParticleSystemComponent>(entity))
-			{
-
+				name = aJson[aNum]["AnimationPaths"][std::to_string(i)];
+				std::filesystem::path animName(name);
+				ModelAssetHandler::LoadAnimation(modelName, animName);
 			}
 		}
-
-
-
-
-
-
-
-
-
-		//std::shared_ptr<ModelInstance> mdl;
-		//std::filesystem::path modelName(modelPath);
-		//std::filesystem::path nameOfModel(name);
-		//if (modelPath == "Cube")
-		//{
-		//	mdl = ModelAssetHandler::CreateCube(L"Cube");
-		//}
-		//else if (!isAnim)
-		//{
-		//	mdl = ModelAssetHandler::LoadModel(modelName);
-		//}
-		//else
-		//{
-		//	std::string name = j[num]["AnimationPaths"]["0"];
-		//	std::filesystem::path firstAnimName(name);
-		//	mdl = ModelAssetHandler::LoadModelWithAnimation(modelName, firstAnimName);
-		//	for (size_t i = 1; i < j[num]["AnimationPaths"].size(); i++)
-		//	{
-		//		name = j[num]["AnimationPaths"][std::to_string(i)];
-		//		std::filesystem::path animName(name);
-		//		ModelAssetHandler::LoadAnimation(modelName, animName);
-		//	}
-		//}
-
-
-		////ENTT TEST
-		//static int id = 0;
-		//if (id == 2)
-		//{
-		//	entt::entity ent = SceneHandler::GetActiveScene()->GetRegistry().create();
-		//	Transform trans;
-		//	trans.SetPosition(position);
-		//	trans.SetScale(scale);
-		//	trans.SetRotation(rotation);
-		//	//Player player;
-		//	//player.Init(trans, ent);
-		//	//ComponentHandler::AddComponent<Player>(ent);
-		//	SceneHandler::GetActiveScene()->GetRegistry().emplace<Player>(ent);
-		//	SceneHandler::GetActiveScene()->GetRegistry().get<Player>(ent).Init(position, rotation, scale, ent);
-		//}
-
-		//mdl->SetPosition(position);
-		//mdl->SetScale(scale);
-		//mdl->SetRotation(rotation);
-		//mdl->SetName(nameOfModel);
-		//scene->AddGameObject(mdl);
-		//id++;
+		reg.get<ModelComponent>(entity).myModel->SetName(nameOfModel);
+		reg.get<ModelComponent>(entity).myModel->SetTransform(reg.get<TransformComponent>(entity).myTransform);
+		aScene->AddModelInstance(reg.get<ModelComponent>(entity).myModel, &entity);
 	}
 }
 
-void Editor::SaveTexts(nlohmann::json& aJson)
+void Editor::SaveTexts(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum)
 {
+	for (size_t i = 0; i < aScene->GetTexts().size(); i++)
+	{
+		std::string num = std::to_string(aNum);
+		std::shared_ptr<Text> text = aScene->GetTexts()[i];
+		std::filesystem::path test(text->GetText());
+		aJson[num]["Text"] = test;
+		aJson[num]["FontSize"] = text->GetFont()->Atlas.Size;
+		aJson[num]["Is2D"] = text->GetIs2D();
+
+		entt::entity& entity = aScene->GetEntitys(ObjectType::Text)[i];
+		SaveComponents(aJson, num, entity, aScene);
+		aNum++;
+	}
 }
 
-void Editor::LoadTexts()
+void Editor::LoadTexts(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum)
 {
+	entt::entity entity = aScene->GetRegistry().create();
+	LoadComponents(aJson, aNum, entity, aScene);
+	std::filesystem::path textData = aJson[aNum]["Text"];
+	std::shared_ptr<Text> text = TextFactory::CreateText(textData, 1, aJson[aNum]["FontSize"], aJson[aNum]["Is2D"]);
+	text->SetTransform(aScene->GetRegistry().get<TransformComponent>(entity).myTransform);
+	aScene->AddText(text, entity);
+}
+
+void Editor::SaveParticleSystems(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum)
+{
+	for (size_t i = 0; i < aScene->GetParticleSystems().size(); i++)
+	{
+		std::string num = std::to_string(aNum);
+		std::shared_ptr<ParticleSystem> system = aScene->GetParticleSystems()[i];
+		EmitterSettingsData settings = system->GetEmitters()[0].GetEmitterSettings();
+		aJson[num]["SpawnRate"] = settings.SpawnRate;
+		aJson[num]["LifeTime"] = settings.LifeTime;
+		aJson[num]["StartVelocity"] = { settings.StartVelocity.x, settings.StartVelocity.y, settings.StartVelocity.z };
+		aJson[num]["EndVelocity"] = { settings.EndVelocity.x, settings.EndVelocity.y, settings.EndVelocity.z };
+		aJson[num]["GravityScale"] = settings.GravityScale;
+		aJson[num]["StartSize"] = settings.StartSize;
+		aJson[num]["EndSize"] = settings.EndSize;
+		aJson[num]["StartColor"] = { settings.StartColor.x, settings.StartColor.y, settings.StartColor.z, settings.StartColor.w };
+		aJson[num]["EndColor"] = { settings.EndColor.x, settings.EndColor.y, settings.EndColor.z, settings.EndColor.w };
+		aJson[num]["Looping"] = settings.Looping;
+		aJson[num]["HasDuration"] = settings.HasDuration;
+		aJson[num]["Duration"] = settings.Duration;
+
+		entt::entity& entity = aScene->GetEntitys(ObjectType::ParticleSystem)[i];
+		SaveComponents(aJson, num, entity, aScene);
+		aNum++;
+	}
+}
+
+void Editor::LoadParticleSystems(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum)
+{
+	entt::entity entity = aScene->GetRegistry().create();
+	LoadComponents(aJson, aNum, entity, aScene);
+	EmitterSettingsData data;
+
+	data.SpawnRate = aJson[aNum]["SpawnRate"];
+	data.LifeTime = aJson[aNum]["LifeTime"];
+
+	data.StartVelocity.x = aJson[aNum]["StartVelocity"][0];
+	data.StartVelocity.y = aJson[aNum]["StartVelocity"][1];
+	data.StartVelocity.z = aJson[aNum]["StartVelocity"][2];
+
+	data.EndVelocity.x = aJson[aNum]["EndVelocity"][0];
+	data.EndVelocity.y = aJson[aNum]["EndVelocity"][1];
+	data.EndVelocity.z = aJson[aNum]["EndVelocity"][2];
+
+	data.GravityScale = aJson[aNum]["GravityScale"];
+	data.StartSize = aJson[aNum]["StartSize"];
+	data.EndSize = aJson[aNum]["EndSize"];
+
+	data.StartColor.x = aJson[aNum]["StartColor"][0];
+	data.StartColor.y = aJson[aNum]["StartColor"][1];
+	data.StartColor.z = aJson[aNum]["StartColor"][2];
+	data.StartColor.w = aJson[aNum]["StartColor"][3];
+
+	data.EndColor.x = aJson[aNum]["EndColor"][0];
+	data.EndColor.y = aJson[aNum]["EndColor"][1];
+	data.EndColor.z = aJson[aNum]["EndColor"][2];
+	data.EndColor.w = aJson[aNum]["EndColor"][3];
+
+	data.Looping = aJson[aNum]["Looping"];
+	data.HasDuration = aJson[aNum]["HasDuration"];
+	data.Duration = aJson[aNum]["Duration"];
+
+	std::shared_ptr<ParticleSystem> system = ParticleAssetHandler::CreateParticleSystem(data);
+	SceneHandler::GetActiveScene()->AddParticleSystem(system, entity);
 }
 
 void Editor::SaveSettings()

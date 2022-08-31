@@ -10,10 +10,10 @@ class ParticleAssetHandler
 
 	inline static EmitterTemplateMap myEmitterTemplates{};
 	inline static SystemTemplateMap mySystemTemplates{};
-
+	static int id;
 	public:
-		static bool LoadSystemTemplate(const std::wstring& someFilePath);
-		static bool LoadEmitterTemplate(const std::wstring& someFilePath);
-		static std::shared_ptr<ParticleSystem> CreateParticleSystem(const std::wstring& aSystemName);
+		static bool LoadSystemTemplate(const EmitterSettingsData& aSystemName);
+		static bool LoadEmitterTemplate(const EmitterSettingsData& aSystemName);
+		static std::shared_ptr<ParticleSystem> CreateParticleSystem(const EmitterSettingsData& aSystemName);
 };
 

@@ -3474,6 +3474,7 @@ bool ImGui::InputScalar(const char* label, ImGuiDataType data_type, void* p_data
         SetNextItemWidth(ImMax(1.0f, CalcItemWidth() - (button_size + style.ItemInnerSpacing.x) * 2));
         if (InputText("", buf, IM_ARRAYSIZE(buf), flags)) // PushId(label) + "" gives us the expected ID from outside point of view
             value_changed = DataTypeApplyFromText(buf, data_type, p_data, format);
+        IMGUI_TEST_ENGINE_ITEM_INFO(g.LastItemData.ID, label, g.LastItemData.StatusFlags);
 
         // Step buttons
         const ImVec2 backup_frame_padding = style.FramePadding;
@@ -5194,7 +5195,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
         bool accepted_drag_drop = false;
         if (const ImGuiPayload* payload = AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
         {
-            memcpy((float*)col, payload->Data, sizeof(float) * 3); // Preserve alpha if any //-V512
+            memcpy((float*)col, payload->Data, sizeof(float) * 3); // Preserve alpha if any //-V512 //-V1086
             value_changed = accepted_drag_drop = true;
         }
         if (const ImGuiPayload* payload = AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
@@ -8287,9 +8288,10 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     // (We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar, which g.HoveredId ignores)
     // FIXME: This is a mess.
     // FIXME: We may want disabled tab to still display the tooltip?
-    if (text_clipped && g.HoveredId == id && !held && g.HoveredIdNotActiveTimer > g.TooltipSlowDelay && IsItemHovered())
+    if (text_clipped && g.HoveredId == id && !held)
         if (!(tab_bar->Flags & ImGuiTabBarFlags_NoTooltip) && !(tab->Flags & ImGuiTabItemFlags_NoTooltip))
-            SetTooltip("%.*s", (int)(FindRenderedTextEnd(label) - label), label);
+            if (IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+                SetTooltip("%.*s", (int)(FindRenderedTextEnd(label) - label), label);
 
     IM_ASSERT(!is_tab_button || !(tab_bar->SelectedTabId == tab->ID && is_tab_button)); // TabItemButton should not be selected
     if (is_tab_button)

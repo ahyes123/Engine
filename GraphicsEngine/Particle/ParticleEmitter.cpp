@@ -124,6 +124,10 @@ void ParticleEmitter::Update(float aDeltaTime)
 		InitParticle(myParticleCounter);
 		myParticleCounter++;
 	}
+	else if(myParticleCounter > myMaxNumberOfParticles)
+	{
+		myParticleCounter = myMaxNumberOfParticles;
+	}
 	for (size_t p = 0; p < myParticleCounter; p++)
 	{
 		ParticleVertex& particle = myParticles[p];
@@ -193,4 +197,37 @@ void ParticleEmitter::SetAsResource() const
 void ParticleEmitter::Draw() const
 {
 	DX11::Context->Draw(static_cast<UINT>(myParticles.size()), 0);
+}
+
+void ParticleEmitter::RefreshValues(const EmitterSettingsData aEmitterData)
+{
+	myEmitterSettings = aEmitterData;
+	myMaxNumberOfParticles = static_cast<size_t>(ceilf(myEmitterSettings.SpawnRate * myEmitterSettings.LifeTime));
+
+	myParticles.resize(myMaxNumberOfParticles);
+
+	HRESULT result;
+
+	D3D11_BUFFER_DESC vertexBufferDesc{};
+	vertexBufferDesc.ByteWidth = static_cast<UINT>(myParticles.size()) * static_cast<UINT>(sizeof(ParticleVertex));
+	vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+	D3D11_SUBRESOURCE_DATA vertexSubresourceData{};
+	vertexSubresourceData.pSysMem = &myParticles[0];
+
+	result = DX11::Device->CreateBuffer(&vertexBufferDesc, &vertexSubresourceData, myVertexBuffer.GetAddressOf());
+
+	if (FAILED(result))
+	{
+		std::cout << "FATAL ERROR IN PARTICLE EMITTER" << std::endl;
+	}
+}
+
+void ParticleEmitter::RefreshSystem()
+{
+	ParticleEmitterTemplate temp;
+	temp.EmitterSettings = myEmitterSettings;
+	Init(temp);
 }

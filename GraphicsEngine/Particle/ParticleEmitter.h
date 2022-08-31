@@ -33,15 +33,18 @@ class ParticleEmitter
 	void InitParticle(size_t aParticleIndex);
 	HRESULT CreateInputLayout(std::string* aVSData, ComPtr<ID3D11InputLayout>& outInputLayout);
 
-	public:
-		virtual ~ParticleEmitter() = default;
+public:
+	virtual ~ParticleEmitter() = default;
 
-		virtual bool Init(const ParticleEmitterTemplate& aTemplate);
-		virtual void Update(float aDeltaTime);
+	virtual bool Init(const ParticleEmitterTemplate& aTemplate);
+	virtual void Update(float aDeltaTime);
 
-		virtual void SetAsResource() const;
-		virtual void Draw() const;
+	virtual void SetAsResource() const;
+	virtual void Draw() const;
 
-		FORCEINLINE const EmitterSettingsData& GetEmitterSettings() const { return myEmitterSettings; }
+	FORCEINLINE EmitterSettingsData& GetEmitterSettings() { return myEmitterSettings; }
+
+	void RefreshValues(const EmitterSettingsData aEmitterData);
+	void RefreshSystem();
 };
 

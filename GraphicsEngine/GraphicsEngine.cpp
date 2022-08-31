@@ -61,10 +61,6 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	Editor::LoadSettings();
 	ComponentHandler::Init();
 
-	std::shared_ptr<Text> myFpsText = TextFactory::CreateText(L"Test: ", 1, 12, true);
-	myFpsText->SetPosition(-1, 0.85f, 0);
-	SceneHandler::GetActiveScene()->AddText(myFpsText);
-
 	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 45, -45, 0 });
 	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"studio_cubemap.dds");
 

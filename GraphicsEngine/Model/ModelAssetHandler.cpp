@@ -368,7 +368,8 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModel(const std::wstring& 
 			TGA::FBXModel::FBXMesh& mesh = tgaModel.Meshes[i];
 
 			const std::wstring wideMatName = std::wstring(mesh.MaterialName.begin(), mesh.MaterialName.end());
-			const std::wstring baseName = Helper::CleanModelName(someFilePath);
+			std::filesystem::path fileName(someFilePath);
+			const std::wstring baseName = fileName.filename().replace_extension("");
 			const std::wstring albedoFileName = L"Models/Textures/T_" + baseName + L"_C.dds";
 			const std::wstring normalFileName = L"Models/Textures/T_" + baseName + L"_N.dds";
 			const std::wstring materialFileName = L"Models/Textures/T_" + baseName + L"_M.dds";

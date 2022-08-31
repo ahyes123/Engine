@@ -14,11 +14,11 @@ class ParticleSystem : public SceneObject
 	friend class ParticleAssetHandler;
 	std::vector<ParticleEmitter> myEmitters;
 	int myId;
-	std::wstring myName;
+	std::wstring myName = L"System";
 public:
 	void Update(float aDeltaTime);
 
-	FORCEINLINE const std::vector<ParticleEmitter>& GetEmitters() const { return myEmitters; }
+	FORCEINLINE std::vector<ParticleEmitter>& GetEmitters() { return myEmitters; }
 
 	std::wstring const& GetName() const { return myName; }
 	void SetName(const std::wstring& aName) { myName = aName; }

@@ -49,7 +49,6 @@ class Scene
 	std::shared_ptr<Camera> myMainCamera;
 	std::wstring myName;
 	entt::registry myRegistry;
-	//std::vector<entt::entity> myEntitys;
 
 public:
 	entt::registry& GetRegistry()
@@ -83,27 +82,6 @@ public:
 
 	int GetNextId() { return myObjects.mySceneObjects.size(); }
 
-	//template <typename T>
-	//entt::entity& AddGameObject(std::shared_ptr<T> aSceneObject, entt::entity* aEntity = nullptr)
-	//{
-	//	entt::entity entity;
-	//	if (aEntity == nullptr)
-	//		entity = myRegistry.create();
-	//	else
-	//		entity = *aEntity;
-
-	//	myObjects.myEntitys.push_back(entity);
-	//	myObjects.mySceneObjects.push_back(std::move(aSceneObject));
-	//	if (!myRegistry.any_of<ModelComponent>(entity))
-	//	{
-	//		myRegistry.emplace<ModelComponent>(entity);
-	//		myRegistry.get<ModelComponent>(entity).myModel = static_cast<std::shared_ptr<ModelInstance>>(aSceneObject);
-	//	}
-	//	//mySceneObjects.push_back(std::move(aSceneObject));
-	//	//myEntitys.push_back(entity);
-	//	return entity;
-	//}
-
 	entt::entity& AddModelInstance(std::shared_ptr<ModelInstance> aModelInstance, entt::entity* aEntity = nullptr)
 	{
 		entt::entity entity;
@@ -126,18 +104,12 @@ public:
 			myRegistry.emplace<ModelComponent>(entity);
 			myRegistry.get<ModelComponent>(entity).myModel = aModelInstance;
 		}
-		//mySceneObjects.push_back(std::move(aSceneObject));
-		//myEntitys.push_back(entity);
 		return entity;
 	}
 
-	void AddText(std::shared_ptr<Text> aText, entt::entity* aEntity = nullptr)
+	void AddText(std::shared_ptr<Text> aText, entt::entity& aEntity)
 	{
-		entt::entity entity;
-		if (aEntity == nullptr)
-			entity = myRegistry.create();
-		else
-			entity = *aEntity;
+		entt::entity& entity = aEntity;
 
 		myTextObject.myEntitys.push_back(entity);
 		myTextObject.myTexts.push_back(aText);
@@ -146,22 +118,17 @@ public:
 		if (!myRegistry.any_of<TransformComponent>(entity))
 		{
 			myRegistry.emplace<TransformComponent>(entity);
-			//aText->SetTransform(myRegistry.get<TransformComponent>(entity).myTransform);
 		}
 		if (!myRegistry.any_of<TextComponent>(entity))
 		{
 			myRegistry.emplace<TextComponent>(entity);
-			myRegistry.get<TextComponent>(entity).myText = aText;
 		}
+		myRegistry.get<TextComponent>(entity).myText = aText;
 	}
 
-	void AddParticleSystem(std::shared_ptr<ParticleSystem> aSystem, entt::entity* aEntity = nullptr)
+	void AddParticleSystem(std::shared_ptr<ParticleSystem> aSystem, entt::entity& aEntity)
 	{
-		entt::entity entity;
-		if (aEntity == nullptr)
-			entity = myRegistry.create();
-		else
-			entity = *aEntity;
+		entt::entity entity = aEntity;
 
 		myParticleSystems.myEntitys.push_back(entity);
 		myParticleSystems.mySystems.push_back(aSystem);
@@ -170,13 +137,12 @@ public:
 		if (!myRegistry.any_of<TransformComponent>(entity))
 		{
 			myRegistry.emplace<TransformComponent>(entity);
-			aSystem->SetTransform(myRegistry.get<TransformComponent>(entity).myTransform);
 		}
 		if (!myRegistry.any_of<ParticleSystemComponent>(entity))
 		{
 			myRegistry.emplace<ParticleSystemComponent>(entity);
-			myRegistry.get<ParticleSystemComponent>(entity).myParticleSystem = aSystem;
 		}
+		myRegistry.get<ParticleSystemComponent>(entity).myParticleSystem = aSystem;
 	}
 
 	void RemoveModelInstance(std::shared_ptr<ModelInstance> aModelInstance)
@@ -197,7 +163,6 @@ public:
 				myObjects.myEntitys.erase(myObjects.myEntitys.begin() + i);
 			}
 		}
-		//mySceneObjects.erase(std::remove(mySceneObjects.begin(), mySceneObjects.end(), aSceneObject), mySceneObjects.end());
 	}
 
 	void RemoveText(std::shared_ptr<Text> aText)
@@ -218,7 +183,6 @@ public:
 				myObjects.myEntitys.erase(myObjects.myEntitys.begin() + i);
 			}
 		}
-		//myTextObject.myTexts.erase(std::remove(myTextObject.myTexts.begin(), myTextObject.myTexts.end(), aText), myTextObject.myTexts.end());
 	}
 
 	void RemoveParticleSystem(std::shared_ptr<ParticleSystem> aSystem)
@@ -239,7 +203,6 @@ public:
 				myObjects.myEntitys.erase(myObjects.myEntitys.begin() + i);
 			}
 		}
-		//myParticleSystems.mySystems.erase(std::remove(myParticleSystems.mySystems.begin(), myParticleSystems.mySystems.end(), aSystem), myParticleSystems.mySystems.end());
 	}
 
 	void RemoveAllGameObjects()
@@ -253,13 +216,6 @@ public:
 		myObjects.mySceneObjects.clear();
 		myObjects.myEntitys.clear();
 		myRegistry.clear();
-
-		//for (int i = mySceneObjects.size() - 1; i >= 0; i--)
-		//{
-		//	mySceneObjects.erase(std::remove(mySceneObjects.begin(), mySceneObjects.end(), mySceneObjects[i]), mySceneObjects.end());
-		//	myEntitys.erase(myEntitys.begin() + i);
-		//}
-
 	}
 
 	void SetCamera(std::shared_ptr<Camera> aCamera)
@@ -320,6 +276,7 @@ public:
 			if (myRegistry.any_of<TransformComponent>(myTextObject.myEntitys[i]))
 			{
 				Transform& transform = myRegistry.get<TransformComponent>(myTextObject.myEntitys[i]).myTransform;
+				std::cout << transform.GetPosition().x << std::endl;
 				objects->GetTransform() = transform;
 			}
 		}
@@ -332,11 +289,6 @@ public:
 				objects->GetTransform() = transform;
 			}
 		}
-
-		/*for (int i = myParticleSystems.mySystems.size() - 1; i >= 0; i--)
-		{
-			myParticleSystems.mySystems[i]->Update(aDeltaTime);
-		}	*/	//for (auto& ps : mySystems)
 	}
 
 	const std::wstring GetSceneName() const { return myName; }

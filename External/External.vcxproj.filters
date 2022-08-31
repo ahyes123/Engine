@@ -60,5 +60,8 @@
     <ClCompile Include="imgui\ImGuizmo.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

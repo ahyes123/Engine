@@ -24,6 +24,7 @@ void ComponentHandler::Update()
 	}
 	auto particleSystems = reg.view<ParticleSystemComponent>();
 	for (auto entity : particleSystems) {
+		std::shared_ptr<ParticleSystem> sys = particleSystems.get<ParticleSystemComponent>(entity).myParticleSystem;
 		particleSystems.get<ParticleSystemComponent>(entity).myParticleSystem->Update(CommonUtilities::Timer::GetDeltaTime());
 	}
 }

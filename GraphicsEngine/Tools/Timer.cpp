@@ -1,5 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "Timer.h"
+#include "UtilityFunctions.hpp"
 
 namespace CommonUtilities
 {
@@ -20,6 +21,7 @@ namespace CommonUtilities
 		auto oldTime = myTotalTime;
 		myTotalTime = std::chrono::high_resolution_clock::now() - myStartTime;
 		myDeltaTime = myTotalTime - oldTime;
+		CommonUtilities::Clamp<float>(0.0f, 0.3f, myDeltaTime.count());
 	}
 
 	float Timer::GetDeltaTime()

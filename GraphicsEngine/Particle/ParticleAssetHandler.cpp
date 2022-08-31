@@ -4,80 +4,39 @@
 #include "json.hpp"
 #include "../Scene/SceneHandler.h"
 
-bool ParticleAssetHandler::LoadSystemTemplate(const std::wstring& someFilePath)
+int ParticleAssetHandler::id;
+
+bool ParticleAssetHandler::LoadSystemTemplate(const EmitterSettingsData& aSystemName)
 {
-	if (const auto It = mySystemTemplates.find(someFilePath); It == mySystemTemplates.end())
-	{
-		LoadEmitterTemplate(someFilePath);
-		ParticleEmitterTemplate emitterTemplate = myEmitterTemplates[someFilePath];
-		ParticleEmitter emitter;
-		emitter.Init(emitterTemplate);
+	LoadEmitterTemplate(aSystemName);
+	ParticleEmitterTemplate emitterTemplate = myEmitterTemplates[std::to_wstring(id)];
+	ParticleEmitter emitter;
+	emitter.Init(emitterTemplate);
 
-		ParticleSystemTemplate systemTemplate;
-		systemTemplate.Settings = emitterTemplate.EmitterSettings;
-		systemTemplate.Emitter = emitter;
-		systemTemplate.Transform.SetPosition({ 0, 0, 0 });
+	ParticleSystemTemplate systemTemplate;
+	systemTemplate.Settings = emitterTemplate.EmitterSettings;
+	systemTemplate.Emitter = emitter;
 
-		mySystemTemplates.insert({ someFilePath, systemTemplate });
-	}
-
+	mySystemTemplates.insert({ std::to_wstring(id), systemTemplate});
 	return true;
 }
 
-bool ParticleAssetHandler::LoadEmitterTemplate(const std::wstring& someFilePath)
+bool ParticleAssetHandler::LoadEmitterTemplate(const EmitterSettingsData& aSystemName)
 {
-	if (const auto It = myEmitterTemplates.find(someFilePath); It == myEmitterTemplates.end())
-	{
-		std::ifstream particleStream(someFilePath);
-		using nlohmann::json;
-		json particleJSON;
-		particleStream >> particleJSON;
-		particleStream.close();
+	ParticleEmitterTemplate emitterTemplate;
+	emitterTemplate.EmitterSettings = aSystemName;
+	emitterTemplate.Path = std::to_wstring(id);
 
-		EmitterSettingsData data;
-		data.SpawnRate = particleJSON["EmitterSettings"]["SpawnRate"];
-		data.LifeTime = particleJSON["EmitterSettings"]["LifeTime"];
-
-		data.StartVelocity.x = particleJSON["EmitterSettings"]["StartVelocity"]["x"];
-		data.StartVelocity.y = particleJSON["EmitterSettings"]["StartVelocity"]["y"];
-		data.StartVelocity.z = particleJSON["EmitterSettings"]["StartVelocity"]["z"];
-
-		data.EndVelocity.x = particleJSON["EmitterSettings"]["EndVelocity"]["x"];
-		data.EndVelocity.y = particleJSON["EmitterSettings"]["EndVelocity"]["y"];
-		data.EndVelocity.z = particleJSON["EmitterSettings"]["EndVelocity"]["z"];
-
-		data.GravityScale = particleJSON["EmitterSettings"]["GravityScale"];
-		data.StartSize = particleJSON["EmitterSettings"]["StartSize"];
-		data.EndSize = particleJSON["EmitterSettings"]["EndSize"];
-
-		data.StartColor.x = particleJSON["EmitterSettings"]["StartColor"]["x"];
-		data.StartColor.y = particleJSON["EmitterSettings"]["StartColor"]["y"];
-		data.StartColor.z = particleJSON["EmitterSettings"]["StartColor"]["z"];
-		data.StartColor.w = particleJSON["EmitterSettings"]["StartColor"]["w"];
-
-		data.EndColor.x = particleJSON["EmitterSettings"]["EndColor"]["x"];
-		data.EndColor.y = particleJSON["EmitterSettings"]["EndColor"]["y"];
-		data.EndColor.z = particleJSON["EmitterSettings"]["EndColor"]["z"];
-		data.EndColor.w = particleJSON["EmitterSettings"]["EndColor"]["w"];
-
-		data.Looping = particleJSON["EmitterSettings"]["Looping"];
-		data.HasDuration = particleJSON["EmitterSettings"]["HasDuration"];
-		data.Duration = particleJSON["EmitterSettings"]["Duration"];
-
-		ParticleEmitterTemplate emitterTemplate;
-		emitterTemplate.EmitterSettings = data;
-		emitterTemplate.Path = someFilePath;
-
-		myEmitterTemplates.insert({ someFilePath, emitterTemplate });
-	}
+	myEmitterTemplates.insert({ std::to_wstring(id), emitterTemplate });
 	return true;
 }
 
-std::shared_ptr<ParticleSystem> ParticleAssetHandler::CreateParticleSystem(const std::wstring& aSystemName)
+std::shared_ptr<ParticleSystem> ParticleAssetHandler::CreateParticleSystem(const EmitterSettingsData& aSystemName)
 {
 	std::shared_ptr<ParticleSystem> system = std::make_shared<ParticleSystem>();
 	LoadSystemTemplate(aSystemName);
-	system->myEmitters.push_back(mySystemTemplates[aSystemName].Emitter);
+	system->myEmitters.push_back(mySystemTemplates[std::to_wstring(id)].Emitter);
 	system->SetId(SceneHandler::GetActiveScene()->GetNextId());
+	id++;
 	return system;
 }

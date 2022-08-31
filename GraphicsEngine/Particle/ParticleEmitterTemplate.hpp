@@ -5,19 +5,19 @@
 
 struct EmitterSettingsData
 {
-	float SpawnRate = 1.f;
-	float LifeTime;
-	Vector3f StartVelocity;
-	Vector3f EndVelocity;
-	float GravityScale;
+	float SpawnRate = 10.f;
+	float LifeTime = 3.f;
+	Vector3f StartVelocity = { 0,50,0 };
+	Vector3f EndVelocity = { 0,50,0 };
+	float GravityScale = 9.81f;
 	float ScaledGravity = 0;
-	float StartSize;
-	float EndSize;
-	Vector4f StartColor;
-	Vector4f EndColor;
-	bool Looping;
-	bool HasDuration;
-	float Duration;
+	float StartSize = 30;
+	float EndSize = 30;
+	Vector4f StartColor = { 1,0.7f,1,1 };
+	Vector4f EndColor = { 1,0,1,0 };
+	bool Looping = true;
+	bool HasDuration = false;
+	float Duration = 20;
 };
 
 struct ParticleEmitterTemplate
