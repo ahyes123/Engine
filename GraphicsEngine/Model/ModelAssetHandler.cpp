@@ -583,8 +583,8 @@ bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std:
 	std::string fileName = std::string(someFilePath.begin(), someFilePath.end());
 	size_t index = fileName.find("Animations\\");
 	fileName = fileName.substr(index, fileName.size());
-	std::string ansiFileName = _SOLUTIONDIR;
-	ansiFileName += "Bin/" + fileName;
+	std::string ansiFileName = "./";
+	ansiFileName += fileName;
 
 
 	TGA::FBXAnimation tgaAnimation;

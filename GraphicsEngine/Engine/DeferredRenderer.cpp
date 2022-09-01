@@ -50,6 +50,7 @@ bool DeferredRenderer::Initialize()
 	}
 
 	myGBuffer = TextureAssetHandler::CreateGBuffer(DX11::ClientRect);
+	myGBuffer->Init();
 
 	std::ifstream psFile;
 	psFile.open("Shaders/GBufferPS.cso", std::ios::binary);
@@ -232,8 +233,16 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 	DX11::Context->VSSetShader(myFullscreenShader.Get(), nullptr, 0);
 	DX11::Context->PSSetShader(myEnvironmentShader.Get(), nullptr, 0);
 
+#ifdef _DEBUG
+	DX11::Context->OMSetRenderTargets(1, myGBuffer->GetVPRTV().GetAddressOf(), DX11::DepthBuffer.Get());
+#endif
+#ifndef _DEBUG
 	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
+#endif
 	myGBuffer->SetAsResource(0);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
 	DX11::Context->Draw(3, 0);
+#ifdef _DEBUG
+	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
+#endif
 }

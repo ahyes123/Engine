@@ -10,6 +10,8 @@
 #include "../Scene/SceneHandler.h"
 #include <commdlg.h>
 #include <fstream>
+
+#include "DX11.h"
 #include "../Engine/ComponentHandler.h"
 #include "../Particle/ParticleAssetHandler.h"
 #include "../Text/TextFactory.h"
@@ -22,6 +24,10 @@ int EditorInterface::selectedItem;
 
 void EditorInterface::SceneHierchy()
 {
+#ifdef _DEBUG
+
+#endif
+
 	if (ImGui::BeginMainMenuBar())
 	{
 		static bool createScene = false;
@@ -275,7 +281,6 @@ void EditorInterface::SceneHierchy()
 			{
 				madeChange = true;
 			}
-			EditorGuizmo(transform.GetMatrix());
 			//if (!ImGui::IsAnyItemHovered())
 			//{
 			if (madeChange)
@@ -461,6 +466,18 @@ void EditorInterface::SceneHierchy()
 	}
 	ImGui::End();
 	ImGui::End();
+	bool f;
+	ImGui::Begin("ViewPort",&f, ImGuiWindowFlags_NoInputs);
+	Vector2f windowWidth(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+	ImGui::Image((void*)GBuffer::GetVPSRV().Get(), { windowWidth.x, windowWidth.y });
+	ImGuiViewport viewport;
+	if(someThingSelected)
+	{
+		entt::entity entity = scene->GetEntitys(ObjectType::All)[selectedItem];
+		Transform& transform = scene->GetRegistry().get<TransformComponent>(entity).myTransform;
+		EditorGuizmo(transform.GetMatrix());
+	}
+	ImGui::End();
 }
 
 void EditorInterface::ModelLoader()
@@ -482,7 +499,7 @@ void EditorInterface::ModelLoader()
 		{
 			animations.erase(animations.begin() + i);
 		}
-		const std::string modelPath = _SOLUTIONDIR"Bin/Models";
+		const std::string modelPath = "./Models";
 		for (const auto& file : directory_iterator(modelPath))
 		{
 			std::string fileName = file.path().filename().string();
@@ -491,7 +508,7 @@ void EditorInterface::ModelLoader()
 				models.push_back(fileName.c_str());
 			}
 		}
-		const std::string animPath = _SOLUTIONDIR"Bin/Animations";
+		const std::string animPath = "./Animations";
 		for (const auto& file : directory_iterator(animPath))
 		{
 			std::string fileName = file.path().string();

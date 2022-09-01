@@ -22,15 +22,20 @@ public:
 		GB_COUNT
 	};
 
-	void Init();
+	bool Init();
 	void SetAsTarget() const;
 	void ClearTarget() const;
 	void SetAsResource(unsigned int aStartSlot) const;
 	void ClearResource(unsigned int aStartSlot) const;
 	void Clear() const;
 
+	static ComPtr<ID3D11ShaderResourceView> GetVPSRV();
+	static ComPtr<ID3D11RenderTargetView> GetVPRTV();
+
 private:
 	std::array<ComPtr<ID3D11RenderTargetView>, GBufferTexture::GB_COUNT> myRTVs;
 	std::array<ComPtr<ID3D11ShaderResourceView>, GBufferTexture::GB_COUNT> mySRVs;
+	static ComPtr<ID3D11ShaderResourceView> GBufferVPSRV;
+	static ComPtr<ID3D11RenderTargetView> GBufferVPRTV;
 };
 

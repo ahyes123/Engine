@@ -70,7 +70,7 @@ void Editor::SaveScenes()
 	{
 		std::shared_ptr<Scene> scene = SceneHandler::GetScenes()[i];
 		nlohmann::json json;
-		const std::string path = _SOLUTIONDIR"Bin/Json/Scenes/";
+		const std::string path = "./Json/Scenes/";
 		bool isFileFound = false;
 		std::filesystem::path sceneName(SceneHandler::GetScenes()[i]->GetSceneName() + L".json");
 		for (const auto& file : directory_iterator(path))
@@ -359,7 +359,7 @@ void Editor::LoadParticleSystems(std::shared_ptr<Scene> aScene, nlohmann::json& 
 void Editor::SaveSettings()
 {
 	using nlohmann::json;
-	const std::string path = _SOLUTIONDIR"Bin/Json/Settings/";
+	const std::string path = "./Json/Settings/";
 	const std::string fileName = "Settings.json";
 	bool isFileFound = false;
 	for (const auto& file : directory_iterator(path))
