@@ -18,7 +18,7 @@ bool Camera::Init(float aHorizontalFOV, CommonUtilities::Vector2<unsigned> aReso
 
 	const float hFoVRad = aHorizontalFOV * (3.14159265358979323846f / 180.0f);
 
-	const float vFovRad = 
+	const float vFovRad =
 		2 * std::atan(std::tan(hFoVRad * 0.5f)
 			* (static_cast<float>(aResolution.y) / static_cast<float>(aResolution.x)));
 
@@ -45,58 +45,58 @@ void Camera::Update(float aDeltaTime)
 	Vector3f pos = GetTransform().GetPosition();
 	Vector3f movedPos;
 
-	if (InputHandler::GetKeyIsHeld('W'))
-	{
-		movedPos += GetTransform().GetForward();
-	}
-	if (InputHandler::GetKeyIsHeld('S'))
-	{
-		movedPos -= GetTransform().GetForward();
-	}
-	if (InputHandler::GetKeyIsHeld('D'))
-	{
-		movedPos += GetTransform().GetRight();
-	}
-	if (InputHandler::GetKeyIsHeld('A'))
-	{
-		movedPos -= GetTransform().GetRight();
-	}
-	if (InputHandler::GetKeyIsHeld(VK_SPACE))
-	{
-		movedPos += GetTransform().GetUp();
-	}
-	//if (InputHandler::GetKeyIsHeld(VK_CONTROL))
-	//{
-	//	movedPos -= GetTransform().GetUp();
-	//}
-	if (InputHandler::GetKeyIsPressed(VK_SHIFT))
-	{
-		myCameraSpeed *= 5;
-	}
-	else if (InputHandler::GetKeyWasReleased(VK_SHIFT))
-	{
-		myCameraSpeed /= 5;
-	}
-
-	movedPos = movedPos.Length() > 0 ? movedPos.GetNormalized() : movedPos;
-	SetPosition(movedPos * myCameraSpeed + pos);
-	
 	if (InputHandler::GetMouseTwoWasPressed())
 	{
 		myCapturedMousePos = InputHandler::GetMousePosition();
 		InputHandler::CaptureMouse();
 		InputHandler::HideMouse();
 	}
-
 	if (InputHandler::GetMouseTwoIsHeld())
 	{
+		if (InputHandler::GetKeyIsHeld('W'))
+		{
+			movedPos += GetTransform().GetForward();
+		}
+		if (InputHandler::GetKeyIsHeld('S'))
+		{
+			movedPos -= GetTransform().GetForward();
+		}
+		if (InputHandler::GetKeyIsHeld('D'))
+		{
+			movedPos += GetTransform().GetRight();
+		}
+		if (InputHandler::GetKeyIsHeld('A'))
+		{
+			movedPos -= GetTransform().GetRight();
+		}
+		if (InputHandler::GetKeyIsHeld(VK_SPACE))
+		{
+			movedPos += GetTransform().GetUp();
+		}
+		if (InputHandler::GetKeyIsHeld(VK_CONTROL))
+		{
+			movedPos -= GetTransform().GetUp();
+		}
+		if (InputHandler::GetKeyIsPressed(VK_SHIFT))
+		{
+			myCameraSpeed *= 5;
+		}
+		else if (InputHandler::GetKeyWasReleased(VK_SHIFT))
+		{
+			myCameraSpeed /= 5;
+		}
+
+		movedPos = movedPos.Length() > 0 ? movedPos.GetNormalized() : movedPos;
+		SetPosition(movedPos * myCameraSpeed + pos);
+
+
 		Vector2f deltaPos = InputHandler::GetMousePositionDelta();
 		float xRot = rot.x + deltaPos.y * 0.05f;
 		float yRot = rot.y + deltaPos.x * 0.05f;
 		SetRotation(Clamp(-180.f * 0.5f, 180.f * 0.5f, xRot), yRot, rot.z);
 		InputHandler::SetMousePosition(myCapturedMousePos.x, myCapturedMousePos.y);
 	}
-	
+
 	if (InputHandler::GetMouseTwoWasReleased())
 	{
 		InputHandler::SetMousePosition(myCapturedMousePos.x, myCapturedMousePos.y);

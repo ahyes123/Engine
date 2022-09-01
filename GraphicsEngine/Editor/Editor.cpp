@@ -12,7 +12,6 @@
 
 #include "../Engine/ComponentHandler.h"
 #include "../Engine/Player.h"
-//#include "entt/entt.hpp"
 
 using std::filesystem::directory_iterator;
 
@@ -207,11 +206,11 @@ void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, in
 		{
 			std::filesystem::path animName(mdl->GetCurrentAnimation().myName);
 			aJson[num]["AnimationPaths"]["0"] = animName;
+			int id = 1;
 			for (size_t k = 0; k < mdl->GetAnimNames().size(); k++)
 			{
 				if (animName != mdl->GetAnimNames()[k])
 				{
-					static int id = 1;
 					std::wstring animNames = mdl->GetAnimNames()[k];
 					std::filesystem::path modelName(animNames);
 					aJson[num]["AnimationPaths"][std::to_string(id)] = modelName;
@@ -383,6 +382,8 @@ void Editor::SaveSettings()
 	json j;
 	j["CameraSpeed"] = SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed();
 	j["TimeScale"] = CommonUtilities::Timer::GetTimeScale();
+	std::array<float, 4> color = GraphicsEngine::GetClearColor();
+	j["ClearColor"] = { color[0], color[1], color[2], color[3] };
 
 	std::ofstream oStream(path + fileName);
 	oStream << j;
@@ -399,4 +400,6 @@ void Editor::LoadSettings()
 
 	SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed() = j["CameraSpeed"];
 	CommonUtilities::Timer::SetTimeScale(j["TimeScale"]);
+	std::array<float, 4> color = j["ClearColor"];
+	GraphicsEngine::GetClearColor() = color;
 }

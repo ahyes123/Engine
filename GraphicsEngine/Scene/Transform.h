@@ -20,6 +20,9 @@ public:
 	Vector3f GetForward() const;
 	Vector3f GetRight() const;
 	Vector3f GetUp() const;
+	Vector3f& GetPositionMutable();
+	Vector3f& GetRotationMutable();
+	Vector3f& GetScaleMutable();
 
 	Quatf GetQuaternion() const;
 

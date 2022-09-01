@@ -47,6 +47,13 @@ void EditorInterface::SceneHierchy()
 					std::shared_ptr<Scene> scene = SceneHandler::AddEmptyScene(name);
 					SceneHandler::LoadScene(scene);
 					std::ofstream fileName("Json/Scenes/" + name.string() + ".json");
+
+					using nlohmann::json;
+					json j;
+					j["SceneName"] = name.string();
+					j["Size"] = 0;
+					std::ofstream oStream("Json/Scenes/" + name.string() + ".json");
+					oStream << j;
 					createScene = false;
 				}
 				if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
@@ -132,9 +139,11 @@ void EditorInterface::SceneHierchy()
 		}
 		if (openedSettings)
 		{
+			static bool colorChange = false;
 			if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
 			{
 				openedSettings = false;
+				colorChange = false;
 			}
 			ImGui::Begin("Settings");
 			ImGui::InputFloat("Camera Speed", &SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed());
@@ -142,6 +151,7 @@ void EditorInterface::SceneHierchy()
 			float timeScale = CommonUtilities::Timer::GetTimeScale();
 			ImGui::InputFloat("Time Scale", &timeScale);
 			CommonUtilities::Timer::SetTimeScale(timeScale);
+			ImGui::ColorEdit4("Clear Color", &GraphicsEngine::GetClearColor()[0]);
 			ImGui::End();
 		}
 		ImGui::EndMainMenuBar();
@@ -167,6 +177,7 @@ void EditorInterface::SceneHierchy()
 
 		if (someThingSelected)
 		{
+			static bool deleteItem = false;
 			if (ImGui::BeginPopupContextWindow(std::to_string(scene->GetSceneObjects()[i]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
 			{
 				if (ImGui::MenuItem("Change Name"))
@@ -185,23 +196,27 @@ void EditorInterface::SceneHierchy()
 				}
 				if (ImGui::MenuItem("Destroy"))
 				{
-					Editor::EditorActions action;
-					entt::entity ent = scene->GetEntitys(ObjectType::All)[selectedItem];
-					entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
-					action.RemovedObject = true;
-					action.Object = scene->GetSceneObjects()[selectedItem];
-					action.oldEntity = ent;
-					Editor::AddEditorAction(action);
-
-					if (reg.any_of<ModelComponent>(ent))
-						scene->RemoveModelInstance(reg.get<ModelComponent>(ent).myModel);
-					if (reg.any_of<ParticleSystemComponent>(ent))
-						scene->RemoveParticleSystem(reg.get<ParticleSystemComponent>(ent).myParticleSystem);
-					if (reg.any_of<TextComponent>(ent))
-						scene->RemoveText(reg.get<TextComponent>(ent).myText);
-					someThingSelected = false;
+					deleteItem = true;
 				}
 				ImGui::EndPopup();
+			}
+			if (deleteItem || InputHandler::GetKeyIsPressed(VK_DELETE))
+			{
+				Editor::EditorActions action;
+				entt::entity ent = scene->GetEntitys(ObjectType::All)[selectedItem];
+				entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+				action.RemovedObject = true;
+				action.Object = scene->GetSceneObjects()[selectedItem];
+				action.oldEntity = ent;
+				Editor::AddEditorAction(action);
+
+				if (reg.any_of<ModelComponent>(ent))
+					scene->RemoveModelInstance(reg.get<ModelComponent>(ent).myModel);
+				if (reg.any_of<ParticleSystemComponent>(ent))
+					scene->RemoveParticleSystem(reg.get<ParticleSystemComponent>(ent).myParticleSystem);
+				if (reg.any_of<TextComponent>(ent))
+					scene->RemoveText(reg.get<TextComponent>(ent).myText);
+				someThingSelected = false;
 			}
 		}
 		if (i >= scene->GetSceneObjects().size() - 1 && someThingSelected == false)
@@ -246,44 +261,34 @@ void EditorInterface::SceneHierchy()
 		{
 			Transform& transform = scene->GetRegistry().get<TransformComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]).myTransform;
 			static bool madeChange = false;
-			float imguiPos[3] = { 0 };
-			float imguiRot[3] = { 0 };
-			float imguiScale[3] = { 0 };
-			Vector3f position = transform.GetPosition();
-			Vector3f rotation = transform.GetRotation();
-			Vector3f scale = transform.GetScale();
 			static Transform oldTransform = transform;
-			memcpy(imguiPos, &position, sizeof(Vector3f));
-			memcpy(imguiRot, &rotation, sizeof(Vector3f));
-			memcpy(imguiScale, &scale, sizeof(Vector3f));
-			if (ImGui::InputFloat3("Position", imguiPos))
+
+			if (ImGui::DragFloat3("Position", &transform.GetPositionMutable().x, 1, -INT_MAX, INT_MAX))
 			{
-				transform.SetPosition({ imguiPos[0], imguiPos[1], imguiPos[2] });
 				madeChange = true;
 			}
-			else if (ImGui::InputFloat3("Rotation", imguiRot))
+			if (ImGui::DragFloat3("Rotation", &transform.GetRotationMutable().x, 1, -360, 360))
 			{
-				transform.SetRotation({ imguiRot[0], imguiRot[1], imguiRot[2] });
 				madeChange = true;
 			}
-			else if (ImGui::InputFloat3("Scale", imguiScale))
+			if (ImGui::DragFloat3("Scale", &transform.GetScaleMutable().x, 0.1f, -INT_MAX, INT_MAX))
 			{
-				transform.SetScale({ imguiScale[0], imguiScale[1], imguiScale[2] });
 				madeChange = true;
 			}
-			//EditorGuizmo(mdl->GetTransform().GetMatrix());
-			if (!ImGui::IsAnyItemHovered())
+			EditorGuizmo(transform.GetMatrix());
+			//if (!ImGui::IsAnyItemHovered())
+			//{
+			if (madeChange)
 			{
-				if (madeChange)
-				{
-					Editor::EditorActions action;
-					action.MovedObject = true;
-					action.Object = scene->GetSceneObjects()[selectedItem];
-					action.OldTransform = oldTransform;
-					Editor::AddEditorAction(action);
-					madeChange = false;
-				}
+				transform.ComposeMatrix();
+				//Editor::EditorActions action;
+				//action.MovedObject = true;
+				//action.Object = scene->GetSceneObjects()[selectedItem];
+				//action.OldTransform = oldTransform;
+				//Editor::AddEditorAction(action);
+				madeChange = false;
 			}
+			//}
 			ImGui::NewLine();
 		}
 		if (scene->GetRegistry().any_of<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
@@ -380,12 +385,8 @@ void EditorInterface::SceneHierchy()
 			ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
 			ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
 
-			float startColor[4] = { data.StartColor.x, data.StartColor.y, data.StartColor.z, data.StartColor.w };
-			ImGui::DragFloat4("Start Color", startColor, 0.01f, 0, 1);
-			data.StartColor = { startColor[0], startColor[1], startColor[2], startColor[3] };
-			float endColor[4] = { data.EndColor.x, data.EndColor.y, data.EndColor.z, data.EndColor.w };
-			ImGui::DragFloat4("End Color", endColor, 0.01f, 0, 1);
-			data.EndColor = { endColor[0], endColor[1], endColor[2], endColor[3] };
+			ImGui::ColorEdit4("Start Color", &data.StartColor.x);
+			ImGui::ColorEdit4("End Color", &data.EndColor.x);
 
 			ImGui::Checkbox("Looping", &data.Looping);
 			ImGui::Checkbox("HasDuration", &data.HasDuration);
@@ -613,11 +614,10 @@ void EditorInterface::ModelLoader()
 
 bool EditorInterface::EditorGuizmo(Matrix4x4f& aObjectMatrix)
 {
-	ImGui::Begin("f");
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-	RECT windowRect = GraphicsEngine::GetWindowRectangle();
-	ImGui::SetWindowPos(ImVec2{ static_cast<float>(windowRect.left), static_cast<float>(windowRect.top) });
-	ImGui::SetWindowSize(ImVec2{ static_cast<float>(windowRect.right - windowRect.left), static_cast<float>(windowRect.bottom - windowRect.top) });
+	//RECT windowRect = GraphicsEngine::GetWindowRectangle();
+	//ImGui::SetWindowPos(ImVec2{ static_cast<float>(windowRect.left), static_cast<float>(windowRect.top) });
+	//ImGui::SetWindowSize(ImVec2{ static_cast<float>(windowRect.right - windowRect.left), static_cast<float>(windowRect.bottom - windowRect.top) });
 	ImGuizmo::SetOrthographic(false);
 	ImGuizmo::SetDrawlist();
 	ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
@@ -629,6 +629,5 @@ bool EditorInterface::EditorGuizmo(Matrix4x4f& aObjectMatrix)
 	memcpy(objectMatrix, &aObjectMatrix, sizeof(float) * 16);
 	ImGuizmo::Manipulate(&view[0], &projection[0], ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &objectMatrix[0]);
 	ImGui::PopStyleVar();
-	ImGui::End();
 	return true;
 }

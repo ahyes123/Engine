@@ -13,7 +13,6 @@
 #include "Scene/SceneHandler.h"
 #include <filesystem>
 #include "Engine/ComponentHandler.h"
-
 #include "../GraphicsEngine/Engine/ComponentHandler.h"
 
 using namespace CommonUtilities;
@@ -152,7 +151,7 @@ void GraphicsEngine::RenderFrame()
 #endif // _DEBUG
 
 	ComponentHandler::Update();
-
+	
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);

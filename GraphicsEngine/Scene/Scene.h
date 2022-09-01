@@ -264,9 +264,9 @@ public:
 			if (myRegistry.any_of<TransformComponent>(myModelObject.myEntitys[i]))
 			{
 				Transform& transform = myRegistry.get<TransformComponent>(myModelObject.myEntitys[i]).myTransform;
-				transform.SetRotation({ transform.GetRotation().x,
-					transform.GetRotation().y + aDeltaTime * 10.f,
-					transform.GetRotation().z });
+				//transform.SetRotation({ transform.GetRotation().x,
+				//	transform.GetRotation().y + aDeltaTime * 10.f,
+				//	transform.GetRotation().z });
 				objects->GetTransform() = transform;
 			}
 		}

@@ -116,6 +116,21 @@ Vector3f Transform::GetUp() const
 	return { result.x, result.y, result.z };
 }
 
+Vector3f& Transform::GetPositionMutable()
+{
+	return myPosition;
+}
+
+Vector3f& Transform::GetRotationMutable()
+{
+	return myRotation;
+}
+
+Vector3f& Transform::GetScaleMutable()
+{
+	return myScale;
+}
+
 Quatf Transform::GetQuaternion() const
 {
 	return Quatf(GetMatrix());
