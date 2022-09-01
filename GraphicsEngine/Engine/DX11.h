@@ -31,5 +31,7 @@ class DX11
 		
 		static ComPtr<ID3D11RenderTargetView> BackBuffer;
 		static ComPtr<ID3D11DepthStencilView> DepthBuffer;
+
+		static RECT ClientRect;
 };
 

@@ -1,5 +1,13 @@
 #include "PBRFunctions.hlsli"
 
+SamplerState defaultSampler : register(s0);
+
+Texture2D albedoTexture : register(t0);
+Texture2D normalTexture : register(t1);
+Texture2D materialTexture : register(t2);
+
+TextureCube environmentTexture : register(t10);
+
 PixelOutput main(VertexToPixel input)
 {
 	PixelOutput result;
@@ -30,7 +38,7 @@ PixelOutput main(VertexToPixel input)
 	const float3 specularColor = lerp((float3)0.04f, albedo, metalness);
 	const float3 diffuseColor = lerp((float3)0.00f, albedo, 1 - metalness);
 
-	const float3 ambientLighting = EvaluateAmbience(
+	const float3 ambientLighting = EvaluateAmbience(defaultSampler,
 		environmentTexture, pixelNormal, input.myNormal, 
 		toEye, roughness, ambientOcclusion, diffuseColor, specularColor);
 

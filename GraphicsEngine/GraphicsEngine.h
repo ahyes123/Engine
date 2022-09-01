@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 
+#include "DeferredRenderer.h"
 #include "Engine/TextRenderer.h"
 #include "Engine/ForwardRenderer.h"
 #include "Scene/Scene.h"
@@ -33,6 +34,7 @@ class GraphicsEngine
 	static HWND myWindowHandle;
 	static std::shared_ptr<Camera> myCamera;
 	ForwardRenderer myForwardRenderer;
+	DeferredRenderer myDeferredRenderer;
 	TextRenderer myTextRenderer;
 	ModelAssetHandler myModelAssetHandler;
 	std::shared_ptr<DirectionalLight> myDirectionalLight;
@@ -41,6 +43,8 @@ class GraphicsEngine
 	static RECT windowRect;
 	// Container window message pump.
 	static LRESULT CALLBACK WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
+
+	static std::array<FLOAT, 4> ourClearColor;
 
 public:
 
@@ -56,6 +60,7 @@ public:
 	static RECT GetWindowRectangle();
 
 	static std::shared_ptr<Camera> GetCamera() { return myCamera; }
+	static std::array<FLOAT, 4> &GetClearColor() { return ourClearColor; }
 
 	[[nodiscard]] static HWND FORCEINLINE GetWindowHandle() { return myWindowHandle; }
 	//[[nodiscard]] SIZE FORCEINLINE GetWindowSize() const { return myWindowSize; }

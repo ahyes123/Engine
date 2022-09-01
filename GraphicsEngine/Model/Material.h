@@ -2,12 +2,13 @@
 #include <memory>
 #include <array>
 #include <string>
-#include <wrl/client.h>
+#include <wrl.h>
 #include "Math/Vector3.hpp"
 
 using namespace Microsoft::WRL;
 
 class Texture;
+struct ID3D11Resource;
 
 namespace MaterialTextureChannel
 {

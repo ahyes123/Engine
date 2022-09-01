@@ -11,6 +11,7 @@ ComPtr<ID3D11SamplerState> DX11::SamplerStateWrap;
 
 ComPtr<ID3D11RenderTargetView> DX11::BackBuffer;
 ComPtr<ID3D11DepthStencilView> DX11::DepthBuffer;
+RECT DX11::ClientRect;
 
 bool DX11::Initialize(HWND aWindowHandle, bool aEnableDeviceDebug)
 {
@@ -55,19 +56,14 @@ bool DX11::Initialize(HWND aWindowHandle, bool aEnableDeviceDebug)
 		return false;
 	}
 
-	if (FAILED(result))
-	{
-		return false;
-	}
-
-	RECT clientRect = { 0, 0, 0, 0 };
-	GetClientRect(aWindowHandle, &clientRect);
+	ClientRect = { 0, 0, 0, 0 };
+	GetClientRect(aWindowHandle, &ClientRect);
 
 	ComPtr<ID3D11Texture2D> depthBufferTexture;
 	D3D11_TEXTURE2D_DESC depthBufferDesc = { 0 };
 
-	depthBufferDesc.Width = clientRect.right - clientRect.left;
-	depthBufferDesc.Height = clientRect.bottom - clientRect.top;
+	depthBufferDesc.Width = ClientRect.right - ClientRect.left;
+	depthBufferDesc.Height = ClientRect.bottom - ClientRect.top;
 	depthBufferDesc.ArraySize = 1;
 	depthBufferDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	depthBufferDesc.SampleDesc.Count = 1;
@@ -91,8 +87,8 @@ bool DX11::Initialize(HWND aWindowHandle, bool aEnableDeviceDebug)
 	D3D11_VIEWPORT viewport = { 0 };
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
-	viewport.Width = static_cast<float>(clientRect.right - clientRect.left);
-	viewport.Height = static_cast<float>(clientRect.bottom - clientRect.top);
+	viewport.Width = static_cast<float>(ClientRect.right - ClientRect.left);
+	viewport.Height = static_cast<float>(ClientRect.bottom - ClientRect.top);
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &viewport);

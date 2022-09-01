@@ -128,7 +128,7 @@ float3 Specular(float3 specularColor, float3 h, float3 v, float a, float NdL, fl
     return ((NormalDistribution_GGX(a, NdH) * Geometric_Smith_Schlick_GGX(a, NdV, NdL)) * Fresnel_Schlick(specularColor, h, v)) / (4.0f * NdL * NdV + 0.0001f);
 }
 
-float3 EvaluateAmbience(TextureCube lysBurleyCube, float3 pixelNormal, float3 vertexNormal, float3 toEye, float perceptualRoughness, float ao, float3 diffuseColor, float3 specularColor)
+float3 EvaluateAmbience(SamplerState defaultSampler, TextureCube lysBurleyCube, float3 pixelNormal, float3 vertexNormal, float3 toEye, float perceptualRoughness, float ao, float3 diffuseColor, float3 specularColor)
 {
     // Extract the number of Mipmaps that exist in this texture.
     const int numMips = GetNumMips(lysBurleyCube);

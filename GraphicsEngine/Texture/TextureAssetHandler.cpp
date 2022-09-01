@@ -30,3 +30,51 @@ bool TextureAssetHandler::LoadTexture(const std::wstring& aFileName)
 	}
 	return false;
 }
+
+std::unique_ptr<GBuffer> TextureAssetHandler::CreateGBuffer(RECT aWindowSize)
+{
+	std::unique_ptr<GBuffer> gbuffer = std::make_unique<GBuffer>();
+	//DXGI_FORMAT formats[GBuffer::GBufferTexture::GB_COUNT]
+	//{
+	//	DXGI_FORMAT_R8G8B8A8_UNORM,
+	//	DXGI_FORMAT_R16G16B16A16_SNORM,
+	//	DXGI_FORMAT_R8G8B8A8_UNORM,
+	//	DXGI_FORMAT_R16G16B16A16_SNORM,
+	//	DXGI_FORMAT_R32G32B32A32_FLOAT,
+	//	DXGI_FORMAT_R8_UNORM
+	//};
+	for (uint8_t i = 0; i < GBuffer::GBufferTexture::GB_COUNT; ++i)
+	{
+		ComPtr<ID3D11Texture2D> texture;
+		D3D11_TEXTURE2D_DESC textureDesc = { 0 };
+		textureDesc.Width = aWindowSize.right - aWindowSize.left;
+		textureDesc.Height = aWindowSize.bottom - aWindowSize.top;
+		textureDesc.ArraySize = 1;
+		textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		textureDesc.SampleDesc.Count = 1;
+		textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		textureDesc.CPUAccessFlags = 0;
+		textureDesc.MiscFlags = 0;
+		textureDesc.Usage = D3D11_USAGE_DEFAULT;
+		textureDesc.MipLevels = 1;
+
+		HRESULT result = DX11::Device->CreateTexture2D(&textureDesc, nullptr, texture.GetAddressOf());
+		if (FAILED(result))
+		{
+			return nullptr;
+		}
+
+		result = DX11::Device->CreateRenderTargetView(texture.Get(), nullptr, &gbuffer->myRTVs[i]);
+		if (FAILED(result))
+		{
+			return nullptr;
+		}
+		result = DX11::Device->CreateShaderResourceView(texture.Get(), nullptr, &gbuffer->mySRVs[i]);
+		if (FAILED(result))
+		{
+			return nullptr;
+		}
+	}
+
+	return gbuffer;
+}

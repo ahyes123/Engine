@@ -22,6 +22,7 @@ RenderMode GraphicsEngine::myRenderMode;
 RECT GraphicsEngine::windowRect;
 HWND GraphicsEngine::myWindowHandle;
 std::shared_ptr<Camera> GraphicsEngine::myCamera;
+std::array<FLOAT, 4> GraphicsEngine::ourClearColor;
 
 bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	unsigned someWidth, unsigned someHeight,
@@ -47,6 +48,8 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 		this
 	);
 
+	ourClearColor = { 0.1f, 0.1f, 0.1f, 1 };
+
 	if (!DX11::Initialize(myWindowHandle, enableDeviceDebug))
 		return false;
 
@@ -62,7 +65,7 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	ComponentHandler::Init();
 
 	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 45, -45, 0 });
-	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"studio_cubemap.dds");
+	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
 
 	/*for (size_t i = 0; i < SceneHandler::GetScenes().size(); i++)
 	{
@@ -72,8 +75,11 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 		SceneHandler::GetScenes()[i]->GetParticleSystems()[1]->SetPosition(300, 0, 100);
 	}*/
 	myRenderMode = RenderMode::Default;
+	GetWindowRect(myWindowHandle, &windowRect);
 
 	if (!myForwardRenderer.Initialize())
+		return false;
+	if (!myDeferredRenderer.Initialize())
 		return false;
 
 	if (!myTextRenderer.Initialize())
@@ -108,7 +114,7 @@ void GraphicsEngine::BeginFrame()
 {
 	// F1 - This is where we clear our buffers and start the DX frame.
 
-	DX11::BeginFrame({ 0.1f, 0.1f, 0.1f, 1 });
+	DX11::BeginFrame(ourClearColor);
 }
 
 void GraphicsEngine::RenderFrame()
@@ -145,13 +151,14 @@ void GraphicsEngine::RenderFrame()
 	}
 #endif // _DEBUG
 
-	//ENTT TEST
 	ComponentHandler::Update();
 
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
-	myForwardRenderer.RenderModels(camera, mdlInstancesToRender, myDirectionalLight, myEnvironmentLight);
+	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());
+	myDeferredRenderer.Render(camera, myDirectionalLight, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
+	//myForwardRenderer.RenderModels(camera, mdlInstancesToRender, myDirectionalLight, myEnvironmentLight);
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::AlphaBlend);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadOnly);
