@@ -62,7 +62,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	ImGui_ImplDX11_Init(DX11::Device.Get(), DX11::Context.Get());
 	ImGui::StyleColorsDark();
 	io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 18.f);
-	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 #endif // _DEBUG
 
 	while (bShouldRun)

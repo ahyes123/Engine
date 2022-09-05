@@ -45,7 +45,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 		toEye, roughness, ambientOcclusion, diffuseColor, specularColor);
 
 	const float3 directLighting = EvaluateDirectionalLight(
-		diffuseColor, specularColor, vertexNormal, roughness,
+		diffuseColor, specularColor, normal, roughness,
 		LB_Color, LB_Intensity, -LB_Direction, toEye);
 
 	result.Color.rgb = LinearToGamma(directLighting + ambientLighting);

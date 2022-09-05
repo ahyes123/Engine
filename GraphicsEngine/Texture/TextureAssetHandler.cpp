@@ -34,15 +34,7 @@ bool TextureAssetHandler::LoadTexture(const std::wstring& aFileName)
 std::unique_ptr<GBuffer> TextureAssetHandler::CreateGBuffer(RECT aWindowSize)
 {
 	std::unique_ptr<GBuffer> gbuffer = std::make_unique<GBuffer>();
-	//DXGI_FORMAT formats[GBuffer::GBufferTexture::GB_COUNT]
-	//{
-	//	DXGI_FORMAT_R8G8B8A8_UNORM,
-	//	DXGI_FORMAT_R16G16B16A16_SNORM,
-	//	DXGI_FORMAT_R8G8B8A8_UNORM,
-	//	DXGI_FORMAT_R16G16B16A16_SNORM,
-	//	DXGI_FORMAT_R32G32B32A32_FLOAT,
-	//	DXGI_FORMAT_R8_UNORM
-	//};
+	
 	for (uint8_t i = 0; i < GBuffer::GBufferTexture::GB_COUNT; ++i)
 	{
 		ComPtr<ID3D11Texture2D> texture;

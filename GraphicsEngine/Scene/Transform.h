@@ -13,6 +13,7 @@ public:
 	void SetScale(const Vector3f& scale);
 	void ComposeMatrix(bool aIsAnim = false);
 	Vector3f GetRotation() const;
+	Vector3f GetRawRotation() const;
 	Vector3f GetPosition() const;
 	Vector3f GetScale() const;
 	Matrix4x4f GetMatrix() const;

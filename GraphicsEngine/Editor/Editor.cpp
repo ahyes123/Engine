@@ -53,7 +53,7 @@ void Editor::EditorActionHandler()
 			{
 				entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
 				if (reg.any_of<ModelComponent>(action.oldEntity))
-					SceneHandler::GetActiveScene()->AddModelInstance(reg.get<ModelComponent>(action.oldEntity).myModel, &action.oldEntity);
+					SceneHandler::GetActiveScene()->AddModelInstance(reg.get<ModelComponent>(action.oldEntity).myModel, action.oldEntity);
 				if (reg.any_of<ParticleSystemComponent>(action.oldEntity))
 					SceneHandler::GetActiveScene()->AddParticleSystem(reg.get<ParticleSystemComponent>(action.oldEntity).myParticleSystem, action.oldEntity);
 				if (reg.any_of<TextComponent>(action.oldEntity))
@@ -260,7 +260,7 @@ void Editor::LoadModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, st
 		}
 		reg.get<ModelComponent>(entity).myModel->SetName(nameOfModel);
 		reg.get<ModelComponent>(entity).myModel->SetTransform(reg.get<TransformComponent>(entity).myTransform);
-		aScene->AddModelInstance(reg.get<ModelComponent>(entity).myModel, &entity);
+		aScene->AddModelInstance(reg.get<ModelComponent>(entity).myModel, entity);
 	}
 }
 

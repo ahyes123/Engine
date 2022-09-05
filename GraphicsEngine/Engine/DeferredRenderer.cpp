@@ -7,6 +7,7 @@
 #include "GraphicsEngine.h"
 #include "RenderStateManager.h"
 #include "Texture/TextureAssetHandler.h"
+#include "../Scene/SceneHandler.h"
 
 bool DeferredRenderer::Initialize()
 {
@@ -77,23 +78,6 @@ bool DeferredRenderer::Initialize()
 		return false;
 	}
 	myFullscreenShader = vertexShader;
-
-	//D3D11_INPUT_ELEMENT_DESC layout[] =
-	//{
-	//	{"SV_TARGET", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//	{"SV_TARGET", 1, DXGI_FORMAT_R16G16B16A16_SNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//	{"SV_TARGET", 2, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//	{"SV_TARGET", 3, DXGI_FORMAT_R16G16B16A16_SNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//	{"SV_TARGET", 4, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//	{"SV_TARGET", 5, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//	{"SV_TARGET", 6, DXGI_FORMAT_R8_UNORM, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	//};
-
-	//result = DX11::Device->CreateInputLayout(layout, sizeof(layout) / sizeof(D3D11_INPUT_ELEMENT_DESC), vsData.data(), vsData.size(), myGBufferLayout.GetAddressOf());
-	//if (FAILED(result))
-	//{
-	//	return false;
-	//}
 
 	psFile.open("Shaders/EnvironmentPS.cso", std::ios::binary);
 	psData = { std::istreambuf_iterator<char>(psFile), std::istreambuf_iterator<char>() };
@@ -233,15 +217,18 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 	DX11::Context->VSSetShader(myFullscreenShader.Get(), nullptr, 0);
 	DX11::Context->PSSetShader(myEnvironmentShader.Get(), nullptr, 0);
 
+	//Viewport
 #ifdef _DEBUG
 	DX11::Context->OMSetRenderTargets(1, myGBuffer->GetVPRTV().GetAddressOf(), DX11::DepthBuffer.Get());
 #endif
+	//Normal
+	//DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
 #ifndef _DEBUG
-	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
 #endif
 	myGBuffer->SetAsResource(0);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
 	DX11::Context->Draw(3, 0);
+	//Viewport
 #ifdef _DEBUG
 	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
 #endif

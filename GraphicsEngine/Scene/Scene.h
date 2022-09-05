@@ -82,67 +82,56 @@ public:
 
 	int GetNextId() { return myObjects.mySceneObjects.size(); }
 
-	entt::entity& AddModelInstance(std::shared_ptr<ModelInstance> aModelInstance, entt::entity* aEntity = nullptr)
+	void AddModelInstance(std::shared_ptr<ModelInstance> aModelInstance, entt::entity& aEntity)
 	{
-		entt::entity entity;
-		if (aEntity == nullptr)
-			entity = myRegistry.create();
-		else
-			entity = *aEntity;
-
-		myModelObject.myEntitys.push_back(entity);
+		myModelObject.myEntitys.push_back(aEntity);
 		myModelObject.myModels.push_back(aModelInstance);
-		myObjects.myEntitys.push_back(entity);
+		myObjects.myEntitys.push_back(aEntity);
 		myObjects.mySceneObjects.push_back(aModelInstance);
-		if (!myRegistry.any_of<TransformComponent>(entity))
+		if (!myRegistry.any_of<TransformComponent>(aEntity))
 		{
-			myRegistry.emplace<TransformComponent>(entity);
-			aModelInstance->SetTransform(myRegistry.get<TransformComponent>(entity).myTransform);
+			myRegistry.emplace<TransformComponent>(aEntity);
+			aModelInstance->SetTransform(myRegistry.get<TransformComponent>(aEntity).myTransform);
 		}
-		if (!myRegistry.any_of<ModelComponent>(entity))
+		if (!myRegistry.any_of<ModelComponent>(aEntity))
 		{
-			myRegistry.emplace<ModelComponent>(entity);
-			myRegistry.get<ModelComponent>(entity).myModel = aModelInstance;
+			myRegistry.emplace<ModelComponent>(aEntity);
+			myRegistry.get<ModelComponent>(aEntity).myModel = aModelInstance;
 		}
-		return entity;
 	}
 
 	void AddText(std::shared_ptr<Text> aText, entt::entity& aEntity)
 	{
-		entt::entity& entity = aEntity;
-
-		myTextObject.myEntitys.push_back(entity);
+		myTextObject.myEntitys.push_back(aEntity);
 		myTextObject.myTexts.push_back(aText);
-		myObjects.myEntitys.push_back(entity);
+		myObjects.myEntitys.push_back(aEntity);
 		myObjects.mySceneObjects.push_back(aText);
-		if (!myRegistry.any_of<TransformComponent>(entity))
+		if (!myRegistry.any_of<TransformComponent>(aEntity))
 		{
-			myRegistry.emplace<TransformComponent>(entity);
+			myRegistry.emplace<TransformComponent>(aEntity);
 		}
-		if (!myRegistry.any_of<TextComponent>(entity))
+		if (!myRegistry.any_of<TextComponent>(aEntity))
 		{
-			myRegistry.emplace<TextComponent>(entity);
+			myRegistry.emplace<TextComponent>(aEntity);
 		}
-		myRegistry.get<TextComponent>(entity).myText = aText;
+		myRegistry.get<TextComponent>(aEntity).myText = aText;
 	}
 
 	void AddParticleSystem(std::shared_ptr<ParticleSystem> aSystem, entt::entity& aEntity)
 	{
-		entt::entity entity = aEntity;
-
-		myParticleSystems.myEntitys.push_back(entity);
+		myParticleSystems.myEntitys.push_back(aEntity);
 		myParticleSystems.mySystems.push_back(aSystem);
-		myObjects.myEntitys.push_back(entity);
+		myObjects.myEntitys.push_back(aEntity);
 		myObjects.mySceneObjects.push_back(aSystem);
-		if (!myRegistry.any_of<TransformComponent>(entity))
+		if (!myRegistry.any_of<TransformComponent>(aEntity))
 		{
-			myRegistry.emplace<TransformComponent>(entity);
+			myRegistry.emplace<TransformComponent>(aEntity);
 		}
-		if (!myRegistry.any_of<ParticleSystemComponent>(entity))
+		if (!myRegistry.any_of<ParticleSystemComponent>(aEntity))
 		{
-			myRegistry.emplace<ParticleSystemComponent>(entity);
+			myRegistry.emplace<ParticleSystemComponent>(aEntity);
 		}
-		myRegistry.get<ParticleSystemComponent>(entity).myParticleSystem = aSystem;
+		myRegistry.get<ParticleSystemComponent>(aEntity).myParticleSystem = aSystem;
 	}
 
 	void RemoveModelInstance(std::shared_ptr<ModelInstance> aModelInstance)

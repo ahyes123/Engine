@@ -66,6 +66,11 @@ Vector3f Transform::GetRotation() const
 		static_cast<float>(fmod(myRotation.z, 360)) };
 }
 
+Vector3f Transform::GetRawRotation() const
+{
+	return myRotation;
+}
+
 Vector3f Transform::GetPosition() const
 {
 	return myPosition;

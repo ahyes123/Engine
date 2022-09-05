@@ -33,6 +33,8 @@ namespace CommonUtilities
 
 		static Vector3<T> DecomposeRotation(const Matrix4x4<T>& aMatrix);
 
+		void Deconstruct(Vector3<T>& aPosition, Vector3<T>& aRotation, Vector3<T>& aScale);
+
 	private:
 		std::array<std::array<T, 4>, 4> myMatrix;
 	};
@@ -83,6 +85,32 @@ namespace CommonUtilities
 		myMatrix[3][1] = aMatrix(4, 2);
 		myMatrix[3][2] = aMatrix(4, 3);
 		myMatrix[3][3] = aMatrix(4, 4);
+	}
+
+	template<class T>
+	void Matrix4x4<T>::Deconstruct(Vector3<T>& aPosition, Vector3<T>& aRotation, Vector3<T>& aScale)
+	{
+		const Matrix4x4<T>& mat = *this;
+		Vector4<T> scaleX = { mat(1,1), mat(1,2) , mat(1,3) , mat(1,4) };
+		Vector4<T> scaleY = { mat(2,1), mat(2,2) , mat(2,3) , mat(2,4) };
+		Vector4<T> scaleZ = { mat(3,1), mat(3,2) , mat(3,3) , mat(3,4) };
+
+		aScale.x = scaleX.Length();
+		aScale.y = scaleY.Length();
+		aScale.z = scaleZ.Length();
+
+		scaleX.Normalize();
+		scaleY.Normalize();
+		scaleZ.Normalize();
+
+		aRotation.x = atan2f(scaleY.z, scaleZ.z);
+		aRotation.y = atan2f(-scaleX.z, sqrtf(scaleY.z * scaleY.z + scaleZ.z * scaleZ.z));
+		aRotation.z = atan2f(scaleX.y, scaleX.x);
+
+
+		aPosition.x = mat(4, 1);
+		aPosition.y = mat(4, 2);
+		aPosition.z = mat(4, 3);
 	}
 
 	template <class T>
@@ -165,7 +193,7 @@ namespace CommonUtilities
 		T scaleY = rowTwo.Length();
 		T scaleZ = rowThree.Length();
 
-		outScale = {scaleX, scaleY, scaleZ };
+		outScale = { scaleX, scaleY, scaleZ };
 
 		rowOne /= scaleX;
 		rowTwo /= scaleY;
@@ -216,7 +244,7 @@ namespace CommonUtilities
 
 		return result;
 	}
-	
+
 	template <class T>
 	Matrix4x4<T> Matrix4x4<T>::CreateRotationAroundX(T aAngleInRadians)
 	{

@@ -78,6 +78,7 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 
 	if (!myForwardRenderer.Initialize())
 		return false;
+
 	if (!myDeferredRenderer.Initialize())
 		return false;
 
@@ -105,7 +106,6 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 		const CREATESTRUCT* createdStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
 		graphicsEnginePtr = static_cast<GraphicsEngine*>(createdStruct->lpCreateParams);
 	}
-
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -123,8 +123,7 @@ void GraphicsEngine::RenderFrame()
 	SceneHandler::UpdateCurrentScene();
 	const std::shared_ptr<Camera> camera = SceneHandler::GetActiveScene()->GetCamera();
 #ifdef _DEBUG
-	EditorInterface::ModelLoader();
-	EditorInterface::SceneHierchy();
+	EditorInterface::ShowEditor();
 
 	if (InputHandler::GetKeyIsPressed(VK_F6))
 	{

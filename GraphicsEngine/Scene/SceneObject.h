@@ -1,5 +1,6 @@
 #pragma once
 #include "Transform.h"
+#include "../External/entt/entity/entity.hpp"
 
 class SceneObject
 {
@@ -26,4 +27,5 @@ public:
 	virtual std::wstring const& GetName() const { return L"nothing"; };
 	virtual void SetName(const std::wstring& aName) {};
 	virtual int const& GetId() const { return 0; };
+	virtual void OnComponentAdded(entt::entity aEntity) {};
 };

@@ -64,6 +64,49 @@ void ComponentHandler::AddComponent(const int& aComponent, entt::entity& aEntity
 	}
 }
 
+std::vector<int> ComponentHandler::GetAllComponentIDs(const entt::entity& aEntity)
+{
+	entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+	std::vector<int> ids;
+	if (reg.any_of<ModelComponent>(aEntity))
+		ids.push_back(0);
+	if (reg.any_of<PlayerComponent>(aEntity))
+		ids.push_back(1);
+	if (reg.any_of<TransformComponent>(aEntity))
+		ids.push_back(2);
+	if (reg.any_of<ParticleSystemComponent>(aEntity))
+		ids.push_back(3);
+	if (reg.any_of<TextComponent>(aEntity))
+		ids.push_back(4);
+	return ids;
+}
+
+entt::entity& ComponentHandler::DuplicateEntity(const entt::entity aEntity)
+{
+	entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+	std::vector<int> ids = GetAllComponentIDs(aEntity);
+	entt::entity entity = reg.create();
+	for (size_t i = 0; i < ids.size(); i++)
+	{
+		AddComponent(ids[i], entity);
+	}
+	if (reg.all_of<ModelComponent>(aEntity))
+		reg.get<ModelComponent>(entity).myModel = reg.get<ModelComponent>(aEntity).myModel;
+	if (reg.all_of<PlayerComponent>(aEntity))
+	{
+		reg.get<PlayerComponent>(entity).myPlayer = reg.get<PlayerComponent>(aEntity).myPlayer;
+		reg.get<PlayerComponent>(entity).myPlayer.Init(entity);
+	}
+	if (reg.all_of<TransformComponent>(aEntity))
+		reg.get<TransformComponent>(entity).myTransform = reg.get<TransformComponent>(aEntity).myTransform;
+
+	if (reg.all_of<ParticleSystemComponent>(aEntity))
+		reg.get<ParticleSystemComponent>(entity).myParticleSystem = reg.get<ParticleSystemComponent>(aEntity).myParticleSystem;
+	if (reg.all_of<TextComponent>(aEntity))
+		reg.get<TextComponent>(entity).myText = reg.get<TextComponent>(aEntity).myText;
+	return entity;
+}
+
 template<typename T>
 void ComponentHandler::AddComponent(entt::entity& aEntity)
 {

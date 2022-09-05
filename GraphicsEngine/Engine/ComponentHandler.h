@@ -33,7 +33,6 @@ struct TextComponent
 	std::shared_ptr<Text> myText;
 };
 
-
 class ComponentHandler
 {
 public:
@@ -49,7 +48,11 @@ public:
 
 	static void AddComponent(const int& aComponent, entt::entity& aEntity);
 
+	static std::vector<int> GetAllComponentIDs(const entt::entity& aEntity);
+
 	static const std::vector<std::string> GetComponentNames() { return myComponents; }
+
+	static entt::entity& DuplicateEntity(const entt::entity aEntity);
 private:
 	static std::vector<std::string> myComponents;
 };
