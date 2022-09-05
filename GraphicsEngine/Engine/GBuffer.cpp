@@ -94,14 +94,14 @@ void GBuffer::ClearResource(unsigned aStartSlot) const
 
 void GBuffer::Clear() const
 {
-	std::array<FLOAT, 4> clearColor = {0, 0, 0, 0};
+	std::array<FLOAT, 4> clearColor = { 0,0,0,0 };
 	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT];
 	for (unsigned t = 0; t < myRTVs.size(); t++)
 	{
 		myRTVList[t] = myRTVs[t].Get();
 	}
 	DX11::Context->ClearRenderTargetView(myRTVList[0], &clearColor[0]);
-	DX11::Context->ClearRenderTargetView(GBufferVPRTV.Get(), &clearColor[0]);
+	DX11::Context->ClearRenderTargetView(GBufferVPRTV.Get(), &GraphicsEngine::GetClearColor()[0]);
 
 	ClearTarget();
 	ClearResource(0);

@@ -22,6 +22,7 @@ RECT GraphicsEngine::windowRect;
 HWND GraphicsEngine::myWindowHandle;
 std::shared_ptr<Camera> GraphicsEngine::myCamera;
 std::array<FLOAT, 4> GraphicsEngine::ourClearColor;
+bool GraphicsEngine::myAutoSave;
 
 bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	unsigned someWidth, unsigned someHeight,
@@ -96,8 +97,11 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 	if (uMsg == WM_DESTROY || uMsg == WM_CLOSE)
 	{
 #ifdef _DEBUG
-		Editor::SaveScenes();
-		Editor::SaveSettings();
+		if (myAutoSave)
+		{
+			Editor::SaveScenes();
+			Editor::SaveSettings();
+		}
 #endif // _DEBUG
 		PostQuitMessage(0);
 	}
@@ -150,7 +154,7 @@ void GraphicsEngine::RenderFrame()
 #endif // _DEBUG
 
 	ComponentHandler::Update();
-	
+
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);

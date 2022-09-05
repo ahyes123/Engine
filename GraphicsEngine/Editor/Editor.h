@@ -23,8 +23,9 @@ public:
 	};
 	static void AddEditorAction(const EditorActions& anAction);
 	static void EditorActionHandler();
+	static void SaveCurrentScene();
 	static void SaveScenes();
-	static void LoadScenes();
+	static void LoadCurrentScene();
 	static void SaveSettings();
 	static void LoadSettings();
 

@@ -45,7 +45,7 @@ class GraphicsEngine
 	static LRESULT CALLBACK WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam);
 
 	static std::array<FLOAT, 4> ourClearColor;
-
+	static bool myAutoSave;
 public:
 
 	bool Initialize(unsigned someX, unsigned someY, unsigned someWidth, unsigned someHeight, bool enableDeviceDebug);
@@ -61,6 +61,8 @@ public:
 
 	static std::shared_ptr<Camera> GetCamera() { return myCamera; }
 	static std::array<FLOAT, 4> &GetClearColor() { return ourClearColor; }
+
+	static bool& GetAutoSave() { return myAutoSave; }
 
 	[[nodiscard]] static HWND FORCEINLINE GetWindowHandle() { return myWindowHandle; }
 	//[[nodiscard]] SIZE FORCEINLINE GetWindowSize() const { return myWindowSize; }

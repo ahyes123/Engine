@@ -64,6 +64,42 @@ void Editor::EditorActionHandler()
 	}
 }
 
+void Editor::SaveCurrentScene()
+{
+	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
+	nlohmann::json json;
+	const std::string path = "./Json/Scenes/";
+	bool isFileFound = false;
+	std::filesystem::path sceneName(scene->GetSceneName() + L".json");
+	for (const auto& file : directory_iterator(path))
+	{
+		if (sceneName == file.path().filename().string())
+		{
+			isFileFound = true;
+			break;
+		}
+	}
+	if (!isFileFound)
+	{
+		//std::ofstream file(sceneName);
+		std::cout << "File Not Found" << std::endl;
+	}
+	else
+	{
+		std::cout << "File Found" << std::endl;
+	}
+	json["SceneName"] = sceneName.string();
+	json["Size"] = scene->GetSceneObjects().size();
+
+	int num = 0;
+	SaveModels(scene, json, num);
+	SaveTexts(scene, json, num);
+	SaveParticleSystems(scene, json, num);
+
+	std::ofstream oStream(path + sceneName.string());
+	oStream << json;
+}
+
 void Editor::SaveScenes()
 {
 	for (size_t i = 0; i < SceneHandler::GetScenes().size(); i++)
@@ -103,7 +139,7 @@ void Editor::SaveScenes()
 	}
 }
 
-void Editor::LoadScenes()
+void Editor::LoadCurrentScene()
 {
 	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
 	nlohmann::json json;

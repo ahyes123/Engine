@@ -160,15 +160,24 @@ void EditorInterface::MenuBar()
 					SceneHandler::LoadScene(name);
 				}
 			}
+			if (ImGui::MenuItem("Save Scene"))
+			{
+				Editor::SaveCurrentScene();
+			}
 			ImGui::EndMenu();
 		}
+		static bool performanceWindow = false;
 		if (ImGui::BeginMenu("Performance"))
 		{
-			ImGui::Begin("Performance");
+			performanceWindow = true;
+			ImGui::EndMenu();
+		}
+		if (performanceWindow)
+		{
+			ImGui::Begin("Performance", &performanceWindow);
 			ImGui::Text("Delta Time %.3f", ImGui::GetIO().DeltaTime);
 			ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 			ImGui::End();
-			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Game Objects"))
 		{
@@ -203,21 +212,24 @@ void EditorInterface::MenuBar()
 		}
 		if (openedSettings)
 		{
-			static bool colorChange = false;
-			if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
-			{
-				openedSettings = false;
-				colorChange = false;
-			}
-			ImGui::Begin("Settings");
-			ImGui::InputFloat("Camera Speed", &SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed());
+			ImGui::Begin("Settings", &openedSettings);
+
+			ImGui::DragFloat("Camera Speed", &SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed(), 0.1f, 0, INT_MAX);
 
 			float timeScale = CommonUtilities::Timer::GetTimeScale();
-			ImGui::InputFloat("Time Scale", &timeScale);
+			ImGui::DragFloat("Time Scale", &timeScale, 0.05f, 0, INT_MAX);
 			CommonUtilities::Timer::SetTimeScale(timeScale);
 			ImGui::ColorEdit4("Clear Color", &GraphicsEngine::GetClearColor()[0]);
+			ImGui::Checkbox("Auto Save", &GraphicsEngine::GetAutoSave());
+			ImGui::NewLine();
+
+			if (ImGui::Button("Save Settings"))
+			{
+				Editor::SaveSettings();
+			}
 			ImGui::End();
 		}
+
 		ImGui::EndMainMenuBar();
 	}
 }
