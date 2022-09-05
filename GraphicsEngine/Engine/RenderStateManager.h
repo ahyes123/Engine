@@ -12,7 +12,8 @@ class RenderStateManager
 		{
 			Opaque,
 			AlphaBlend,
-			Additive
+			Additive,
+			TextBlend
 		};
 
 		enum class DepthStencilState

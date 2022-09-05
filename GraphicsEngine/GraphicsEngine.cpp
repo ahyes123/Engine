@@ -158,11 +158,13 @@ void GraphicsEngine::RenderFrame()
 	myDeferredRenderer.Render(camera, myDirectionalLight, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
 	//myForwardRenderer.RenderModels(camera, mdlInstancesToRender, myDirectionalLight, myEnvironmentLight);
 
-	RenderStateManager::SetBlendState(RenderStateManager::BlendState::AlphaBlend);
+	RenderStateManager::SetBlendState(RenderStateManager::BlendState::TextBlend);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadOnly);
 	myTextRenderer.Render(camera, SceneHandler::GetActiveScene()->GetTexts());
+
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Additive);
 	myForwardRenderer.RenderParticles(camera, SceneHandler::GetActiveScene()->GetParticleSystems());
+	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
 }
 
 void GraphicsEngine::EndFrame()

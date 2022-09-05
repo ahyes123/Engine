@@ -36,7 +36,7 @@ bool GBuffer::Init()
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
 
-	result = DX11::Device->CreateRenderTargetView(texture.Get(), &renderTargetViewDesc, &GBufferVPRTV);
+	result = DX11::Device->CreateRenderTargetView(texture.Get(), &renderTargetViewDesc, GBufferVPRTV.GetAddressOf());
 	if (FAILED(result))
 	{
 		return false;
@@ -47,7 +47,7 @@ bool GBuffer::Init()
 	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-	result = DX11::Device->CreateShaderResourceView(texture.Get(), &shaderResourceViewDesc, &GBufferVPSRV);
+	result = DX11::Device->CreateShaderResourceView(texture.Get(), &shaderResourceViewDesc, GBufferVPSRV.GetAddressOf());
 	if (FAILED(result))
 	{
 		return false;

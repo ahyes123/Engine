@@ -58,6 +58,25 @@ bool RenderStateManager::Initialize()
 		return false;
 	}
 
+	D3D11_BLEND_DESC textDesc;
+	ZeroMemory(&textDesc, sizeof(textDesc));
+	textDesc.AlphaToCoverageEnable = false;
+	textDesc.RenderTarget[0].BlendEnable = true;
+	textDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	textDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	textDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	textDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
+	textDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	textDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	textDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	result = DX11::Device->CreateBlendState(&textDesc, myBlendStates[BlendState::TextBlend].GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return false;
+	}
+
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = true;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
