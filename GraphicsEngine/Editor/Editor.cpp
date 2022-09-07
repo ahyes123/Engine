@@ -420,7 +420,6 @@ void Editor::SaveSettings()
 	j["TimeScale"] = CommonUtilities::Timer::GetTimeScale();
 	std::array<float, 4> color = GraphicsEngine::GetClearColor();
 	j["ClearColor"] = { color[0], color[1], color[2], color[3] };
-
 	std::ofstream oStream(path + fileName);
 	oStream << j;
 }
@@ -438,4 +437,55 @@ void Editor::LoadSettings()
 	CommonUtilities::Timer::SetTimeScale(j["TimeScale"]);
 	std::array<float, 4> color = j["ClearColor"];
 	GraphicsEngine::GetClearColor() = color;
+}
+
+void Editor::SaveClearColorPreset(std::string aName)
+{
+	using nlohmann::json;
+	const std::string path = "./Json/Settings/";
+	const std::string fileName = aName + ".json";
+	bool isFileFound = false;
+	for (const auto& file : directory_iterator(path))
+	{
+		if (fileName == file.path().filename().string())
+		{
+			isFileFound = true;
+			break;
+		}
+	}
+	if (!isFileFound)
+	{
+		//std::ofstream file(sceneName);
+		std::cout << "File Not Found" << std::endl;
+	}
+	else
+	{
+		std::cout << "File Found" << std::endl;
+	}
+	json j;
+	j["PresetOne"] = { GraphicsEngine::myClearColorPresets[0][0],GraphicsEngine::myClearColorPresets[0][1], 
+		GraphicsEngine::myClearColorPresets[0][2], GraphicsEngine::myClearColorPresets[0][3] };
+	j["PresetTwo"] = { GraphicsEngine::myClearColorPresets[1][0],GraphicsEngine::myClearColorPresets[1][1], 
+		GraphicsEngine::myClearColorPresets[1][2], GraphicsEngine::myClearColorPresets[1][3] };
+	j["Factor"] = GraphicsEngine::myClearColorBlendFactor;
+	j["IsBlending"] = GraphicsEngine::myClearColorBlending; 
+	std::ofstream oStream(path + fileName);
+	oStream << j;
+}
+
+void Editor::LoadClearColorPreset(std::string aName)
+{
+	using nlohmann::json;
+	json j;
+	std::ifstream ifStream("Json/Settings/" + aName + ".json");
+	if (ifStream.fail())
+		return;
+	ifStream >> j;
+
+	GraphicsEngine::myClearColorBlendFactor = j["Factor"];
+	GraphicsEngine::myClearColorBlending = j["IsBlending"];
+	std::array<float, 4> color = j["PresetOne"];
+	GraphicsEngine::myClearColorPresets[0] = color;
+	color = j["PresetTwo"];
+	GraphicsEngine::myClearColorPresets[1] = color;
 }

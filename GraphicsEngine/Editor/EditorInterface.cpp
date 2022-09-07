@@ -15,6 +15,7 @@
 #include "../Engine/ComponentHandler.h"
 #include "../Particle/ParticleAssetHandler.h"
 #include "../Text/TextFactory.h"
+#include <UtilityFunctions.hpp>
 
 using std::filesystem::directory_iterator;
 using namespace CommonUtilities;
@@ -89,6 +90,7 @@ void EditorInterface::EnableDocking()
 
 void EditorInterface::MenuBar()
 {
+	ImGui::ShowDemoWindow();
 	if (ImGui::BeginMainMenuBar())
 	{
 		static bool createScene = false;
@@ -219,13 +221,130 @@ void EditorInterface::MenuBar()
 			float timeScale = CommonUtilities::Timer::GetTimeScale();
 			ImGui::DragFloat("Time Scale", &timeScale, 0.05f, 0, INT_MAX);
 			CommonUtilities::Timer::SetTimeScale(timeScale);
-			ImGui::ColorEdit4("Clear Color", &GraphicsEngine::GetClearColor()[0]);
+			std::array<FLOAT, 4> color = GraphicsEngine::GetClearColor();
+			if (ImGui::ColorEdit4("Clear Color", &color[0]))
+			{
+				GraphicsEngine::GetClearColor() = color;
+			}
+			static bool myPreset1Selected = true;
+			if (ImGui::Button("Use Preset 1"))
+			{
+				GraphicsEngine::GetClearColor() = GraphicsEngine::myClearColorPresets[0];
+				GraphicsEngine::GetClearColor()[3] = 1;
+			}
+			ImVec4 col = { GraphicsEngine::myClearColorPresets[0][0], GraphicsEngine::myClearColorPresets[0][1], GraphicsEngine::myClearColorPresets[0][2],
+				GraphicsEngine::myClearColorPresets[0][3] };
+			ImGui::SameLine();
+			ImGui::ColorButton("Color 1", col);
+			ImGui::SameLine();
+			if (ImGui::Button("Use Preset 2"))
+			{
+				GraphicsEngine::GetClearColor() = GraphicsEngine::myClearColorPresets[1];
+				GraphicsEngine::GetClearColor()[3] = 1;
+			}
+			ImGui::SameLine();
+			col = { GraphicsEngine::myClearColorPresets[1][0], GraphicsEngine::myClearColorPresets[1][1], GraphicsEngine::myClearColorPresets[1][2],
+				GraphicsEngine::myClearColorPresets[1][3] };
+			ImGui::ColorButton("Color 2", col);
+			ImGui::SameLine();
+			ImGui::Checkbox("Blend", &GraphicsEngine::myClearColorBlending);
+			if (GraphicsEngine::myClearColorBlending)
+			{
+				CommonUtilities::Vector4<float> start;
+				memcpy(&start, &GraphicsEngine::myClearColorPresets[0], sizeof(Vector4f));
+				CommonUtilities::Vector4<float> end;
+				memcpy(&end, &GraphicsEngine::myClearColorPresets[1], sizeof(Vector4f));
+				ImGui::DragFloat("Blend Factor", &GraphicsEngine::myClearColorBlendFactor, 0.005f, 0.0f, 1.0f);
+				Vector4f value = CommonUtilities::Lerp(start, end, GraphicsEngine::myClearColorBlendFactor);
+				memcpy(&GraphicsEngine::GetClearColor(), &value, sizeof(Vector4f));
+			}
+			static bool save = false;
+			if (ImGui::Button("Save Preset"))
+			{
+				save = true;
+			}
+			if (save)
+			{
+				if (ImGui::Button("Save To Preset 1"))
+				{
+					GraphicsEngine::myClearColorPresets[0] = GraphicsEngine::GetClearColor();
+					save = false;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Save To Preset 2"))
+				{
+					GraphicsEngine::myClearColorPresets[1] = GraphicsEngine::GetClearColor();
+					save = false;
+				}
+			}
 			ImGui::Checkbox("Auto Save", &GraphicsEngine::GetAutoSave());
 			ImGui::NewLine();
-
+			static bool saveSettings = false;
+			static bool loadSettings = false;
 			if (ImGui::Button("Save Settings"))
 			{
 				Editor::SaveSettings();
+				saveSettings = true;
+			}
+			if (ImGui::Button("Load Preset"))
+			{
+				loadSettings = true;
+			}
+			if (saveSettings)
+			{
+				ImGui::OpenPopup("Preset");
+				if (ImGui::BeginPopup("Preset"))
+				{
+					char curValue[256];
+					static char prevValue[256];
+					memset(curValue, 0, sizeof(curValue));
+					memcpy(curValue, prevValue, sizeof(prevValue));
+
+					if (ImGui::InputText("Preset Name", curValue, sizeof(curValue)))
+					{
+						memcpy(prevValue, curValue, sizeof(curValue));
+					}
+					std::filesystem::path name(prevValue);
+					if (InputHandler::GetKeyIsPressed(VK_RETURN))
+					{
+						Editor::SaveClearColorPreset(name.string());
+						saveSettings = false;
+					}
+					if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
+					{
+						saveSettings = false;
+					}
+
+					ImGui::EndPopup();
+				}
+			}
+			if (loadSettings)
+			{
+				ImGui::OpenPopup("Preset");
+				if (ImGui::BeginPopup("Preset"))
+				{
+					char curValue[256];
+					static char prevValue[256];
+					memset(curValue, 0, sizeof(curValue));
+					memcpy(curValue, prevValue, sizeof(prevValue));
+
+					if (ImGui::InputText("Preset Name", curValue, sizeof(curValue)))
+					{
+						memcpy(prevValue, curValue, sizeof(curValue));
+					}
+					std::filesystem::path name(prevValue);
+					if (InputHandler::GetKeyIsPressed(VK_RETURN))
+					{
+						Editor::LoadClearColorPreset(name.string());
+						loadSettings = false;
+					}
+					if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
+					{
+						loadSettings = false;
+					}
+
+					ImGui::EndPopup();
+				}
 			}
 			ImGui::End();
 		}

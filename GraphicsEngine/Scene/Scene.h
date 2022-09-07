@@ -265,7 +265,6 @@ public:
 			if (myRegistry.any_of<TransformComponent>(myTextObject.myEntitys[i]))
 			{
 				Transform& transform = myRegistry.get<TransformComponent>(myTextObject.myEntitys[i]).myTransform;
-				std::cout << transform.GetPosition().x << std::endl;
 				objects->GetTransform() = transform;
 			}
 		}

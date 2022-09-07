@@ -47,6 +47,9 @@ class GraphicsEngine
 	static std::array<FLOAT, 4> ourClearColor;
 	static bool myAutoSave;
 public:
+	static bool myClearColorBlending;
+	static float myClearColorBlendFactor;
+	static std::array<std::array<FLOAT, 4>, 2> myClearColorPresets;
 
 	bool Initialize(unsigned someX, unsigned someY, unsigned someWidth, unsigned someHeight, bool enableDeviceDebug);
 

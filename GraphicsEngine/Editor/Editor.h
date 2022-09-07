@@ -28,6 +28,8 @@ public:
 	static void LoadCurrentScene();
 	static void SaveSettings();
 	static void LoadSettings();
+	static void SaveClearColorPreset(std::string aName);
+	static void LoadClearColorPreset(std::string aName);
 
 private:
 	static std::vector<EditorActions> myEditorActions;

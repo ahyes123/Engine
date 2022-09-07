@@ -23,6 +23,9 @@ HWND GraphicsEngine::myWindowHandle;
 std::shared_ptr<Camera> GraphicsEngine::myCamera;
 std::array<FLOAT, 4> GraphicsEngine::ourClearColor;
 bool GraphicsEngine::myAutoSave;
+bool GraphicsEngine::myClearColorBlending;
+float GraphicsEngine::myClearColorBlendFactor;
+std::array<std::array<FLOAT, 4>, 2> GraphicsEngine::myClearColorPresets;
 
 bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	unsigned someWidth, unsigned someHeight,
