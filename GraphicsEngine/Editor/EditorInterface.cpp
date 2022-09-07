@@ -221,10 +221,13 @@ void EditorInterface::MenuBar()
 			float timeScale = CommonUtilities::Timer::GetTimeScale();
 			ImGui::DragFloat("Time Scale", &timeScale, 0.05f, 0, INT_MAX);
 			CommonUtilities::Timer::SetTimeScale(timeScale);
-			std::array<FLOAT, 4> color = GraphicsEngine::GetClearColor();
-			if (ImGui::ColorEdit4("Clear Color", &color[0]))
+			if (!GraphicsEngine::myClearColorBlending)
 			{
-				GraphicsEngine::GetClearColor() = color;
+				std::array<FLOAT, 4> color = GraphicsEngine::GetClearColor();
+				if (ImGui::ColorEdit4("Clear Color", &color[0]))
+				{
+					GraphicsEngine::GetClearColor() = color;
+				}
 			}
 			static bool myPreset1Selected = true;
 			if (ImGui::Button("Use Preset 1"))
