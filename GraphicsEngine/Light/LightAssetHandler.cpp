@@ -29,3 +29,38 @@ std::shared_ptr<EnvironmentLight> LightAssetHandler::CreateEnvironmentLight(cons
 
 	return myEnvironmentLight;
 }
+
+std::shared_ptr<PointLight> LightAssetHandler::CreatePointLight(Vector3f aColor, float anIntensity, float aRange, float aAttenuation,
+	Vector3f aPosition)
+{
+	myLights.push_back(std::make_shared<PointLight>());
+	std::shared_ptr<PointLight> result = std::dynamic_pointer_cast<PointLight>(myLights.back());
+
+	result->Init(aColor, anIntensity);
+	result->SetRange(aRange);
+	result->SetPosition(aPosition);
+	result->myLightBufferData.Position = aPosition;
+	result->myLightBufferData.Attenuation = aAttenuation;
+	result->myLightBufferData.LightType = 1;
+
+	return result;
+}
+
+std::shared_ptr<SpotLight> LightAssetHandler::CreateSpotLight(Vector3f aColor, float anIntensity, float aRange, float aAttenuation,
+	float aInnerCone, float aOuterCone, Vector3f aDirection, Vector3f aPosition)
+{
+	myLights.push_back(std::make_shared<SpotLight>());
+	std::shared_ptr<SpotLight> result = std::dynamic_pointer_cast<SpotLight>(myLights.back());
+
+	result->Init(aColor, anIntensity);
+	result->SetRange(aRange);
+	result->SetInnerCone(aInnerCone);
+	result->SetOuterCone(aOuterCone);
+	result->SetPosition(aPosition);
+	result->SetDirection(aDirection);
+	result->myLightBufferData.Position = aPosition;
+	result->myLightBufferData.Attenuation = aAttenuation;
+	result->myLightBufferData.LightType = 2;
+
+	return result;
+}

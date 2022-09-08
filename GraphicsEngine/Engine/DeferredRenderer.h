@@ -34,6 +34,15 @@ class DeferredRenderer
 		Matrix4x4f BoneData[128];
 	} myObjectBufferData;
 
+	struct SceneLightBuffer
+	{
+		Light::LightBufferData DirectionalLight;
+		Light::LightBufferData Lights[8];
+
+		unsigned int NumLights;
+		Vector3f Padding;
+	} mySceneLightBufferData;
+
 	ComPtr<ID3D11Buffer> myFrameBuffer;
 	ComPtr<ID3D11Buffer> myObjectBuffer;
 	ComPtr<ID3D11Buffer> myMaterialBuffer;
@@ -48,7 +57,8 @@ class DeferredRenderer
 public:
 	bool Initialize();
 	void GenerateGBuffer(const std::shared_ptr<Camera>& aCamera, const std::vector<std::shared_ptr<ModelInstance>>& aModelList, float aDeltaTime, float aTotalTime);
-	void Render(const std::shared_ptr<Camera>& aCamera, const std::shared_ptr<DirectionalLight>& aDirectionalLight,
-		const std::shared_ptr<EnvironmentLight>& aEnvironmentLight, float aDeltaTime, float aTotalTime);
+	void Render(const std::shared_ptr<Camera>& aCamera, const std::shared_ptr<DirectionalLight>& aDirectionalLight, 
+		const std::vector<std::shared_ptr<Light>>& aLightList, const std::shared_ptr<EnvironmentLight>& aEnvironmentLight, 
+		float aDeltaTime, float aTotalTime);
 };
 

@@ -13,19 +13,31 @@ public:
 	{
 		Vector3f Color;
 		float Intensity;
+
 		Vector3f Direction;
+		float Range;
+
+		Vector3f Position;
+		float Attenuation;
+
+		float SpotInnerRadius;
+		float SpotOuterRadius;
+		unsigned LightType;
 		float Padding;
 	};
 
 protected:
-	LightBufferData myLightBufferData;
 
 public:
+	LightBufferData myLightBufferData;
+
 	virtual ~Light() override = default;
 	virtual void Init(Vector3f aColor, float anIntensity);
 	virtual void SetAsResource(ComPtr<ID3D11Buffer> aLightBuffer) = 0;
 
 	FORCEINLINE Vector3f GetColor() const { return myLightBufferData.Color; }
 	FORCEINLINE float GetIntensity() const { return myLightBufferData.Intensity; }
+	FORCEINLINE LightBufferData GetLightBufferData() const { return myLightBufferData; }
+
 };
 

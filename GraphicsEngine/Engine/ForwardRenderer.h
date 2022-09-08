@@ -13,6 +13,8 @@
 #include "Particle/ParticleSystem.h"
 
 using namespace Microsoft::WRL;
+constexpr UINT MAX_FORWARD_LIGHTS = 8;
+
 
 class ForwardRenderer
 {
@@ -32,6 +34,15 @@ class ForwardRenderer
 		Matrix4x4f BoneData[128];
 	} myObjectBufferData;
 
+	struct SceneLightBuffer
+	{
+		Light::LightBufferData DirectionalLight;
+		Light::LightBufferData Lights[MAX_FORWARD_LIGHTS];
+
+		unsigned int NumLights;
+		Vector3f Padding;
+	} mySceneLightBufferData;
+
 	ComPtr<ID3D11Buffer> myFrameBuffer;
 	ComPtr<ID3D11Buffer> myObjectBuffer;
 	ComPtr<ID3D11Buffer> myMaterialBuffer;
@@ -40,7 +51,8 @@ class ForwardRenderer
 	public:
 		bool Initialize();
 		void RenderModels(const std::shared_ptr<Camera>& aCamera, const std::vector<std::shared_ptr<ModelInstance>>& aModelList, const std::
-					shared_ptr<DirectionalLight>& aDirectionalLight, const std::shared_ptr<EnvironmentLight>& anEnvironmentLight);
+						  shared_ptr<DirectionalLight>& aDirectionalLight, const std::vector<std::shared_ptr<Light>>& aLightList, const std::
+						  shared_ptr<EnvironmentLight>& anEnvironmentLight);
 		void RenderParticles(const std::shared_ptr<Camera>& aCamera, const std::vector<std::shared_ptr<ParticleSystem>>& aParticleList);
 };
 

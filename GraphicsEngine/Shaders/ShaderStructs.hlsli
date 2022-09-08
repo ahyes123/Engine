@@ -38,14 +38,6 @@ cbuffer MaterialBuffer : register(b2)
 	float MB_padding;
 }
 
-cbuffer LightBuffer : register(b3)
-{
-	float3 LB_Color;
-	float LB_Intensity;
-	float3 LB_Direction;
-	float LB_padding;
-}
-
 struct VertexToPixel
 {
 	float4 myPosition : SV_POSITION;

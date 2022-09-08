@@ -1,4 +1,6 @@
 #include "PBRFunctions.hlsli"
+#define MAX_LIGHTS 8
+#include "LightBuffer.hlsli"
 
 SamplerState defaultSampler : register(s0);
 
@@ -39,12 +41,12 @@ PixelOutput main(VertexToPixel input)
 	const float3 diffuseColor = lerp((float3)0.00f, albedo, 1 - metalness);
 
 	const float3 ambientLighting = EvaluateAmbience(defaultSampler,
-		environmentTexture, pixelNormal, input.myNormal, 
+		environmentTexture, pixelNormal, input.myNormal,
 		toEye, roughness, ambientOcclusion, diffuseColor, specularColor);
 
 	const float3 directLighting = EvaluateDirectionalLight(
 		diffuseColor, specularColor, pixelNormal, roughness,
-		LB_Color, LB_Intensity, -LB_Direction, toEye);
+		LB_DirectionalLight.Color, LB_DirectionalLight.Intensity, -LB_DirectionalLight.Direction, toEye);
 
 	//const float3 L = -1 * normalize(LB_Direction);
 	//const float3 N = pixelNormal;
@@ -59,88 +61,118 @@ PixelOutput main(VertexToPixel input)
 	const float3 diffuse = albedo * directLighting;
 	const float3 ambient = albedo * ambientLighting;
 
+	float3 pointLight = 0;
+	float3 spotLight = 0;
+
+	for (unsigned int l = 0; l < LB_NumLights; l++)
+	{
+		const LightData Light = LB_Lights[l];
+
+		switch (Light.LightType)
+		{
+		default:
+			break;
+		case 0:
+			break;
+		case 1:
+		{
+			pointLight += EvaluatePointLight(diffuseColor, specularColor, pixelNormal, material.g, Light.Color,
+				Light.Intensity, Light.Range, Light.Position, toEye, input.myVxPosition.xyz);
+				break;
+		}
+		case 2:
+		{
+			spotLight += EvaluateSpotLight(diffuseColor, specularColor, pixelNormal, material.g, Light.Color,
+				Light.Intensity, Light.Range, Light.Position, Light.Direction, Light.SpotOuterRadius, Light.SpotInnerRadius, toEye, input.myVxPosition.xyz);
+			break;
+		}
+		case 3:
+			break;
+		}
+	}
+
 #ifdef _DEBUG
 	switch (FB_RenderMode)
 	{
-		case 0: //Default
-			result.myColor.rgb = LinearToGamma(directLighting + ambientLighting);
-			result.myColor.a = 1;
-			break;
-		case 1: //UV1
-			result.myColor = float4(input.myUV.x, input.myUV.y, 0, 1);
-			break;
-		case 2: //VertexColor
-			result.myColor = float4(input.myVxColor.r, input.myVxColor.g, input.myVxColor.b, input.myVxColor.a);
-			break;
-		case 3: //VertexNormal
-		{
-			float3 debugNormal = input.myNormal;
-			const float signedLength = (debugNormal.r + debugNormal.g + debugNormal.b) / 3;
+	case 0: //Default
+		result.myColor.rgb = LinearToGamma(directLighting + ambientLighting + pointLight + spotLight);
+		result.myColor.a = 1;
+		break;
+	case 1: //UV1
+		result.myColor = float4(input.myUV.x, input.myUV.y, 0, 1);
+		break;
+	case 2: //VertexColor
+		result.myColor = float4(input.myVxColor.r, input.myVxColor.g, input.myVxColor.b, input.myVxColor.a);
+		break;
+	case 3: //VertexNormal
+	{
+		float3 debugNormal = input.myNormal;
+		const float signedLength = (debugNormal.r + debugNormal.g + debugNormal.b) / 3;
 
-			if (signedLength < 0)
-			{
-				debugNormal = float3(1 - abs(debugNormal));
-			}
-			result.myColor.rgb = debugNormal;
-			result.myColor.a = 1;
-			break;
-		}
-		case 4: //PixelNormal
+		if (signedLength < 0)
 		{
-			float3 debugNormal = pixelNormal;
-			const float signedLength = (debugNormal.r + debugNormal.g + debugNormal.b) / 3;
+			debugNormal = float3(1 - abs(debugNormal));
+		}
+		result.myColor.rgb = debugNormal;
+		result.myColor.a = 1;
+		break;
+	}
+	case 4: //PixelNormal
+	{
+		float3 debugNormal = pixelNormal;
+		const float signedLength = (debugNormal.r + debugNormal.g + debugNormal.b) / 3;
 
-			if (signedLength < 0)
-			{
-				debugNormal = float3(1 - abs(debugNormal));
-			}
-			result.myColor.rgb = debugNormal;
-			result.myColor.a = 1;
-			break;
-		}
-		case 5: //AlbedoMap
-			result.myColor = float4(albedo, 1);
-			break;
-		case 6: //NormalMap
+		if (signedLength < 0)
 		{
-			const float3 normalMapDebug = normalTexture.Sample(defaultSampler, input.myUV).agb;
-			result.myColor = float4(normalMapDebug.r, normalMapDebug.g, 1, 1);
-			break;
+			debugNormal = float3(1 - abs(debugNormal));
 		}
-		case 7: //DiffuseLight
-			result.myColor.rgb = saturate(diffuse);
-			result.myColor.a = 1;
-			break;
-		case 8: //AmbientLight
-			result.myColor.rgb = saturate(ambient);
-			result.myColor.a = 1;
-			break;
-		case 9: //DirectionalOnly
-			result.myColor.rgb = saturate(directLighting);
-			result.myColor.a = 1;
-			break;
-		case 10: //AmbientOnly
-			result.myColor.rgb = saturate(ambientLighting);
-			result.myColor.a = 1;
-			break;
-		case 11: //Ambient Occlusion
-			result.myColor.rgb = ambientOcclusion;
-			result.myColor.a = 1;
-			break;
-		case 12: //Roughness
-			result.myColor.rgb = roughness;
-			result.myColor.a = 1;
-			break;
-		case 13: //Metalness
-			result.myColor.rgb = metalness;
-			result.myColor.a = 1;
-			break;
-		case 14: //Emissiveness
-			result.myColor.rgb = emissive * emissiveStr;
-			result.myColor.a = 1;
-			break;
-		default:
-			break;
+		result.myColor.rgb = debugNormal;
+		result.myColor.a = 1;
+		break;
+	}
+	case 5: //AlbedoMap
+		result.myColor = float4(albedo, 1);
+		break;
+	case 6: //NormalMap
+	{
+		const float3 normalMapDebug = normalTexture.Sample(defaultSampler, input.myUV).agb;
+		result.myColor = float4(normalMapDebug.r, normalMapDebug.g, 1, 1);
+		break;
+	}
+	case 7: //DiffuseLight
+		result.myColor.rgb = saturate(diffuse);
+		result.myColor.a = 1;
+		break;
+	case 8: //AmbientLight
+		result.myColor.rgb = saturate(ambient);
+		result.myColor.a = 1;
+		break;
+	case 9: //DirectionalOnly
+		result.myColor.rgb = saturate(directLighting);
+		result.myColor.a = 1;
+		break;
+	case 10: //AmbientOnly
+		result.myColor.rgb = saturate(ambientLighting);
+		result.myColor.a = 1;
+		break;
+	case 11: //Ambient Occlusion
+		result.myColor.rgb = ambientOcclusion;
+		result.myColor.a = 1;
+		break;
+	case 12: //Roughness
+		result.myColor.rgb = roughness;
+		result.myColor.a = 1;
+		break;
+	case 13: //Metalness
+		result.myColor.rgb = metalness;
+		result.myColor.a = 1;
+		break;
+	case 14: //Emissiveness
+		result.myColor.rgb = emissive * emissiveStr;
+		result.myColor.a = 1;
+		break;
+	default:
+		break;
 	}
 #else
 	result.myColor.rgb = LinearToGamma(directLighting + ambientLighting);

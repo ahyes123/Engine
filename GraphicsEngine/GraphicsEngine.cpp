@@ -14,7 +14,9 @@
 #include <filesystem>
 #include "Engine/ComponentHandler.h"
 #include "../GraphicsEngine/Engine/ComponentHandler.h"
-
+#include "Light/PointLight.hpp"
+#include "Light/SpotLight.hpp"
+#include "imgui/imgui.h"
 using namespace CommonUtilities;
 
 RenderMode GraphicsEngine::myRenderMode;
@@ -25,6 +27,7 @@ std::array<FLOAT, 4> GraphicsEngine::ourClearColor;
 bool GraphicsEngine::myAutoSave;
 bool GraphicsEngine::myClearColorBlending;
 float GraphicsEngine::myClearColorBlendFactor;
+std::string GraphicsEngine::myCurrentClearColorPreset;
 std::array<std::array<FLOAT, 4>, 2> GraphicsEngine::myClearColorPresets;
 
 bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
@@ -69,6 +72,11 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 
 	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 45, -45, 0 });
 	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
+	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0, 1 }, 10000, 1000, 1, { 50, 50, 0 });
+	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 50000, 1000, 1, 5, 50, { 0, -1, 0 }, { 0, 100, 0 });
+
+	myLights.push_back(point);
+	myLights.push_back(spot);
 
 	/*for (size_t i = 0; i < SceneHandler::GetScenes().size(); i++)
 	{
@@ -158,11 +166,21 @@ void GraphicsEngine::RenderFrame()
 
 	ComponentHandler::Update();
 
+	//ImGui::Begin("Lights");
+	//ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 1, 0, INT_MAX);
+	//ImGui::DragFloat("Intensity", &myLights[0]->myLightBufferData.Intensity, 1, 0, INT_MAX);
+	//ImGui::DragFloat3("Position", &myLights[0]->myLightBufferData.Position.x, 1, -INT_MAX, INT_MAX);
+	//ImGui::DragFloat3("Color", &myLights[0]->myLightBufferData.Color.x, 0.01f, 0, 1);
+	//ImGui::DragFloat("Inner rad", &myLights[0]->myLightBufferData.SpotInnerRadius, 1, 0, INT_MAX);
+	//ImGui::DragFloat("Outer rad", &myLights[0]->myLightBufferData.SpotOuterRadius, 1, 0, INT_MAX);
+	//ImGui::DragFloat3("Direction", &myLights[0]->myLightBufferData.Direction.x, 0.01f, -1, 1);
+	//ImGui::End();
+
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());
-	myDeferredRenderer.Render(camera, myDirectionalLight, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
+	myDeferredRenderer.Render(camera, myDirectionalLight, myLights, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
 	//myForwardRenderer.RenderModels(camera, mdlInstancesToRender, myDirectionalLight, myEnvironmentLight);
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::TextBlend);

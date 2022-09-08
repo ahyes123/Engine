@@ -420,6 +420,7 @@ void Editor::SaveSettings()
 	j["TimeScale"] = CommonUtilities::Timer::GetTimeScale();
 	std::array<float, 4> color = GraphicsEngine::GetClearColor();
 	j["ClearColor"] = { color[0], color[1], color[2], color[3] };
+	j["PresetName"] = GraphicsEngine::myCurrentClearColorPreset;
 	std::ofstream oStream(path + fileName);
 	oStream << j;
 }
@@ -437,6 +438,7 @@ void Editor::LoadSettings()
 	CommonUtilities::Timer::SetTimeScale(j["TimeScale"]);
 	std::array<float, 4> color = j["ClearColor"];
 	GraphicsEngine::GetClearColor() = color;
+	LoadClearColorPreset(j["PresetName"]);
 }
 
 void Editor::SaveClearColorPreset(std::string aName)
@@ -445,6 +447,7 @@ void Editor::SaveClearColorPreset(std::string aName)
 	const std::string path = "./Json/Settings/";
 	const std::string fileName = aName + ".json";
 	bool isFileFound = false;
+	GraphicsEngine::myCurrentClearColorPreset = aName;
 	for (const auto& file : directory_iterator(path))
 	{
 		if (fileName == file.path().filename().string())
@@ -488,4 +491,5 @@ void Editor::LoadClearColorPreset(std::string aName)
 	GraphicsEngine::myClearColorPresets[0] = color;
 	color = j["PresetTwo"];
 	GraphicsEngine::myClearColorPresets[1] = color;
+	GraphicsEngine::myCurrentClearColorPreset = aName;
 }

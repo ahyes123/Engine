@@ -188,6 +188,8 @@
     <ClInclude Include="Light\EnvironmentLight.h" />
     <ClInclude Include="Light\Light.h" />
     <ClInclude Include="Light\LightAssetHandler.h" />
+    <ClInclude Include="Light\PointLight.hpp" />
+    <ClInclude Include="Light\SpotLight.hpp" />
     <ClInclude Include="Math\Matrix3x3.hpp" />
     <ClInclude Include="Math\Matrix4x4.hpp" />
     <ClInclude Include="Math\Quaternion.hpp" />
@@ -343,6 +345,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />
+    <None Include="Shaders\LightBuffer.hlsli" />
     <None Include="Shaders\ParticleStructs.hlsli" />
     <None Include="Shaders\PBRFunctions.hlsli" />
     <None Include="Shaders\ShaderStructs.hlsli" />

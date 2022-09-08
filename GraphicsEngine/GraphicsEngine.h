@@ -39,6 +39,7 @@ class GraphicsEngine
 	ModelAssetHandler myModelAssetHandler;
 	std::shared_ptr<DirectionalLight> myDirectionalLight;
 	std::shared_ptr<EnvironmentLight> myEnvironmentLight;
+	std::vector<std::shared_ptr<Light>> myLights;
 	static RenderMode myRenderMode;
 	static RECT windowRect;
 	// Container window message pump.
@@ -50,6 +51,7 @@ public:
 	static bool myClearColorBlending;
 	static float myClearColorBlendFactor;
 	static std::array<std::array<FLOAT, 4>, 2> myClearColorPresets;
+	static std::string myCurrentClearColorPreset;
 
 	bool Initialize(unsigned someX, unsigned someY, unsigned someWidth, unsigned someHeight, bool enableDeviceDebug);
 

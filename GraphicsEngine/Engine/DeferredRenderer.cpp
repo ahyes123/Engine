@@ -42,7 +42,7 @@ bool DeferredRenderer::Initialize()
 		return false;
 	}
 
-	bufferDescription.ByteWidth = sizeof(Light::LightBufferData);
+	bufferDescription.ByteWidth = sizeof(SceneLightBuffer);
 	result = DX11::Device->CreateBuffer(&bufferDescription, nullptr, myLightBuffer.GetAddressOf());
 
 	if (FAILED(result))
@@ -169,7 +169,7 @@ void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
 }
 
 void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
-	const std::shared_ptr<DirectionalLight>& aDirectionalLight, const std::shared_ptr<EnvironmentLight>& aEnvironmentLight,
+	const std::shared_ptr<DirectionalLight>& aDirectionalLight, const std::vector<std::shared_ptr<Light>>& aLightList, const std::shared_ptr<EnvironmentLight>& aEnvironmentLight,
 	float aDeltaTime, float aTotalTime)
 {
 	HRESULT result;
@@ -200,13 +200,33 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 
 	if (aDirectionalLight)
 	{
-		aDirectionalLight->SetAsResource(myLightBuffer);
+		mySceneLightBufferData.DirectionalLight = aDirectionalLight->GetLightBufferData();
 	}
 
 	if (aEnvironmentLight)
 	{
 		aEnvironmentLight->SetAsResource(nullptr);
 	}
+
+	mySceneLightBufferData.NumLights = 0;
+	ZeroMemory(mySceneLightBufferData.Lights, sizeof(Light::LightBufferData) * 8);
+	for (size_t l = 0; l < aLightList.size() && l < 8; l++)
+	{
+		mySceneLightBufferData.Lights[l] = aLightList[l]->GetLightBufferData();
+		mySceneLightBufferData.NumLights++;
+	}
+
+	ZeroMemory(&bufferData, sizeof(D3D11_MAPPED_SUBRESOURCE));
+	result = DX11::Context->Map(myLightBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData);
+
+	if (FAILED(result))
+	{
+
+	}
+
+	memcpy_s(bufferData.pData, sizeof(SceneLightBuffer), &mySceneLightBufferData, sizeof(SceneLightBuffer));
+	DX11::Context->Unmap(myLightBuffer.Get(), 0);
+	DX11::Context->PSSetConstantBuffers(3, 1, myLightBuffer.GetAddressOf());
 
 	DX11::Context->IASetPrimitiveTopology(static_cast<D3D11_PRIMITIVE_TOPOLOGY>(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	DX11::Context->IASetInputLayout(nullptr);

@@ -1,4 +1,6 @@
 #include "PBRFunctions.hlsli"
+#define MAX_LIGHTS 8
+#include "LightBuffer.hlsli"
 
 SamplerState defaultSampler : register(s0);
 
@@ -46,16 +48,47 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 
 	const float3 directLighting = EvaluateDirectionalLight(
 		diffuseColor, specularColor, normal, roughness,
-		LB_Color, LB_Intensity, -LB_Direction, toEye);
+		LB_DirectionalLight.Color, LB_DirectionalLight.Intensity, -LB_DirectionalLight.Direction, toEye);
 
-	result.Color.rgb = LinearToGamma(directLighting + ambientLighting);
+
+	float3 pointLight = 0;
+	float3 spotLight = 0;
+
+	for (unsigned int l = 0; l < LB_NumLights; l++)
+	{
+		const LightData Light = LB_Lights[l];
+
+		switch (Light.LightType)
+		{
+		default:
+			break;
+		case 0:
+			break;
+		case 1:
+		{
+			pointLight += EvaluatePointLight(diffuseColor, specularColor, normal, material.g, Light.Color,
+				Light.Intensity, Light.Range, Light.Position, toEye, worldPosition);
+			break;
+		}
+		case 2:
+		{
+			spotLight += EvaluateSpotLight(diffuseColor, specularColor, normal, material.g, Light.Color,
+				Light.Intensity, Light.Range, Light.Position, Light.Direction, Light.SpotOuterRadius, Light.SpotInnerRadius, toEye, worldPosition);
+			break;
+		}
+		case 3:
+			break;
+		}
+	}
+
+	result.Color.rgb = LinearToGamma(directLighting + ambientLighting + pointLight + spotLight);
 	result.Color.a = 1;
 
 #ifdef _DEBUG
 	switch (FB_RenderMode)
 	{
 	case 0: //Default
-		result.Color.rgb = LinearToGamma(directLighting + ambientLighting);
+		result.Color.rgb = LinearToGamma(directLighting + ambientLighting + pointLight + spotLight);
 		result.Color.a = 1;
 		break;
 	case 1: //UV1
