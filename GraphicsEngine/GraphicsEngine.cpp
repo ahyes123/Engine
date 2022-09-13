@@ -17,7 +17,9 @@
 #include "Light/PointLight.hpp"
 #include "Light/SpotLight.hpp"
 #include "imgui/imgui.h"
+#include <shellapi.h>
 using namespace CommonUtilities;
+using std::filesystem::directory_iterator;
 
 RenderMode GraphicsEngine::myRenderMode;
 RECT GraphicsEngine::windowRect;
@@ -26,6 +28,7 @@ std::shared_ptr<Camera> GraphicsEngine::myCamera;
 std::array<FLOAT, 4> GraphicsEngine::ourClearColor;
 bool GraphicsEngine::myAutoSave;
 bool GraphicsEngine::myClearColorBlending;
+bool GraphicsEngine::myFileExists;
 float GraphicsEngine::myClearColorBlendFactor;
 std::string GraphicsEngine::myCurrentClearColorPreset;
 std::array<std::array<FLOAT, 4>, 2> GraphicsEngine::myClearColorPresets;
@@ -106,14 +109,25 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam)
 {
 	// We want to be able to access the Graphics Engine instance from inside this function.
+	static bool dropped;
 	static GraphicsEngine* graphicsEnginePtr = nullptr;
-
+	if (!dropped)
+	{
+		DragAcceptFiles(hWnd, true);
+		dropped = true;
+	}
+	if (uMsg == WM_DROPFILES)
+	{
+		DragDrop(wParam);
+		return 0;
+	}
 	if (uMsg == WM_DESTROY || uMsg == WM_CLOSE)
 	{
 #ifdef _DEBUG
 		if (myAutoSave)
 		{
 			Editor::SaveScenes();
+			Editor::SaveClearColorPreset(myCurrentClearColorPreset);
 			Editor::SaveSettings();
 		}
 #endif // _DEBUG
@@ -125,6 +139,71 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 		graphicsEnginePtr = static_cast<GraphicsEngine*>(createdStruct->lpCreateParams);
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+void GraphicsEngine::DragDrop(WPARAM aWparam)
+{
+	HDROP hDrop = (HDROP)aWparam;
+	TCHAR filePath[MAX_PATH];
+	DragQueryFile(hDrop, 0, filePath, MAX_PATH);
+	std::wstring wpath = filePath;
+	std::filesystem::path path = std::filesystem::path(wpath.begin(), wpath.end());
+	if (path.extension() == ".fbx")
+	{
+		Editor::EditorActions action;
+		entt::entity ent = SceneHandler::GetActiveScene()->GetRegistry().create();
+		std::shared_ptr<ModelInstance> mdl = ModelAssetHandler::LoadModel(path);
+		SceneHandler::GetActiveScene()->AddModelInstance(mdl, ent);
+		action.AddedObject = true;
+		action.Object = mdl;
+		action.oldEntity = ent;
+		Editor::AddEditorAction(action);
+	}
+	else if (path.extension() == ".json")
+	{
+		SceneHandler::LoadScene(path);
+	}
+	else if (path.extension() == ".dds")
+	{
+		const std::string animPath = "./Models/Textures";
+		bool found = false;
+		for (const auto& file : directory_iterator(animPath))
+		{
+			if (path == file.path())
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found)
+		{
+
+		}
+		else
+		{
+			const std::string animPath = "./Models/Textures";
+			static int numCount = 1;
+			std::filesystem::path originalPath = path;
+			for (const auto& file : directory_iterator(animPath))
+			{
+				std::string fileName = file.path().string();
+				std::filesystem::path test(file);
+				if (path.filename() == test.filename())
+				{
+					path = path.replace_extension("");
+					path += "_";
+					path += std::to_string(numCount);
+					path += ".dds";
+					numCount++;
+				}
+			}
+			BOOL f = true;
+			std::filesystem::path newFileName = L"./Models/Textures/" + originalPath.filename().wstring();
+			CopyFile(originalPath.wstring().c_str(), newFileName.c_str(), f);
+			EditorInterface::SetTexture(newFileName.filename().wstring());
+		}
+	}
+	DragFinish(hDrop);
 }
 
 void GraphicsEngine::BeginFrame()

@@ -25,6 +25,8 @@ public:
 	static std::shared_ptr<ModelInstance> GetModelInstance(const std::wstring& someFilePath);
 
 	static HRESULT CreateInputLayout(std::string* aVSData, ComPtr<ID3D11InputLayout>& outInputLayout);
+
+	static void SetModelTexture(std::shared_ptr<ModelInstance> aMdl, const std::wstring& aName);
 private:
 	static int GetID();
 };

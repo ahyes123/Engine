@@ -367,7 +367,6 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModel(const std::wstring& 
 
 			TGA::FBXModel::FBXMesh& mesh = tgaModel.Meshes[i];
 
-			const std::wstring wideMatName = std::wstring(mesh.MaterialName.begin(), mesh.MaterialName.end());
 			std::filesystem::path fileName(someFilePath);
 			const std::wstring baseName = fileName.filename().replace_extension("");
 			const std::wstring albedoFileName = L"Models/Textures/T_" + baseName + L"_C.dds";
@@ -675,4 +674,47 @@ HRESULT ModelAssetHandler::CreateInputLayout(std::string* aVSData, ComPtr<ID3D11
 	};
 
 	return DX11::Device->CreateInputLayout(layout, sizeof(layout) / sizeof(D3D11_INPUT_ELEMENT_DESC), aVSData->data(), aVSData->size(), outInputLayout.GetAddressOf());
+}
+
+void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, const std::wstring& aName)
+{
+	for (size_t i = 0; i < aMdl->GetNumMeshes(); ++i)
+	{
+		std::filesystem::path fileName(aName);
+		const std::wstring baseName = fileName.filename().replace_extension("");
+		const std::wstring albedoFileName = L"Models/Textures/T_" + baseName + L"_C.dds";
+		const std::wstring normalFileName = L"Models/Textures/T_" + baseName + L"_N.dds";
+		const std::wstring materialFileName = L"Models/Textures/T_" + baseName + L"_M.dds";
+
+		std::shared_ptr<Material> meshMaterial = std::make_shared<Material>();
+
+		if (TextureAssetHandler::LoadTexture(albedoFileName))
+		{
+			meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(albedoFileName));
+		}
+		else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_C.dds"))
+		{
+			meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_C.dds"));
+		}
+
+		if (TextureAssetHandler::LoadTexture(normalFileName))
+		{
+			meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(normalFileName));
+		}
+		else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_N.dds"))
+		{
+			meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_N.dds"));
+		}
+
+		if (TextureAssetHandler::LoadTexture(materialFileName))
+		{
+			meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(materialFileName));
+		}
+		else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_M.dds"))
+		{
+			meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_M.dds"));
+		}
+
+		aMdl->GetMeshData(i).myMaterial = meshMaterial;
+	}
 }

@@ -24,6 +24,8 @@ void ModelInstance::Init(std::shared_ptr<Model> aModel)
 
 void ModelInstance::Update(float aDeltaTime)
 {
+	if (myCurrentAnimation.myFrames.size() == 0)
+		return;
 	if(myCurrentAnimation.myState == Animation::AnimationState::Playing)
 	{
 		myTimer += aDeltaTime;
@@ -72,7 +74,7 @@ void ModelInstance::UpdateAnimationHierarchy(size_t aCurrentFrame, unsigned aBon
 	{
 		aCurrentFrame = 0;
 	}
-
+	
 	const Transform& currentTransform = anAnimation->myFrames[aCurrentFrame].LocalTransform[aBoneIDx];
 
 	Matrix4x4f matrix = currentTransform.GetMatrix();

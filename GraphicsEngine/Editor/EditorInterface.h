@@ -8,6 +8,7 @@ class EditorInterface
 {
 public:
 	static void ShowEditor();
+	static void SetTexture(std::wstring aFilePath);
 private:
 	static void SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scene> aScene);
 	static void ModelLoader();

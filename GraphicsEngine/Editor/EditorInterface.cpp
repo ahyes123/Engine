@@ -34,6 +34,20 @@ void EditorInterface::ShowEditor()
 	SceneHierchy(someThingSelected, scene);
 }
 
+void EditorInterface::SetTexture(std::wstring aFilePath)
+{
+	if (selectedItem >= 0)
+	{
+		std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
+		if (scene->GetRegistry().all_of<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
+		{
+			std::shared_ptr<ModelInstance> mdl = scene->GetRegistry().get<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
+			aFilePath = aFilePath.substr(2, aFilePath.size() - 8);
+			ModelAssetHandler::SetModelTexture(mdl, aFilePath);
+		}
+	}
+}
+
 void EditorInterface::EnableDocking()
 {
 	static bool pOpen = true;
@@ -95,7 +109,6 @@ void EditorInterface::MenuBar()
 	{
 		static bool createScene = false;
 		static bool openedSettings = false;
-		static bool createParticleSystem = false;
 		if (createScene)
 		{
 			ImGui::OpenPopup("Scene");
@@ -188,7 +201,13 @@ void EditorInterface::MenuBar()
 				if (ImGui::MenuItem("Cube"))
 				{
 					entt::entity entity = SceneHandler::GetActiveScene()->GetRegistry().create();
-					SceneHandler::GetActiveScene()->AddModelInstance(ModelAssetHandler::CreateCube(L"Cube"), entity);
+					std::shared_ptr<ModelInstance> mdl = ModelAssetHandler::CreateCube(L"Cube");
+					SceneHandler::GetActiveScene()->AddModelInstance(mdl, entity);
+					Editor::EditorActions action;
+					action.AddedObject = true;
+					action.Object = mdl;
+					action.oldEntity = entity;
+					Editor::AddEditorAction(action);
 				}
 				ImGui::EndMenu();
 			}
@@ -197,6 +216,11 @@ void EditorInterface::MenuBar()
 				entt::entity entity = SceneHandler::GetActiveScene()->GetRegistry().create();
 				EmitterSettingsData data;
 				std::shared_ptr<ParticleSystem> system = ParticleAssetHandler::CreateParticleSystem(data);
+				Editor::EditorActions action;
+				action.AddedObject = true;
+				action.Object = system;
+				action.oldEntity = entity;
+				Editor::AddEditorAction(action);
 				SceneHandler::GetActiveScene()->AddParticleSystem(system, entity);
 			}
 			if (ImGui::MenuItem("Text Element"))
@@ -204,6 +228,11 @@ void EditorInterface::MenuBar()
 				entt::entity entity = SceneHandler::GetActiveScene()->GetRegistry().create();
 				std::shared_ptr<Text> text = TextFactory::CreateText(L"Text", 1, 12, true);
 				SceneHandler::GetActiveScene()->AddText(text, entity);
+				Editor::EditorActions action;
+				action.AddedObject = true;
+				action.Object = text;
+				action.oldEntity = entity;
+				Editor::AddEditorAction(action);
 			}
 			ImGui::EndMenu();
 		}
@@ -280,13 +309,43 @@ void EditorInterface::MenuBar()
 					save = false;
 				}
 			}
+			static bool deletePreset = false;
+			if (ImGui::Button("Delete Preset"))
+			{
+				deletePreset = true;
+			}
+			if (deletePreset)
+			{
+				char curValue[256];
+				static char prevValue[256];
+				memset(curValue, 0, sizeof(curValue));
+				memcpy(curValue, prevValue, sizeof(prevValue));
+
+				if (ImGui::InputText("Preset Name", curValue, sizeof(curValue)))
+				{
+					memcpy(prevValue, curValue, sizeof(curValue));
+				}
+				std::filesystem::path name(prevValue);
+				if (InputHandler::GetKeyIsPressed(VK_RETURN))
+				{
+					if (name.string() != "Settings" && name.string() != "settings")
+					{
+						std::string fullName = "Json/Settings/" + name.string() + ".json";
+						remove(fullName.c_str());
+					}
+					deletePreset = false;
+				}
+				if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
+				{
+					deletePreset = false;
+				}
+			}
 			ImGui::Checkbox("Auto Save", &GraphicsEngine::GetAutoSave());
 			ImGui::NewLine();
 			static bool saveSettings = false;
 			static bool loadSettings = false;
 			if (ImGui::Button("Save Settings"))
 			{
-				Editor::SaveSettings();
 				saveSettings = true;
 			}
 			if (ImGui::Button("Load Preset"))
@@ -311,6 +370,7 @@ void EditorInterface::MenuBar()
 					if (InputHandler::GetKeyIsPressed(VK_RETURN))
 					{
 						Editor::SaveClearColorPreset(name.string());
+						Editor::SaveSettings();
 						saveSettings = false;
 					}
 					if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
@@ -430,15 +490,36 @@ void EditorInterface::ModelLoader()
 		}
 		if (addAnimation)
 		{
-			std::shared_ptr<ModelInstance> mdl = SceneHandler::GetActiveScene()->GetModels()[selectedItem];
-			if (!mdl->HasBones())
+			std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
+			if (scene->GetRegistry().any_of<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
 			{
-				addAnimation = false;
-			}
-			if (ImGui::Button("Add Animation"))
-			{
-				std::filesystem::path name(animations[selectedAnimation]);
-				ModelAssetHandler::LoadAnimation(mdl->GetPath(), name);
+				std::shared_ptr<ModelInstance> mdl = scene->GetRegistry().get<ModelComponent>
+					(scene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
+				if (!mdl->HasBones())
+				{
+					addAnimation = false;
+				}
+				if (ImGui::BeginCombo("Animations", animations[selectedAnimation].string().c_str()))
+				{
+					for (size_t i = 0; i < animations.size(); i++)
+					{
+						if (ImGui::Selectable(animations[i].filename().string().c_str(), &selectable))
+						{
+							selectedAnimation = i;
+						}
+						if (selectable)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+					ImGui::EndCombo();
+				}
+				if (ImGui::Button("Add Animation"))
+				{
+					std::filesystem::path name(animations[selectedAnimation]);
+					ModelAssetHandler::LoadAnimation(mdl->GetPath(), name);
+					addAnimation = false;
+				}
 			}
 		}
 		else
@@ -447,7 +528,6 @@ void EditorInterface::ModelLoader()
 			static std::shared_ptr<ModelInstance> model;
 			if (ImGui::Button("Load Model"))
 			{
-
 				std::filesystem::path name("Models/" + models[selectedModel].string());
 				model = ModelAssetHandler::LoadModel(name);
 				if (model != nullptr)
@@ -460,6 +540,7 @@ void EditorInterface::ModelLoader()
 						Editor::EditorActions action;
 						action.AddedObject = true;
 						action.Object = model;
+						action.oldEntity = entity;
 						Editor::AddEditorAction(action);
 					}
 					else if (model->HasBones())

@@ -49,6 +49,7 @@ class GraphicsEngine
 
 	static std::array<FLOAT, 4> ourClearColor;
 	static bool myAutoSave;
+	static bool myFileExists;
 public:
 	static bool myClearColorBlending;
 	static float myClearColorBlendFactor;
@@ -56,6 +57,8 @@ public:
 	static std::string myCurrentClearColorPreset;
 
 	bool Initialize(unsigned someX, unsigned someY, unsigned someWidth, unsigned someHeight, bool enableDeviceDebug);
+
+	static void DragDrop(WPARAM aWparam);
 
 	void BeginFrame();
 	void EndFrame();

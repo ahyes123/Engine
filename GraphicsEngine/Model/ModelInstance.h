@@ -23,7 +23,7 @@ class ModelInstance : public SceneObject
 
 		void SetAnimation(const std::wstring& aName, bool aLoop = true);
 
-	FORCEINLINE Model::MeshData const& GetMeshData(unsigned int anIndex) const { return myModel->GetMeshData(anIndex); }
+	FORCEINLINE Model::MeshData& GetMeshData(unsigned int anIndex) { return myModel->GetMeshData(anIndex); }
 	FORCEINLINE size_t GetNumMeshes() const { return myModel->GetNumMeshes(); }
 	FORCEINLINE std::wstring const& GetName() const { return myName; }
 	FORCEINLINE std::wstring const& GetPath() const { return myPath; }

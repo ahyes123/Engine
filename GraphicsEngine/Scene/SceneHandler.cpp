@@ -71,9 +71,11 @@ std::shared_ptr<Scene> SceneHandler::LoadScene(const unsigned int& aSceneIndex)
 
 std::shared_ptr<Scene> SceneHandler::LoadScene(const std::wstring& aSceneName)
 {
+	std::filesystem::path name(aSceneName);
+	std::wstring realName = name.filename().replace_extension("").wstring();
 	for (size_t i = 0; i < myScenes.size(); i++)
 	{
-		if (myScenes[i]->GetSceneName() == aSceneName)
+		if (myScenes[i]->GetSceneName() == realName)
 		{
 			myScenes[i]->SetCamera(myCurrentScene->GetCamera());
 			myCurrentScene = myScenes[i];
@@ -82,14 +84,13 @@ std::shared_ptr<Scene> SceneHandler::LoadScene(const std::wstring& aSceneName)
 			return myCurrentScene;
 		}
 	}
-	std::filesystem::path p(aSceneName);
-	const std::string scenePath = "./Json/Scenes";
-	const std::string scenePathFull = "./Json/Scenes" + p.string() + ".json";
+	const std::wstring scenePath = L"./Json/Scenes";
+	const std::wstring scenePathFull = L"./Json/Scenes" + realName + L".json";
 	for (const auto& file : std::filesystem::directory_iterator(scenePath))
 	{
 		if (file.path() == scenePathFull)
 		{
-			return AddEmptyScene(aSceneName);
+			return AddEmptyScene(realName);
 		}
 	}
 	return nullptr;

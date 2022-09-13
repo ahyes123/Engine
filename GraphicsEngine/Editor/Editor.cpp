@@ -237,9 +237,9 @@ void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, in
 		std::shared_ptr<ModelInstance> mdl = aScene->GetModels()[i];
 		std::filesystem::path path(mdl->GetPath());
 		aJson[num]["ModelPath"] = path;
-		aJson[num]["IsAnim"] = mdl->HasBones();
-		if (mdl->HasBones())
+		if (mdl->GetCurrentAnimation().myFrames.size() > 0)
 		{
+			aJson[num]["IsAnim"] = true;
 			std::filesystem::path animName(mdl->GetCurrentAnimation().myName);
 			aJson[num]["AnimationPaths"]["0"] = animName;
 			int id = 1;
@@ -253,6 +253,10 @@ void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, in
 					id++;
 				}
 			}
+		}
+		else
+		{
+			aJson[num]["IsAnim"] = false;
 		}
 		entt::entity& entity = aScene->GetEntitys(ObjectType::Model)[i];
 		SaveComponents(aJson, num, entity, aScene);
@@ -421,6 +425,7 @@ void Editor::SaveSettings()
 	std::array<float, 4> color = GraphicsEngine::GetClearColor();
 	j["ClearColor"] = { color[0], color[1], color[2], color[3] };
 	j["PresetName"] = GraphicsEngine::myCurrentClearColorPreset;
+	j["AutoSave"] = GraphicsEngine::GetAutoSave();
 	std::ofstream oStream(path + fileName);
 	oStream << j;
 }
@@ -437,6 +442,7 @@ void Editor::LoadSettings()
 	SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed() = j["CameraSpeed"];
 	CommonUtilities::Timer::SetTimeScale(j["TimeScale"]);
 	std::array<float, 4> color = j["ClearColor"];
+	GraphicsEngine::GetAutoSave() = j["AutoSave"];
 	GraphicsEngine::GetClearColor() = color;
 	LoadClearColorPreset(j["PresetName"]);
 }
@@ -447,7 +453,6 @@ void Editor::SaveClearColorPreset(std::string aName)
 	const std::string path = "./Json/Settings/";
 	const std::string fileName = aName + ".json";
 	bool isFileFound = false;
-	GraphicsEngine::myCurrentClearColorPreset = aName;
 	for (const auto& file : directory_iterator(path))
 	{
 		if (fileName == file.path().filename().string())
@@ -466,12 +471,13 @@ void Editor::SaveClearColorPreset(std::string aName)
 		std::cout << "File Found" << std::endl;
 	}
 	json j;
-	j["PresetOne"] = { GraphicsEngine::myClearColorPresets[0][0],GraphicsEngine::myClearColorPresets[0][1], 
+	j["PresetOne"] = { GraphicsEngine::myClearColorPresets[0][0],GraphicsEngine::myClearColorPresets[0][1],
 		GraphicsEngine::myClearColorPresets[0][2], GraphicsEngine::myClearColorPresets[0][3] };
-	j["PresetTwo"] = { GraphicsEngine::myClearColorPresets[1][0],GraphicsEngine::myClearColorPresets[1][1], 
+	j["PresetTwo"] = { GraphicsEngine::myClearColorPresets[1][0],GraphicsEngine::myClearColorPresets[1][1],
 		GraphicsEngine::myClearColorPresets[1][2], GraphicsEngine::myClearColorPresets[1][3] };
 	j["Factor"] = GraphicsEngine::myClearColorBlendFactor;
-	j["IsBlending"] = GraphicsEngine::myClearColorBlending; 
+	j["IsBlending"] = GraphicsEngine::myClearColorBlending;
+	GraphicsEngine::myCurrentClearColorPreset = aName;
 	std::ofstream oStream(path + fileName);
 	oStream << j;
 }
@@ -482,7 +488,16 @@ void Editor::LoadClearColorPreset(std::string aName)
 	json j;
 	std::ifstream ifStream("Json/Settings/" + aName + ".json");
 	if (ifStream.fail())
+	{
+		GraphicsEngine::myClearColorBlendFactor = 0;
+		GraphicsEngine::myClearColorBlending = false;
+		std::array<float, 4> color = { 0,0,0,1 };
+		GraphicsEngine::myClearColorPresets[0] = color;
+		GraphicsEngine::myClearColorPresets[1] = color;
+		GraphicsEngine::myCurrentClearColorPreset = "default";
+		GraphicsEngine::GetClearColor() = color;
 		return;
+	}
 	ifStream >> j;
 
 	GraphicsEngine::myClearColorBlendFactor = j["Factor"];

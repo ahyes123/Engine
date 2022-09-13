@@ -41,7 +41,7 @@ class Model : public SceneObject
 
 		void SetName(const std::wstring& aName);
 
-		FORCEINLINE MeshData const& GetMeshData(int aIndex) const { return myMeshData[aIndex]; }
+		FORCEINLINE MeshData& GetMeshData(int aIndex) { return myMeshData[aIndex]; }
 		FORCEINLINE std::wstring const& GetName() const { return myName; }
 		FORCEINLINE std::wstring const& GetPath() const { return myPath; }
 		FORCEINLINE size_t  GetNumMeshes() const { return myMeshData.size(); }
