@@ -181,6 +181,7 @@
     <ClInclude Include="Engine\GBuffer.h" />
     <ClInclude Include="Engine\Player.h" />
     <ClInclude Include="Engine\RenderStateManager.h" />
+    <ClInclude Include="Engine\ShadowRenderer.h" />
     <ClInclude Include="Engine\TextRenderer.h" />
     <ClInclude Include="GraphicsEngine.h" />
     <ClInclude Include="GraphicsEngine.pch.h" />
@@ -215,6 +216,7 @@
     <ClInclude Include="Scene\SceneHandler.h" />
     <ClInclude Include="Scene\SceneObject.h" />
     <ClInclude Include="Scene\Transform.h" />
+    <ClInclude Include="Texture\DepthStencil.h" />
     <ClInclude Include="Texture\Texture.h" />
     <ClInclude Include="Texture\TextureAssetHandler.h" />
     <ClInclude Include="Text\Font.hpp" />
@@ -237,6 +239,7 @@
     <ClCompile Include="Engine\GBuffer.cpp" />
     <ClCompile Include="Engine\Player.cpp" />
     <ClCompile Include="Engine\RenderStateManager.cpp" />
+    <ClCompile Include="Engine\ShadowRenderer.cpp" />
     <ClCompile Include="Engine\TextRenderer.cpp" />
     <ClCompile Include="GraphicsEngine.cpp" />
     <ClCompile Include="GraphicsEngine.pch.cpp">
@@ -261,6 +264,7 @@
     <ClCompile Include="Scene\SceneHandler.cpp" />
     <ClCompile Include="Scene\SceneObject.cpp" />
     <ClCompile Include="Scene\Transform.cpp" />
+    <ClCompile Include="Texture\DepthStencil.cpp" />
     <ClCompile Include="Texture\Texture.cpp" />
     <ClCompile Include="Texture\TextureAssetHandler.cpp" />
     <ClCompile Include="Text\Text.cpp" />

@@ -4,6 +4,7 @@
 
 std::unordered_map<RenderStateManager::BlendState, ComPtr<ID3D11BlendState>> RenderStateManager::myBlendStates;
 std::unordered_map<RenderStateManager::DepthStencilState, ComPtr<ID3D11DepthStencilState>> RenderStateManager::myDepthStencilStates;
+std::unordered_map<RenderStateManager::SamplerState, ComPtr<ID3D11SamplerState>> RenderStateManager::mySamplerStates;
 
 bool RenderStateManager::Initialize()
 {
@@ -91,6 +92,46 @@ bool RenderStateManager::Initialize()
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 	depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
 	DX11::Device->CreateDepthStencilState(&depthStencilDesc, myDepthStencilStates[DepthStencilState::None].GetAddressOf());
+
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerDesc.BorderColor[0] = 0.0f;
+	samplerDesc.BorderColor[1] = 0.0f;
+	samplerDesc.BorderColor[2] = 0.0f;
+	samplerDesc.BorderColor[3] = 0.0f;
+	samplerDesc.MinLOD = -D3D11_FLOAT32_MAX;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	result = DX11::Device->CreateSamplerState(&samplerDesc, mySamplerStates[SamplerState::SS_Default].GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	D3D11_SAMPLER_DESC pointSampleDesc = {};
+	pointSampleDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	pointSampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	pointSampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	pointSampleDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	pointSampleDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	pointSampleDesc.MinLOD = -FLT_MAX;
+	pointSampleDesc.MaxLOD = FLT_MAX;
+
+	result = DX11::Device->CreateSamplerState(&pointSampleDesc, mySamplerStates[SamplerState::SS_PointClamp].GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	DX11::Context->PSSetSamplers(0, 1, mySamplerStates[SamplerState::SS_Default].GetAddressOf());
 }
 
 void RenderStateManager::SetBlendState(BlendState aState)
@@ -101,4 +142,17 @@ void RenderStateManager::SetBlendState(BlendState aState)
 void RenderStateManager::SetDepthStencilState(DepthStencilState aState)
 {
 	DX11::Context->OMSetDepthStencilState(myDepthStencilStates[aState].Get(), 0);
+}
+
+void RenderStateManager::SetSamplerState(SamplerState aState, int aSlot)
+{
+	DX11::Context->PSSetSamplers(aSlot, 1, mySamplerStates[aState].GetAddressOf());
+}
+
+void RenderStateManager::ResetStates()
+{
+	SetBlendState(BlendState::Opaque);
+	SetDepthStencilState(DepthStencilState::ReadWrite);
+	SetSamplerState(SamplerState::SS_Default, 0);
+	SetSamplerState(SamplerState::SS_PointClamp, 1);
 }

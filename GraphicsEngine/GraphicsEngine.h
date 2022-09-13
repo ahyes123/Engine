@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "DeferredRenderer.h"
+#include "ShadowRenderer.h"
 #include "Engine/TextRenderer.h"
 #include "Engine/ForwardRenderer.h"
 #include "Scene/Scene.h"
@@ -35,6 +36,7 @@ class GraphicsEngine
 	static std::shared_ptr<Camera> myCamera;
 	ForwardRenderer myForwardRenderer;
 	DeferredRenderer myDeferredRenderer;
+	ShadowRenderer myShadowRenderer;
 	TextRenderer myTextRenderer;
 	ModelAssetHandler myModelAssetHandler;
 	std::shared_ptr<DirectionalLight> myDirectionalLight;

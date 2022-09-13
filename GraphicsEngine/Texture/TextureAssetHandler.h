@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "DepthStencil.h"
 #include "GBuffer.h"
 #include "Vector2.hpp"
 
@@ -20,5 +21,7 @@ class TextureAssetHandler
 		static bool LoadTexture(const std::wstring& aFileName);
 
 		static std::unique_ptr<GBuffer> CreateGBuffer(RECT aWindowSize);
+
+		static std::unique_ptr<DepthStencil> CreateDepthStencil(const std::wstring& aName, size_t aWidth, size_t aHeight);
 };
 

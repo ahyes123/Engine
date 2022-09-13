@@ -1,6 +1,7 @@
 #include "GraphicsEngine.pch.h"
 #include "LightAssetHandler.h"
 
+#include "DX11.h"
 #include "UtilityFunctions.hpp"
 #include "Texture/TextureAssetHandler.h"
 
@@ -13,6 +14,27 @@ std::shared_ptr<DirectionalLight> LightAssetHandler::CreateDirectionalLight(Vect
 	Transform transform;
 	transform.SetRotation(aRotation);
 	myDirectionalLight->myLightBufferData.Direction = transform.GetForward();
+
+	constexpr float nearPlane = 1.0f;
+	constexpr  float farPlane = 25000.0f;
+	const POINT resolution = { DX11::ClientRect.right - DX11::ClientRect.left, DX11::ClientRect.bottom - DX11::ClientRect.top};
+
+	myDirectionalLight->myLightBufferData.NearPlane = nearPlane;
+	myDirectionalLight->myLightBufferData.FarPlane = farPlane;
+
+	Matrix4x4f lightProjection;
+
+	lightProjection(1, 1) = 2.0f / static_cast<float>(resolution.x);
+	lightProjection(2, 2) = 2.0f / static_cast<float>(resolution.y);
+	lightProjection(3, 3) = 1.0f / (farPlane - nearPlane);
+	lightProjection(4, 3) = nearPlane / (nearPlane - farPlane);
+	lightProjection(4, 4) = 1.0f;
+
+	myDirectionalLight->myLightBufferData.LightProjection = lightProjection;
+
+	myDirectionalLight->myShadowMap = TextureAssetHandler::CreateDepthStencil(L"shadow", resolution.x, resolution.y);
+
+	myDirectionalLight->myLightBufferData.CastShadows = true;
 
 	return myDirectionalLight;
 }

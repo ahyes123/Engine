@@ -94,6 +94,9 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	if (!myDeferredRenderer.Initialize())
 		return false;
 
+	if (!myShadowRenderer.Initialize())
+		return false;
+
 	if (!myTextRenderer.Initialize())
 		return false;
 
@@ -129,6 +132,7 @@ void GraphicsEngine::BeginFrame()
 	// F1 - This is where we clear our buffers and start the DX frame.
 
 	DX11::BeginFrame(ourClearColor);
+	RenderStateManager::ResetStates();
 }
 
 void GraphicsEngine::RenderFrame()
@@ -177,6 +181,9 @@ void GraphicsEngine::RenderFrame()
 	//ImGui::End();
 
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
+	myDirectionalLight->ClearShadowMap();
+	myDirectionalLight->SetShadowMapAsDepth();
+	myShadowRenderer.Render(myDirectionalLight, mdlInstancesToRender);
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());

@@ -25,10 +25,7 @@ class DX11
 		static ComPtr<ID3D11Device> Device;
 		static ComPtr<ID3D11DeviceContext> Context;
 		static ComPtr<IDXGISwapChain> SwapChain;
-		
-		static ComPtr<ID3D11SamplerState> SamplerStateDefault;
-		static ComPtr<ID3D11SamplerState> SamplerStateWrap;
-		
+
 		static ComPtr<ID3D11RenderTargetView> BackBuffer;
 		static ComPtr<ID3D11DepthStencilView> DepthBuffer;
 

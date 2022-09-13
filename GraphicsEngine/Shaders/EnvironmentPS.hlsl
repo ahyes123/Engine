@@ -46,10 +46,32 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 		environmentTexture, normal, vertexNormal,
 		toEye, roughness, ambientOcclusion, diffuseColor, specularColor);
 
-	const float3 directLighting = EvaluateDirectionalLight(
+	float3 directLighting = EvaluateDirectionalLight(
 		diffuseColor, specularColor, normal, roughness,
 		LB_DirectionalLight.Color, LB_DirectionalLight.Intensity, -LB_DirectionalLight.Direction, toEye);
 
+	if (LB_DirectionalLight.CastShadows)
+	{
+		const float4 worldToLightView = mul(LB_DirectionalLight.View, worldPosition);
+		const float4 lightViewToLightProj = mul(LB_DirectionalLight.Projection, worldToLightView);
+
+		float2 projectedTexCoord;
+		projectedTexCoord.x = lightViewToLightProj.x / lightViewToLightProj.w / 2.0f + 0.5f;
+		projectedTexCoord.y = -lightViewToLightProj.y / lightViewToLightProj.w / 2.0f + 0.5f;
+
+		if(saturate(projectedTexCoord.x) == projectedTexCoord.x && saturate(projectedTexCoord.y) == projectedTexCoord.y)
+		{
+			const float shadowBias = 0.0005f;
+			const float shadow = 0.0f;
+			const float viewDepth = (lightViewToLightProj.z / lightViewToLightProj.w) - shadowBias;
+			const float lightDepth = dirLightShadowMap.Sample(pointClampSampler, projectedTexCoord).r;
+
+			if(lightDepth < viewDepth)
+			{
+				directLighting *= shadow;
+			}
+		}
+	}
 
 	float3 pointLight = 0;
 	float3 spotLight = 0;

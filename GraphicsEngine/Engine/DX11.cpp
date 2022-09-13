@@ -6,9 +6,6 @@ ComPtr<ID3D11Device> DX11::Device;
 ComPtr<ID3D11DeviceContext> DX11::Context;
 ComPtr<IDXGISwapChain> DX11::SwapChain;
 
-ComPtr<ID3D11SamplerState> DX11::SamplerStateDefault;
-ComPtr<ID3D11SamplerState> DX11::SamplerStateWrap;
-
 ComPtr<ID3D11RenderTargetView> DX11::BackBuffer;
 ComPtr<ID3D11DepthStencilView> DX11::DepthBuffer;
 RECT DX11::ClientRect;
@@ -82,6 +79,7 @@ bool DX11::Initialize(HWND aWindowHandle, bool aEnableDeviceDebug)
 	{
 		return false;
 	}
+
 	Context->OMSetRenderTargets(1, BackBuffer.GetAddressOf(), DepthBuffer.Get());
 
 	D3D11_VIEWPORT viewport = { 0 };
@@ -92,30 +90,6 @@ bool DX11::Initialize(HWND aWindowHandle, bool aEnableDeviceDebug)
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &viewport);
-
-	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	samplerDesc.BorderColor[0] = 0.0f;
-	samplerDesc.BorderColor[1] = 0.0f;
-	samplerDesc.BorderColor[2] = 0.0f;
-	samplerDesc.BorderColor[3] = 0.0f;
-	samplerDesc.MinLOD = -D3D11_FLOAT32_MAX;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	result = Device->CreateSamplerState(&samplerDesc, SamplerStateDefault.GetAddressOf());
-
-	if (FAILED(result))
-	{
-		return false;
-	}
-
-	Context->PSSetSamplers(0, 1, SamplerStateDefault.GetAddressOf());
 
 	return true;
 }
