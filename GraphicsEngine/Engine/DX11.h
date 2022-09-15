@@ -22,6 +22,8 @@ class DX11
 		static void BeginFrame(std::array<float, 4> aClearColor);
 		static void EndFrame();
 
+		static void SetViewPort(float width, float height);
+
 		static ComPtr<ID3D11Device> Device;
 		static ComPtr<ID3D11DeviceContext> Context;
 		static ComPtr<IDXGISwapChain> SwapChain;

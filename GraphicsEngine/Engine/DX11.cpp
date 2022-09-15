@@ -104,3 +104,15 @@ void DX11::EndFrame()
 {
 	SwapChain->Present(1, 0);
 }
+
+void DX11::SetViewPort(float width, float height)
+{
+	D3D11_VIEWPORT viewport = { 0 };
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	viewport.Width = width;
+	viewport.Height = height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	Context->RSSetViewports(1, &viewport);
+}

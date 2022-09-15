@@ -266,7 +266,14 @@ void GraphicsEngine::RenderFrame()
 	myDeferredRenderer.ClearGBuffer();
 	myDirectionalLight->ClearShadowMap();
 	myDirectionalLight->SetShadowMapAsDepth();
+
+	DX11::SetViewPort(2048.f, 2048.f);
+
 	myShadowRenderer.Render(myDirectionalLight, mdlInstancesToRender);
+
+	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left), 
+		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));
+
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());

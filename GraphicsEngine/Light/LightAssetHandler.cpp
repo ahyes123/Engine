@@ -18,7 +18,7 @@ std::shared_ptr<DirectionalLight> LightAssetHandler::CreateDirectionalLight(Vect
 
 	constexpr float nearPlane = 1.0f;
 	constexpr  float farPlane = 25000.0f;
-	const POINT resolution = { DX11::ClientRect.right - DX11::ClientRect.left, DX11::ClientRect.bottom - DX11::ClientRect.top };
+	const POINT resolution = { 2048, 2048 };
 
 	myDirectionalLight->myLightBufferData.NearPlane = nearPlane;
 	myDirectionalLight->myLightBufferData.FarPlane = farPlane;
