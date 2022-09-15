@@ -157,7 +157,7 @@ void GraphicsEngine::DragDrop(WPARAM aWparam)
 		action.AddedObject = true;
 		action.Object = mdl;
 		action.oldEntity = ent;
-		Editor::AddEditorAction(action);
+		Editor::AddUndoAction(action);
 	}
 	else if (path.extension() == ".json")
 	{
@@ -165,40 +165,64 @@ void GraphicsEngine::DragDrop(WPARAM aWparam)
 	}
 	else if (path.extension() == ".dds")
 	{
-		const std::string animPath = "./Models/Textures";
+		const std::string animPath = ".\\Models\\Textures";
 		bool found = false;
 		for (const auto& file : directory_iterator(animPath))
 		{
-			if (path == file.path())
+			std::filesystem::path test = path;
+			size_t index = test.string().find("\\Models\\Textures\\" + test.filename().string());
+			if (index < test.string().size())
 			{
-				found = true;
+				std::string finalPath = test.string().substr(index, test.string().size());
+				std::string otherPath = file.path().string().substr(1, file.path().string().size());
+				if (finalPath == otherPath)
+				{
+					found = true;
+					break;
+				}
+			}
+			else
+			{
 				break;
 			}
 		}
 		if (found)
 		{
-
+			std::filesystem::path newFileName = L"./Models/Textures/" + path.filename().wstring();
+			EditorInterface::SetTexture(newFileName.filename().wstring());
 		}
 		else
 		{
-			const std::string animPath = "./Models/Textures";
-			static int numCount = 1;
+			const std::string animPath = ".\\Models\\Textures";
+			int numCount = 1;
 			std::filesystem::path originalPath = path;
+			bool found = false;
 			for (const auto& file : directory_iterator(animPath))
 			{
 				std::string fileName = file.path().string();
 				std::filesystem::path test(file);
+				if (numCount > 0)
+				{
+					path = originalPath;
+					path = path.replace_extension("");
+					path += "_";
+					path += std::to_string(numCount);
+					path += ".dds";
+				}
 				if (path.filename() == test.filename())
 				{
+					found = true;
 					path = path.replace_extension("");
 					path += "_";
 					path += std::to_string(numCount);
 					path += ".dds";
 					numCount++;
 				}
+				else if (found)
+					break;
 			}
 			BOOL f = true;
-			std::filesystem::path newFileName = L"./Models/Textures/" + originalPath.filename().wstring();
+			std::filesystem::path newFileName = L".\\Models\\Textures\\" + path.filename().wstring();
 			CopyFile(originalPath.wstring().c_str(), newFileName.c_str(), f);
 			EditorInterface::SetTexture(newFileName.filename().wstring());
 		}
@@ -271,7 +295,7 @@ void GraphicsEngine::RenderFrame()
 
 	myShadowRenderer.Render(myDirectionalLight, mdlInstancesToRender);
 
-	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left), 
+	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left),
 		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);

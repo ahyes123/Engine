@@ -681,40 +681,57 @@ void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, con
 	for (size_t i = 0; i < aMdl->GetNumMeshes(); ++i)
 	{
 		std::filesystem::path fileName(aName);
-		const std::wstring baseName = fileName.filename().replace_extension("");
-		const std::wstring albedoFileName = L"Models/Textures/T_" + baseName + L"_C.dds";
-		const std::wstring normalFileName = L"Models/Textures/T_" + baseName + L"_N.dds";
-		const std::wstring materialFileName = L"Models/Textures/T_" + baseName + L"_M.dds";
+		std::wstring baseName = fileName.filename().replace_extension("");
+		std::wstring nameWithoutNumbers = baseName;
+		std::wstring undefiledName = baseName;
 
-		std::shared_ptr<Material> meshMaterial = std::make_shared<Material>();
+		baseName = baseName.substr(2, baseName.size());
+		size_t index = baseName.find(L"_C");
+		if (index > baseName.size())
+			index = baseName.find(L"_N");
+		if (index > baseName.size())
+			index = baseName.find(L"_M");
 
-		if (TextureAssetHandler::LoadTexture(albedoFileName))
-		{
-			meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(albedoFileName));
-		}
-		else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_C.dds"))
-		{
-			meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_C.dds"));
-		}
+		nameWithoutNumbers = nameWithoutNumbers.substr(0, index + 4);
 
-		if (TextureAssetHandler::LoadTexture(normalFileName))
+		std::shared_ptr<Material> meshMaterial = aMdl->GetMeshData(i).myMaterial;
+		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'C')
 		{
-			meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(normalFileName));
-		}
-		else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_N.dds"))
-		{
-			meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_N.dds"));
-		}
-
-		if (TextureAssetHandler::LoadTexture(materialFileName))
-		{
-			meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(materialFileName));
-		}
-		else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_M.dds"))
-		{
-			meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_M.dds"));
+			undefiledName = L"Models/Textures/" + undefiledName + L".dds";
+			if (TextureAssetHandler::LoadTexture(undefiledName))
+			{
+				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(undefiledName));
+			}
+			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_C.dds"))
+			{
+				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_C.dds"));
+			}
 		}
 
-		aMdl->GetMeshData(i).myMaterial = meshMaterial;
+		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'N')
+		{
+			undefiledName = L"Models/Textures/" + baseName + L".dds";
+			if (TextureAssetHandler::LoadTexture(undefiledName))
+			{
+				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(undefiledName));
+			}
+			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_N.dds"))
+			{
+				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_N.dds"));
+			}
+		}
+
+		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'M')
+		{
+			undefiledName = L"Models/Textures/" + undefiledName + L".dds";
+			if (TextureAssetHandler::LoadTexture(undefiledName))
+			{
+				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(undefiledName));
+			}
+			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_M.dds"))
+			{
+				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_M.dds"));
+			}
+		}
 	}
 }

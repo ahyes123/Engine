@@ -18,10 +18,13 @@ public:
 		bool MovedObject = false;
 		std::shared_ptr<SceneObject> Object;
 		Transform OldTransform;
+		Transform beforeTransform;
 		std::wstring OldName;
+		std::wstring beforeName;
 		entt::entity oldEntity;
 	};
-	static void AddEditorAction(const EditorActions& anAction);
+	static void AddUndoAction(const EditorActions& anAction);
+	static void AddRedoActoin(const EditorActions& anAction);
 	static void EditorActionHandler();
 	static void SaveCurrentScene();
 	static void SaveScenes();
@@ -32,7 +35,8 @@ public:
 	static void LoadClearColorPreset(std::string aName);
 
 private:
-	static std::vector<EditorActions> myEditorActions;
+	static std::vector<EditorActions> myUndoActions;
+	static std::vector<EditorActions> myRedoActions;
 
 	static void SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum);
 	static void LoadModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum);

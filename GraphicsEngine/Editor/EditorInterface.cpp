@@ -42,8 +42,8 @@ void EditorInterface::SetTexture(std::wstring aFilePath)
 		if (scene->GetRegistry().all_of<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
 		{
 			std::shared_ptr<ModelInstance> mdl = scene->GetRegistry().get<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
-			aFilePath = aFilePath.substr(2, aFilePath.size() - 8);
-			ModelAssetHandler::SetModelTexture(mdl, aFilePath);
+			std::filesystem::path path = aFilePath;
+			ModelAssetHandler::SetModelTexture(mdl, path.replace_extension(""));
 		}
 	}
 }
@@ -207,7 +207,7 @@ void EditorInterface::MenuBar()
 					action.AddedObject = true;
 					action.Object = mdl;
 					action.oldEntity = entity;
-					Editor::AddEditorAction(action);
+					Editor::AddUndoAction(action);
 				}
 				ImGui::EndMenu();
 			}
@@ -220,7 +220,7 @@ void EditorInterface::MenuBar()
 				action.AddedObject = true;
 				action.Object = system;
 				action.oldEntity = entity;
-				Editor::AddEditorAction(action);
+				Editor::AddUndoAction(action);
 				SceneHandler::GetActiveScene()->AddParticleSystem(system, entity);
 			}
 			if (ImGui::MenuItem("Text Element"))
@@ -232,7 +232,7 @@ void EditorInterface::MenuBar()
 				action.AddedObject = true;
 				action.Object = text;
 				action.oldEntity = entity;
-				Editor::AddEditorAction(action);
+				Editor::AddUndoAction(action);
 			}
 			ImGui::EndMenu();
 		}
@@ -411,6 +411,24 @@ void EditorInterface::MenuBar()
 			}
 			ImGui::End();
 		}
+		static bool showUpgift = false;
+		if (ImGui::BeginMenu("U3 Read Me"))
+		{
+			showUpgift = true;
+			ImGui::EndMenu();
+		}
+		if (showUpgift)
+		{
+			ImGui::Begin("U3");
+			ImGui::Text("Du kan ctrl + z for att angra namn, spawn av objekt och bort tagandet av objekt och du kan undo allt detta");
+			ImGui::NewLine();
+			ImGui::Text("Du kan aven byta ut textur attributerna enskillt genom componentens combo eller genom drag and drop");
+			if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
+			{
+				showUpgift = false;
+			}
+			ImGui::End();
+		}
 
 		ImGui::EndMainMenuBar();
 	}
@@ -541,7 +559,7 @@ void EditorInterface::ModelLoader()
 						action.AddedObject = true;
 						action.Object = model;
 						action.oldEntity = entity;
-						Editor::AddEditorAction(action);
+						Editor::AddUndoAction(action);
 					}
 					else if (model->HasBones())
 					{
@@ -579,7 +597,7 @@ void EditorInterface::ModelLoader()
 						Editor::EditorActions action;
 						action.AddedObject = true;
 						action.Object = model;
-						Editor::AddEditorAction(action);
+						Editor::AddUndoAction(action);
 					}
 				}
 			}
@@ -639,7 +657,7 @@ void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scen
 				action.RemovedObject = true;
 				action.Object = aScene->GetSceneObjects()[selectedItem];
 				action.oldEntity = ent;
-				Editor::AddEditorAction(action);
+				Editor::AddUndoAction(action);
 
 				if (reg.any_of<ModelComponent>(ent))
 					aScene->RemoveModelInstance(reg.get<ModelComponent>(ent).myModel);
@@ -690,7 +708,7 @@ void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scen
 						reg.get<ParticleSystemComponent>(entity).myParticleSystem = reg.get<ParticleSystemComponent>(entity).myParticleSystem;
 						action.Object = reg.get<ParticleSystemComponent>(entity).myParticleSystem;
 					}
-					Editor::AddEditorAction(action);
+					Editor::AddUndoAction(action);
 					stillPressed = true;
 				}
 			}
@@ -728,7 +746,7 @@ void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scen
 			action.ChangedName = true;
 			action.Object = aScene->GetSceneObjects()[selectedItem];
 			action.OldName = oldName;
-			Editor::AddEditorAction(action);
+			Editor::AddUndoAction(action);
 			canChangeName = false;
 			oldName = L"";
 			memset(prevValue, 0, sizeof(prevValue));
@@ -804,6 +822,33 @@ void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene>
 			{
 				std::shared_ptr<ModelInstance> mdl = aScene->GetRegistry().get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
 
+				static std::vector<std::filesystem::path> textureNames;
+				static int selectedTexture = 0;
+				static bool selectable = false;
+				if (textureNames.size() > 0)
+				{
+					if (ImGui::BeginCombo("Models", textureNames[selectedTexture].string().c_str()))
+					{
+						for (size_t i = 0; i < textureNames.size(); i++)
+						{
+							if (ImGui::Selectable(textureNames[i].filename().string().c_str(), &selectable))
+							{
+								selectedTexture = i;
+							}
+							if (selectable)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
+					}
+					if (ImGui::Button("Load Texture"))
+					{
+						SetTexture(textureNames[selectedTexture]);
+					}
+					ImGui::NewLine();
+				}
+
 				if (mdl->HasBones() && mdl->GetAnimNames().size() >= 1)
 				{
 					static int selectedAnim = 0;
@@ -837,7 +882,6 @@ void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene>
 						mdl->SetAnimation(mdl->GetAnimNames()[selectedAnim]);
 					}
 				}
-				ImGui::NewLine();
 				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
 				{
 					if (ImGui::MenuItem("Remove Component"))
@@ -847,118 +891,129 @@ void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene>
 					}
 					ImGui::EndPopup();
 				}
-			}
-		}
-		if (aScene->GetRegistry().any_of<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
-		{
-			if (ImGui::CollapsingHeader("TextComponent"))
-			{
-				std::shared_ptr<Text> text = aScene->GetRegistry().get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText;
-				std::filesystem::path startName(text->GetText());
-				char curValue[256];
-				static char prevValue[256];
-				memcpy(prevValue, startName.string().c_str(), sizeof(startName));
-				memset(curValue, 0, sizeof(curValue));
-				memcpy(curValue, prevValue, sizeof(prevValue));
-				if (ImGui::InputText("Set Text", curValue, sizeof(curValue)))
+
+				if (ImGui::Button("Reload Textures"))
 				{
-					std::filesystem::path name(curValue);
-					text->SetText(name);
-					memcpy(prevValue, curValue, sizeof(curValue));
-				}
-				bool is2D = text->GetIs2D();
-				if (ImGui::Checkbox("2D", &is2D))
-				{
-					text->SetIs2D(is2D);
+					textureNames.clear();
+					std::string path = ".\\Models\\Textures\\";
+					for (const auto& file : directory_iterator(path))
+					{
+						textureNames.push_back(file.path());
+					}
 				}
 				ImGui::NewLine();
-				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+			}
+			if (aScene->GetRegistry().any_of<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
+			{
+				if (ImGui::CollapsingHeader("TextComponent"))
 				{
-					if (ImGui::MenuItem("Remove Component"))
+					std::shared_ptr<Text> text = aScene->GetRegistry().get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText;
+					std::filesystem::path startName(text->GetText());
+					char curValue[256];
+					static char prevValue[256];
+					memcpy(prevValue, startName.string().c_str(), sizeof(startName));
+					memset(curValue, 0, sizeof(curValue));
+					memcpy(curValue, prevValue, sizeof(prevValue));
+					if (ImGui::InputText("Set Text", curValue, sizeof(curValue)))
 					{
-						aScene->RemoveText(aScene->GetRegistry().get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText);
-						aScene->GetRegistry().remove<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						std::filesystem::path name(curValue);
+						text->SetText(name);
+						memcpy(prevValue, curValue, sizeof(curValue));
 					}
-					ImGui::EndPopup();
+					bool is2D = text->GetIs2D();
+					if (ImGui::Checkbox("2D", &is2D))
+					{
+						text->SetIs2D(is2D);
+					}
+					ImGui::NewLine();
+					if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+					{
+						if (ImGui::MenuItem("Remove Component"))
+						{
+							aScene->RemoveText(aScene->GetRegistry().get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText);
+							aScene->GetRegistry().remove<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						}
+						ImGui::EndPopup();
+					}
 				}
 			}
-		}
-		if (aScene->GetRegistry().any_of<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
-		{
-			if (ImGui::CollapsingHeader("ParticleSystemComponent"))
+			if (aScene->GetRegistry().any_of<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
 			{
-				bool isDirty = false;
-				std::shared_ptr<ParticleSystem> system = aScene->GetRegistry().get<ParticleSystemComponent>
-					(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem;
-				EmitterSettingsData& data = system->GetEmitters()[0].GetEmitterSettings();
-
-				if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, INT_MAX))
+				if (ImGui::CollapsingHeader("ParticleSystemComponent"))
 				{
-					isDirty = true;
-					if (data.SpawnRate <= 0)
+					bool isDirty = false;
+					std::shared_ptr<ParticleSystem> system = aScene->GetRegistry().get<ParticleSystemComponent>
+						(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem;
+					EmitterSettingsData& data = system->GetEmitters()[0].GetEmitterSettings();
+
+					if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, INT_MAX))
 					{
-						data.SpawnRate = 0.1f;
+						isDirty = true;
+						if (data.SpawnRate <= 0)
+						{
+							data.SpawnRate = 0.1f;
+						}
 					}
-				}
-				if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, INT_MAX))
-				{
-					isDirty = true;
-					if (data.LifeTime <= 0)
+					if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, INT_MAX))
 					{
-						data.LifeTime = 0.1f;
+						isDirty = true;
+						if (data.LifeTime <= 0)
+						{
+							data.LifeTime = 0.1f;
+						}
 					}
-				}
 
-				float startVelocity[3] = { data.StartVelocity.x, data.StartVelocity.y, data.StartVelocity.z };
-				ImGui::DragFloat3("Start Velocity", startVelocity, 1, -INT_MAX, INT_MAX);
-				data.StartVelocity = { startVelocity[0], startVelocity[1], startVelocity[2] };
-				float endVelocity[3] = { data.EndVelocity.x, data.EndVelocity.y, data.EndVelocity.z };
-				ImGui::DragFloat3("End Velocity", endVelocity, 1, -INT_MAX, INT_MAX);
-				data.EndVelocity = { endVelocity[0], endVelocity[1], endVelocity[2] };
+					float startVelocity[3] = { data.StartVelocity.x, data.StartVelocity.y, data.StartVelocity.z };
+					ImGui::DragFloat3("Start Velocity", startVelocity, 1, -INT_MAX, INT_MAX);
+					data.StartVelocity = { startVelocity[0], startVelocity[1], startVelocity[2] };
+					float endVelocity[3] = { data.EndVelocity.x, data.EndVelocity.y, data.EndVelocity.z };
+					ImGui::DragFloat3("End Velocity", endVelocity, 1, -INT_MAX, INT_MAX);
+					data.EndVelocity = { endVelocity[0], endVelocity[1], endVelocity[2] };
 
-				ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, INT_MAX);
-				ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
-				ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
+					ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, INT_MAX);
+					ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
+					ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
 
-				ImGui::ColorEdit4("Start Color", &data.StartColor.x);
-				ImGui::ColorEdit4("End Color", &data.EndColor.x);
+					ImGui::ColorEdit4("Start Color", &data.StartColor.x);
+					ImGui::ColorEdit4("End Color", &data.EndColor.x);
 
-				ImGui::Checkbox("Looping", &data.Looping);
-				ImGui::Checkbox("HasDuration", &data.HasDuration);
-				if (data.HasDuration)
-					ImGui::DragFloat("Duration", &data.Duration, 1, 0, INT_MAX);
+					ImGui::Checkbox("Looping", &data.Looping);
+					ImGui::Checkbox("HasDuration", &data.HasDuration);
+					if (data.HasDuration)
+						ImGui::DragFloat("Duration", &data.Duration, 1, 0, INT_MAX);
 
-				if (ImGui::Button("Refresh System"))
-				{
-					system->GetEmitters()[0].RefreshSystem();
-				}
-
-				if (isDirty)
-					system->GetEmitters()[0].RefreshValues(data);
-				ImGui::NewLine();
-				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
-				{
-					if (ImGui::MenuItem("Remove Component"))
+					if (ImGui::Button("Refresh System"))
 					{
-						aScene->RemoveParticleSystem(aScene->GetRegistry().get<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem);
-						aScene->GetRegistry().remove<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						system->GetEmitters()[0].RefreshSystem();
 					}
-					ImGui::EndPopup();
+
+					if (isDirty)
+						system->GetEmitters()[0].RefreshValues(data);
+					ImGui::NewLine();
+					if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+					{
+						if (ImGui::MenuItem("Remove Component"))
+						{
+							aScene->RemoveParticleSystem(aScene->GetRegistry().get<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem);
+							aScene->GetRegistry().remove<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						}
+						ImGui::EndPopup();
+					}
 				}
 			}
-		}
-		if (aScene->GetRegistry().any_of<PlayerComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
-		{
-			if (ImGui::CollapsingHeader("PlayerComponent"))
+			if (aScene->GetRegistry().any_of<PlayerComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
 			{
-				ImGui::NewLine();
-				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+				if (ImGui::CollapsingHeader("PlayerComponent"))
 				{
-					if (ImGui::MenuItem("Remove Component"))
+					ImGui::NewLine();
+					if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
 					{
-						aScene->GetRegistry().remove<PlayerComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						if (ImGui::MenuItem("Remove Component"))
+						{
+							aScene->GetRegistry().remove<PlayerComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						}
+						ImGui::EndPopup();
 					}
-					ImGui::EndPopup();
 				}
 			}
 		}

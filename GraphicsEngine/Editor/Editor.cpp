@@ -15,22 +15,30 @@
 
 using std::filesystem::directory_iterator;
 
-std::vector<Editor::EditorActions> Editor::myEditorActions;
+std::vector<Editor::EditorActions> Editor::myUndoActions;
+std::vector<Editor::EditorActions> Editor::myRedoActions;
 
-void Editor::AddEditorAction(const EditorActions& anAction)
+void Editor::AddUndoAction(const EditorActions& anAction)
 {
-	myEditorActions.push_back(anAction);
-	if (myEditorActions.size() >= 15)
-		myEditorActions.erase(myEditorActions.begin() + 0);
+	myUndoActions.push_back(anAction);
+	if (myUndoActions.size() >= 15)
+		myUndoActions.erase(myUndoActions.begin() + 0);
+}
+
+void Editor::AddRedoActoin(const EditorActions& anAction)
+{
+	myRedoActions.push_back(anAction);
+	if (myRedoActions.size() >= 15)
+		myRedoActions.erase(myRedoActions.begin() + 0);
 }
 
 void Editor::EditorActionHandler()
 {
 	if (CommonUtilities::InputHandler::GetKeyIsHeld(VK_CONTROL) && CommonUtilities::InputHandler::GetKeyIsPressed('Z'))
 	{
-		if (myEditorActions.size() > 0)
+		if (myUndoActions.size() > 0)
 		{
-			EditorActions action = myEditorActions[myEditorActions.size() - 1];
+			EditorActions action = myUndoActions[myUndoActions.size() - 1];
 			if (action.AddedObject)
 			{
 				entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
@@ -43,10 +51,12 @@ void Editor::EditorActionHandler()
 			}
 			else if (action.ChangedName)
 			{
+				action.beforeName = action.Object->GetName();
 				action.Object->SetName(action.OldName);
 			}
 			else if (action.MovedObject)
 			{
+				action.beforeTransform = action.Object->GetTransform();
 				action.Object->SetTransform(action.OldTransform);
 			}
 			else if (action.RemovedObject)
@@ -59,7 +69,47 @@ void Editor::EditorActionHandler()
 				if (reg.any_of<TextComponent>(action.oldEntity))
 					SceneHandler::GetActiveScene()->AddText(reg.get<TextComponent>(action.oldEntity).myText, action.oldEntity);
 			}
-			myEditorActions.erase(myEditorActions.begin() + myEditorActions.size() - 1);
+			AddRedoActoin(action);
+			myUndoActions.erase(myUndoActions.begin() + myUndoActions.size() - 1);
+		}
+	}
+	if ((CommonUtilities::InputHandler::GetKeyIsHeld(VK_CONTROL) && CommonUtilities::InputHandler::GetKeyIsPressed('Y')) ||
+		(CommonUtilities::InputHandler::GetKeyIsHeld(VK_CONTROL) && CommonUtilities::InputHandler::GetKeyIsHeld(VK_SHIFT)
+			&& CommonUtilities::InputHandler::GetKeyIsPressed('Z')))
+	{
+		if (myRedoActions.size() > 0)
+		{
+			EditorActions action = myRedoActions[myRedoActions.size() - 1];
+			if (action.AddedObject)
+			{
+				entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+				if (reg.any_of<ModelComponent>(action.oldEntity))
+					SceneHandler::GetActiveScene()->AddModelInstance(reg.get<ModelComponent>(action.oldEntity).myModel, action.oldEntity);
+				if (reg.any_of<ParticleSystemComponent>(action.oldEntity))
+					SceneHandler::GetActiveScene()->AddParticleSystem(reg.get<ParticleSystemComponent>(action.oldEntity).myParticleSystem,
+						action.oldEntity);
+				if (reg.any_of<TextComponent>(action.oldEntity))
+					SceneHandler::GetActiveScene()->AddText(reg.get<TextComponent>(action.oldEntity).myText, action.oldEntity);
+			}
+			else if (action.ChangedName)
+			{
+				action.Object->SetName(action.beforeName);
+			}
+			else if (action.MovedObject)
+			{
+				action.Object->SetTransform(action.beforeTransform);
+			}
+			else if (action.RemovedObject)
+			{
+				entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+				if (reg.any_of<ModelComponent>(action.oldEntity))
+					SceneHandler::GetActiveScene()->RemoveModelInstance(reg.get<ModelComponent>(action.oldEntity).myModel);
+				if (reg.any_of<ParticleSystemComponent>(action.oldEntity))
+					SceneHandler::GetActiveScene()->RemoveParticleSystem(reg.get<ParticleSystemComponent>(action.oldEntity).myParticleSystem);
+				if (reg.any_of<TextComponent>(action.oldEntity))
+					SceneHandler::GetActiveScene()->RemoveText(reg.get<TextComponent>(action.oldEntity).myText);
+			}
+			myRedoActions.erase(myRedoActions.begin() + myRedoActions.size() - 1);
 		}
 	}
 }
