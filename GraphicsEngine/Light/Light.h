@@ -46,10 +46,12 @@ public:
 
 	void ClearShadowMap();
 	void SetShadowMapAsDepth();
+	void SetShadowMapAsResource(int aSlot);
 
 	FORCEINLINE Vector3f GetColor() const { return myLightBufferData.Color; }
 	FORCEINLINE float GetIntensity() const { return myLightBufferData.Intensity; }
 	FORCEINLINE LightBufferData GetLightBufferData() const { return myLightBufferData; }
+	FORCEINLINE DepthStencil* GetShadowMap() const { return myShadowMap.get(); }
 
 };
 

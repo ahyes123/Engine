@@ -73,7 +73,7 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	Editor::LoadSettings();
 	ComponentHandler::Init();
 
-	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 45, -45, 0 });
+	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 45, -45, 0 }, { 0, 1000, -500 });
 	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
 	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0, 1 }, 10000, 1000, 1, { 50, 50, 0 });
 	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 50000, 1000, 1, 5, 50, { 0, -1, 0 }, { 0, 100, 0 });
@@ -249,7 +249,7 @@ void GraphicsEngine::RenderFrame()
 
 	ComponentHandler::Update();
 
-	//ImGui::Begin("Lights");
+	ImGui::Begin("Lights");
 	//ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 1, 0, INT_MAX);
 	//ImGui::DragFloat("Intensity", &myLights[0]->myLightBufferData.Intensity, 1, 0, INT_MAX);
 	//ImGui::DragFloat3("Position", &myLights[0]->myLightBufferData.Position.x, 1, -INT_MAX, INT_MAX);
@@ -257,9 +257,13 @@ void GraphicsEngine::RenderFrame()
 	//ImGui::DragFloat("Inner rad", &myLights[0]->myLightBufferData.SpotInnerRadius, 1, 0, INT_MAX);
 	//ImGui::DragFloat("Outer rad", &myLights[0]->myLightBufferData.SpotOuterRadius, 1, 0, INT_MAX);
 	//ImGui::DragFloat3("Direction", &myLights[0]->myLightBufferData.Direction.x, 0.01f, -1, 1);
-	//ImGui::End();
+	ImGui::DragFloat3("Position", &myDirectionalLight->GetTransform().GetPositionMutable().x, 1, -INT_MAX, INT_MAX);
+	ImGui::DragFloat3("Direction", &myDirectionalLight->myLightBufferData.Direction.x, 0.01f, -1, 1);
+	ImGui::End();
 
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
+	DX11::Context->ClearRenderTargetView(GBuffer::GetVPRTV().Get(), &ourClearColor[0]);
+	myDeferredRenderer.ClearGBuffer();
 	myDirectionalLight->ClearShadowMap();
 	myDirectionalLight->SetShadowMapAsDepth();
 	myShadowRenderer.Render(myDirectionalLight, mdlInstancesToRender);

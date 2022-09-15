@@ -98,7 +98,6 @@ void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
 									   const std::vector<std::shared_ptr<ModelInstance>>& aModelList, float aDeltaTime, float aTotalTime)
 {
 	myGBuffer->Clear();
-
 	myGBuffer->SetAsTarget();
 
 	HRESULT result = S_FALSE;
@@ -246,10 +245,16 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 #ifndef _DEBUG
 #endif
 	myGBuffer->SetAsResource(0);
+	aDirectionalLight->SetShadowMapAsResource(20);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
 	DX11::Context->Draw(3, 0);
 	//Viewport
 #ifdef _DEBUG
 	//DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
 #endif
+}
+
+void DeferredRenderer::ClearGBuffer()
+{
+	myGBuffer->Clear();
 }

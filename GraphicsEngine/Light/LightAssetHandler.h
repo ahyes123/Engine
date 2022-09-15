@@ -14,7 +14,7 @@ class LightAssetHandler
 	static inline std::shared_ptr<EnvironmentLight> myEnvironmentLight;
 
 	public:
-		static std::shared_ptr<DirectionalLight> CreateDirectionalLight(Vector3f aColor, float anIntensity, Vector3f aRotation);
+		static std::shared_ptr<DirectionalLight> CreateDirectionalLight(Vector3f aColor, float anIntensity, Vector3f aRotation, Vector3f aPosition);
 		static std::shared_ptr<EnvironmentLight> CreateEnvironmentLight(const std::wstring& aTextureName);
 		static std::shared_ptr<PointLight> CreatePointLight(Vector3f aColor, float anIntensity, float aRange, float aAttenuation, Vector3f aPosition);
 		static std::shared_ptr<SpotLight> CreateSpotLight(Vector3f aColor, float anIntensity, float aRange, float aAttenuation, float aInnerCone, float aOuterCone, Vector3f aDirection, Vector3f aPosition);

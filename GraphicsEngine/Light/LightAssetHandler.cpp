@@ -6,18 +6,19 @@
 #include "Texture/TextureAssetHandler.h"
 
 std::shared_ptr<DirectionalLight> LightAssetHandler::CreateDirectionalLight(Vector3f aColor, float anIntensity,
-																			Vector3f aRotation)
+																			Vector3f aRotation, Vector3f aPosition)
 {
 	myDirectionalLight = std::make_shared<DirectionalLight>();
 	myDirectionalLight->Init(aColor, anIntensity);
 
-	Transform transform;
-	transform.SetRotation(aRotation);
-	myDirectionalLight->myLightBufferData.Direction = transform.GetForward();
+	myDirectionalLight->GetTransform().SetRotation(aRotation);
+	myDirectionalLight->myLightBufferData.Direction = myDirectionalLight->GetTransform().GetForward();
+
+	myDirectionalLight->SetPosition(aPosition);
 
 	constexpr float nearPlane = 1.0f;
 	constexpr  float farPlane = 25000.0f;
-	const POINT resolution = { DX11::ClientRect.right - DX11::ClientRect.left, DX11::ClientRect.bottom - DX11::ClientRect.top};
+	const POINT resolution = { DX11::ClientRect.right - DX11::ClientRect.left, DX11::ClientRect.bottom - DX11::ClientRect.top };
 
 	myDirectionalLight->myLightBufferData.NearPlane = nearPlane;
 	myDirectionalLight->myLightBufferData.FarPlane = farPlane;
@@ -31,6 +32,8 @@ std::shared_ptr<DirectionalLight> LightAssetHandler::CreateDirectionalLight(Vect
 	lightProjection(4, 4) = 1.0f;
 
 	myDirectionalLight->myLightBufferData.LightProjection = lightProjection;
+	myDirectionalLight->myLightBufferData.Position = myDirectionalLight->GetTransform().GetPosition();
+	myDirectionalLight->myLightBufferData.LightView = Matrix4x4f::GetFastInverse(myDirectionalLight->GetTransform().GetMatrix());
 
 	myDirectionalLight->myShadowMap = TextureAssetHandler::CreateDepthStencil(L"shadow", resolution.x, resolution.y);
 

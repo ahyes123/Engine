@@ -47,7 +47,7 @@ void ShadowRenderer::Render(const std::shared_ptr<Light>& aLight,
 	HRESULT result = S_FALSE;
 	D3D11_MAPPED_SUBRESOURCE bufferData;
 
-	const Light::LightBufferData lightData = aLight->GetLightBufferData();
+	Light::LightBufferData lightData = aLight->GetLightBufferData();
 
 	myFrameBufferData.View = lightData.LightView; //This is already inverted
 	myFrameBufferData.CamTranslation = lightData.Position;

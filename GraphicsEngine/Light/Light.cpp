@@ -19,3 +19,8 @@ void Light::SetShadowMapAsDepth()
 {
 	DX11::Context->OMSetRenderTargets(1, GBuffer::GetVPRTV().GetAddressOf(), myShadowMap->myDRV.Get());
 }
+
+void Light::SetShadowMapAsResource(int aSlot)
+{
+	DX11::Context->PSSetShaderResources(aSlot, 1, myShadowMap->mySRV.GetAddressOf());
+}

@@ -70,6 +70,10 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 			{
 				directLighting *= shadow;
 			}
+
+			//result.Color.rgb = dif;
+			//result.Color.a = 1;
+			//return result;
 		}
 	}
 
