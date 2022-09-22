@@ -1,6 +1,7 @@
 #pragma once
 #include "Transform.h"
 #include "../External/entt/entity/entity.hpp"
+#include <vector>
 
 class SceneObject
 {
@@ -10,6 +11,10 @@ protected:
 public:
 	SceneObject() = default;
 	virtual ~SceneObject() = default;
+
+	std::vector<std::shared_ptr<SceneObject>> myChildren;
+	std::shared_ptr<SceneObject> myParent;
+	entt::entity myEntity;
 
 	void SetTransform(const Transform& aTransform);
 	void SetRotation(float aPitch, float aYaw, float aRoll);

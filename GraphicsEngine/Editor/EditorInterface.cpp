@@ -21,7 +21,9 @@ using std::filesystem::directory_iterator;
 using namespace CommonUtilities;
 
 bool EditorInterface::addAnimation;
+bool EditorInterface::someSelected;
 int EditorInterface::selectedItem;
+entt::entity EditorInterface::selectedEntity;
 
 void EditorInterface::ShowEditor()
 {
@@ -31,7 +33,7 @@ void EditorInterface::ShowEditor()
 	EnableDocking();
 	MenuBar();
 	ModelLoader();
-	SceneHierchy(someThingSelected, scene);
+	SceneHierchy(scene);
 }
 
 void EditorInterface::SetTexture(std::wstring aFilePath)
@@ -39,9 +41,9 @@ void EditorInterface::SetTexture(std::wstring aFilePath)
 	if (selectedItem >= 0)
 	{
 		std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
-		if (scene->GetRegistry().all_of<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
+		if (scene->GetRegistry().all_of<ModelComponent>(selectedEntity))
 		{
-			std::shared_ptr<ModelInstance> mdl = scene->GetRegistry().get<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
+			std::shared_ptr<ModelInstance> mdl = scene->GetRegistry().get<ModelComponent>(selectedEntity).myModel;
 			std::filesystem::path path = aFilePath;
 			ModelAssetHandler::SetModelTexture(mdl, path.replace_extension(""));
 		}
@@ -346,6 +348,7 @@ void EditorInterface::MenuBar()
 			static bool loadSettings = false;
 			if (ImGui::Button("Save Settings"))
 			{
+				Editor::SaveSettings();
 				saveSettings = true;
 			}
 			if (ImGui::Button("Load Preset"))
@@ -370,7 +373,6 @@ void EditorInterface::MenuBar()
 					if (InputHandler::GetKeyIsPressed(VK_RETURN))
 					{
 						Editor::SaveClearColorPreset(name.string());
-						Editor::SaveSettings();
 						saveSettings = false;
 					}
 					if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
@@ -509,10 +511,10 @@ void EditorInterface::ModelLoader()
 		if (addAnimation)
 		{
 			std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
-			if (scene->GetRegistry().any_of<ModelComponent>(scene->GetEntitys(ObjectType::All)[selectedItem]))
+			if (scene->GetRegistry().any_of<ModelComponent>(selectedEntity))
 			{
 				std::shared_ptr<ModelInstance> mdl = scene->GetRegistry().get<ModelComponent>
-					(scene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
+					(selectedEntity).myModel;
 				if (!mdl->HasBones())
 				{
 					addAnimation = false;
@@ -606,122 +608,136 @@ void EditorInterface::ModelLoader()
 	ImGui::End();
 }
 
-void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scene> aScene)
+void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 {
-	//EnableDocking();
-	//MenuBar();
 	ImGui::Begin("Scene Hierchy");
-
+	someSelected = false;
 	static bool canChangeName = false;
-	for (size_t i = 0; i < aScene->GetSceneObjects().size(); i++)
+	if (ImGui::TreeNodeEx("Scene"))
 	{
-		static ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
-		std::filesystem::path name(aScene->GetSceneObjects()[i]->GetName());
-		if (ImGui::TreeNodeEx((void*)aScene->GetSceneObjects()[i]->GetId(), flags, name.string().c_str()))
+		for (size_t i = 0; i < aScene->GetSceneObjects().size(); i++)
 		{
-			ImGui::TreePop();
-			selectedItem = i;
-			aSomeThingSelected = true;
-		}
-
-		if (aSomeThingSelected)
-		{
-			static bool deleteItem = false;
-			if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[i]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+			DragAndDropHierchy(i);
+			if (i >= aScene->GetSceneObjects().size())
+				continue;
+			if (someSelected)
 			{
-				if (ImGui::MenuItem("Change Name"))
+				static bool deleteItem = false;
+				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[i]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
 				{
-					canChangeName = true;
-				}
-				if (aScene->GetRegistry().any_of<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
-				{
-					if (aScene->GetRegistry().get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel->HasBones())
+					if (ImGui::MenuItem("Change Name"))
 					{
-						if (ImGui::MenuItem("Add Animation"))
+						canChangeName = true;
+					}
+					if (aScene->GetRegistry().any_of<ModelComponent>(selectedEntity))
+					{
+						if (aScene->GetRegistry().get<ModelComponent>(selectedEntity).myModel->HasBones())
 						{
-							addAnimation = true;
+							if (ImGui::MenuItem("Add Animation"))
+							{
+								addAnimation = true;
+							}
 						}
 					}
+					if (ImGui::MenuItem("Destroy"))
+					{
+						deleteItem = true;
+					}
+					ImGui::EndPopup();
 				}
-				if (ImGui::MenuItem("Destroy"))
+				if (deleteItem || InputHandler::GetKeyIsPressed(VK_DELETE))
 				{
-					deleteItem = true;
-				}
-				ImGui::EndPopup();
-			}
-			if (deleteItem || InputHandler::GetKeyIsPressed(VK_DELETE))
-			{
-				Editor::EditorActions action;
-				entt::entity ent = aScene->GetEntitys(ObjectType::All)[selectedItem];
-				entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
-				action.RemovedObject = true;
-				action.Object = aScene->GetSceneObjects()[selectedItem];
-				action.oldEntity = ent;
-				Editor::AddUndoAction(action);
+					for (size_t i = 0; i < aScene->GetSceneObjects()[selectedItem]->myChildren.size(); i++)
+					{
+						Editor::EditorActions action;
+						entt::entity ent = aScene->GetSceneObjects()[selectedItem]->myEntity;
+						entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+						action.RemovedObject = true;
+						action.Object = aScene->GetSceneObjects()[selectedItem];
+						action.oldEntity = ent;
+						Editor::AddUndoAction(action);
 
-				if (reg.any_of<ModelComponent>(ent))
-					aScene->RemoveModelInstance(reg.get<ModelComponent>(ent).myModel);
-				if (reg.any_of<ParticleSystemComponent>(ent))
-					aScene->RemoveParticleSystem(reg.get<ParticleSystemComponent>(ent).myParticleSystem);
-				if (reg.any_of<TextComponent>(ent))
-					aScene->RemoveText(reg.get<TextComponent>(ent).myText);
-				aSomeThingSelected = false;
-			}
-			static bool stillPressed = false;
-			if (!stillPressed)
-			{
-				if (InputHandler::GetKeyIsPressed('V'))
-				{
+						if (reg.any_of<ModelComponent>(ent))
+							aScene->RemoveModelInstance(reg.get<ModelComponent>(ent).myModel);
+						if (reg.any_of<ParticleSystemComponent>(ent))
+							aScene->RemoveParticleSystem(reg.get<ParticleSystemComponent>(ent).myParticleSystem);
+						if (reg.any_of<TextComponent>(ent))
+							aScene->RemoveText(reg.get<TextComponent>(ent).myText);
+					}
 					Editor::EditorActions action;
-					entt::entity entity = ComponentHandler::DuplicateEntity(aScene->GetEntitys(ObjectType::All)[selectedItem]);
-					action.AddedObject = true;
-					action.oldEntity = entity;
-					entt::registry& reg = aScene->GetRegistry();
-
-					if (reg.all_of<ModelComponent>(entity))
-					{
-						std::shared_ptr<ModelInstance> mdl;
-						if (!reg.get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel->HasBones())
-						{
-							mdl = ModelAssetHandler::LoadModel(reg.get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel->GetPath());
-						}
-						else
-						{
-							mdl = ModelAssetHandler::LoadModelWithAnimation(reg.get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel->GetPath(),
-								reg.get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel->GetCurrentAnimation().myName);
-						}
-						reg.get<ModelComponent>(entity).myModel = mdl;
-						aScene->AddModelInstance(reg.get<ModelComponent>(entity).myModel, entity);
-						action.Object = reg.get<ModelComponent>(entity).myModel;
-					}
-					if (reg.all_of<TextComponent>(entity))
-					{
-						std::shared_ptr<Text> text = reg.get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText;
-						aScene->AddText(TextFactory::CreateText(text->GetText(), 1, text->GetFont()->Atlas.Size, text->GetIs2D()), entity);
-						reg.get<TextComponent>(entity).myText = reg.get<TextComponent>(entity).myText;
-						action.Object = reg.get<TextComponent>(entity).myText;
-					}
-					if (reg.all_of<ParticleSystemComponent>(entity))
-					{
-						std::shared_ptr<ParticleSystem> system = reg.get<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem;
-						aScene->AddParticleSystem(ParticleAssetHandler::CreateParticleSystem(system->GetEmitters()[0].GetEmitterSettings()), entity);
-						reg.get<ParticleSystemComponent>(entity).myParticleSystem = reg.get<ParticleSystemComponent>(entity).myParticleSystem;
-						action.Object = reg.get<ParticleSystemComponent>(entity).myParticleSystem;
-					}
+					entt::entity ent = selectedEntity;
+					entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
+					action.RemovedObject = true;
+					action.Object = aScene->GetSceneObjects()[selectedItem];
+					action.oldEntity = ent;
 					Editor::AddUndoAction(action);
-					stillPressed = true;
+
+					if (reg.any_of<ModelComponent>(ent))
+						aScene->RemoveModelInstance(reg.get<ModelComponent>(ent).myModel);
+					if (reg.any_of<ParticleSystemComponent>(ent))
+						aScene->RemoveParticleSystem(reg.get<ParticleSystemComponent>(ent).myParticleSystem);
+					if (reg.any_of<TextComponent>(ent))
+						aScene->RemoveText(reg.get<TextComponent>(ent).myText);
+					someSelected = false;
+
+				}
+				static bool stillPressed = false;
+				if (!stillPressed)
+				{
+					if (InputHandler::GetKeyIsPressed('V'))
+					{
+						Editor::EditorActions action;
+						entt::entity entity = ComponentHandler::DuplicateEntity(selectedEntity);
+						action.AddedObject = true;
+						action.oldEntity = entity;
+						entt::registry& reg = aScene->GetRegistry();
+
+						if (reg.all_of<ModelComponent>(entity))
+						{
+							std::shared_ptr<ModelInstance> mdl;
+							if (!reg.get<ModelComponent>(selectedEntity).myModel->HasBones())
+							{
+								mdl = ModelAssetHandler::LoadModel(reg.get<ModelComponent>(selectedEntity).myModel->GetPath());
+							}
+							else
+							{
+								mdl = ModelAssetHandler::LoadModelWithAnimation(reg.get<ModelComponent>(selectedEntity).myModel->GetPath(),
+									reg.get<ModelComponent>(selectedEntity).myModel->GetCurrentAnimation().myName);
+							}
+							reg.get<ModelComponent>(entity).myModel = mdl;
+							aScene->AddModelInstance(reg.get<ModelComponent>(entity).myModel, entity);
+							action.Object = reg.get<ModelComponent>(entity).myModel;
+						}
+						if (reg.all_of<TextComponent>(entity))
+						{
+							std::shared_ptr<Text> text = reg.get<TextComponent>(selectedEntity).myText;
+							aScene->AddText(TextFactory::CreateText(text->GetText(), 1, text->GetFont()->Atlas.Size, text->GetIs2D()), entity);
+							reg.get<TextComponent>(entity).myText = reg.get<TextComponent>(entity).myText;
+							action.Object = reg.get<TextComponent>(entity).myText;
+						}
+						if (reg.all_of<ParticleSystemComponent>(entity))
+						{
+							std::shared_ptr<ParticleSystem> system = reg.get<ParticleSystemComponent>(selectedEntity).myParticleSystem;
+							aScene->AddParticleSystem(ParticleAssetHandler::CreateParticleSystem(system->GetEmitters()[0].GetEmitterSettings()), entity);
+							reg.get<ParticleSystemComponent>(entity).myParticleSystem = reg.get<ParticleSystemComponent>(entity).myParticleSystem;
+							action.Object = reg.get<ParticleSystemComponent>(entity).myParticleSystem;
+						}
+						Editor::AddUndoAction(action);
+						stillPressed = true;
+					}
+				}
+				if (InputHandler::GetKeyWasReleased('V'))
+				{
+					stillPressed = false;
 				}
 			}
-			if (InputHandler::GetKeyWasReleased('V'))
+			if (i >= aScene->GetSceneObjects().size() - 1 && someSelected == false)
 			{
-				stillPressed = false;
+				selectedItem = -1;
+				canChangeName = false;
 			}
 		}
-		if (i >= aScene->GetSceneObjects().size() - 1 && aSomeThingSelected == false)
-		{
-			selectedItem = -1;
-			canChangeName = false;
-		}
+		ImGui::TreePop();
 	}
 	if (canChangeName)
 	{
@@ -738,7 +754,7 @@ void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scen
 		{
 			memcpy(prevValue, curValue, sizeof(curValue));
 			std::filesystem::path name(curValue);
-			aScene->GetSceneObjects()[selectedItem]->SetName(name);
+			aScene->GetAllSceneObjects()[selectedItem]->SetName(name);
 		}
 		if (InputHandler::GetKeyIsPressed(VK_RETURN))
 		{
@@ -753,17 +769,17 @@ void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scen
 		}
 	}
 
-	Properties(aSomeThingSelected, aScene);
-	AddComponentTab(aSomeThingSelected, aScene);
+	Properties(aScene);
+	AddComponentTab(aScene);
 
 	ImGui::End();
 	ImGui::Begin("ViewPort");
 	Vector2f windowWidth(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
 	ImGui::Image((void*)GBuffer::GetVPSRV().Get(), { windowWidth.x, windowWidth.y });
 	ImGuiViewport viewport;
-	if (aSomeThingSelected)
+	if (someSelected)
 	{
-		entt::entity entity = aScene->GetEntitys(ObjectType::All)[selectedItem];
+		entt::entity entity = selectedEntity;
 		Transform transform = aScene->GetRegistry().get<TransformComponent>(entity).myTransform;
 		EditorGuizmo(entity);
 		//scene->GetRegistry().get<TransformComponent>(entity).myTransform.SetPosition(transform.GetPosition());
@@ -772,17 +788,140 @@ void EditorInterface::SceneHierchy(bool aSomeThingSelected, std::shared_ptr<Scen
 	ImGui::End();
 }
 
-void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene> aScene)
+void EditorInterface::DragAndDropHierchy(const int& aIndex)
+{
+	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
+	std::shared_ptr<SceneObject> object = scene->GetSceneObjects()[aIndex];
+	std::filesystem::path objName = object->GetName();
+	static std::vector<std::shared_ptr<SceneObject>> SelectedObjects;
+	if (!InputHandler::GetKeyIsHeld('M'))
+	{
+		SelectedObjects.clear();
+	}
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+		{
+			std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+			for (size_t i = 0; i < child.size(); i++)
+			{
+				if (child[i]->myParent)
+					if (child[i]->myParent->myChildren.size() > 0)
+						child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+							child[i]->myParent->myChildren.end(), child[i]));
+				child[i]->myParent = nullptr;
+			}
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	if (ImGui::TreeNodeEx((void*)object->GetId(), ImGuiTreeNodeFlags_None, objName.string().c_str()))
+	{
+		if (InputHandler::GetKeyIsHeld('M'))
+			SelectedObjects.push_back(object);
+		if (ImGui::BeginDragDropSource())
+		{
+			if (!InputHandler::GetKeyIsHeld('M'))
+				SelectedObjects.push_back(object);
+			ImGui::SetDragDropPayload("ENTITY", &SelectedObjects, sizeof(std::vector<std::shared_ptr<SceneObject>>));
+			ImGui::EndDragDropSource();
+		}
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+			{
+				std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+				auto parent = object;
+				for (size_t i = 0; i < child.size(); i++)
+				{
+					if (child[i] != object)
+					{
+						if (child[i]->myParent)
+							if (child[i]->myParent->myChildren.size() > 0)
+								child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+									child[i]->myParent->myChildren.end(), child[i]));
+						parent->myChildren.push_back(child[i]);
+						child[i]->myParent = parent;
+					}
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+		selectedEntity = object->myEntity;
+		selectedItem = aIndex;
+		ShowObjectChildren(object, SelectedObjects);
+		ImGui::TreePop();
+		someSelected = true;
+	}
+}
+
+void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObectVector)
+{
+	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
+	bool removedObj = false;
+	for (size_t j = 0; j < aObject->myChildren.size(); j++)
+	{
+		std::filesystem::path childName = aObject->myChildren[j]->GetName();
+		if (ImGui::TreeNodeEx((void*)aObject->myChildren[j]->GetId(), ImGuiTreeNodeFlags_None,
+			childName.string().c_str()))
+		{
+			if (InputHandler::GetKeyIsHeld('M'))
+				aObectVector.push_back(aObject->myChildren[j]);
+			if (ImGui::BeginDragDropSource())
+			{
+				if (!InputHandler::GetKeyIsHeld('M'))
+					aObectVector.push_back(aObject->myChildren[j]);
+				ImGui::SetDragDropPayload("ENTITY", &aObectVector,
+					sizeof(std::vector<std::shared_ptr<SceneObject>>));
+				ImGui::EndDragDropSource();
+			}
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+				{
+					std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+					auto parent = aObject->myChildren[j];
+					for (size_t i = 0; i < child.size(); i++)
+					{
+						if (child[i] != aObject)
+						{
+							if (child[i]->myParent)
+								if (child[i]->myParent->myChildren.size() > 0)
+								{
+									removedObj = true;
+									child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+										child[i]->myParent->myChildren.end(), child[i]), child[i]->myParent->myChildren.end());
+								}
+							parent->myChildren.push_back(child[i]);
+							child[i]->myParent = parent;
+						}
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+			if (!removedObj)
+			{
+				ShowObjectChildren(aObject->myChildren[j], aObectVector);
+				selectedEntity = aObject->myChildren[j]->myEntity;
+				selectedItem = j;
+				someSelected = true;
+			}
+			ImGui::TreePop();
+		}
+	}
+}
+
+void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 {
 	ImGui::Begin("Properties");
 	bool anythingOpen = false;
-	if (aSomeThingSelected)
+	if (someSelected)
 	{
-		if (aScene->GetRegistry().any_of<TransformComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
+		if (aScene->GetRegistry().any_of<TransformComponent>(selectedEntity))
 		{
 			if (!anythingOpen && ImGui::CollapsingHeader("TransformComponent"))
 			{
-				Transform& transform = aScene->GetRegistry().get<TransformComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myTransform;
+				Transform& transform = aScene->GetRegistry().get<TransformComponent>(selectedEntity).myTransform;
 				static bool madeChange = false;
 				static Transform oldTransform = transform;
 
@@ -816,11 +955,11 @@ void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene>
 			}
 		}
 
-		if (aScene->GetRegistry().any_of<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
+		if (aScene->GetRegistry().any_of<ModelComponent>(selectedEntity))
 		{
 			if (ImGui::CollapsingHeader("ModelComponent"))
 			{
-				std::shared_ptr<ModelInstance> mdl = aScene->GetRegistry().get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel;
+				std::shared_ptr<ModelInstance> mdl = aScene->GetRegistry().get<ModelComponent>(selectedEntity).myModel;
 
 				static std::vector<std::filesystem::path> textureNames;
 				static int selectedTexture = 0;
@@ -886,8 +1025,8 @@ void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene>
 				{
 					if (ImGui::MenuItem("Remove Component"))
 					{
-						aScene->RemoveModelInstance(aScene->GetRegistry().get<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myModel);
-						aScene->GetRegistry().remove<ModelComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
+						aScene->RemoveModelInstance(aScene->GetRegistry().get<ModelComponent>(selectedEntity).myModel);
+						aScene->GetRegistry().remove<ModelComponent>(selectedEntity);
 					}
 					ImGui::EndPopup();
 				}
@@ -903,129 +1042,129 @@ void EditorInterface::Properties(bool aSomeThingSelected, std::shared_ptr<Scene>
 				}
 				ImGui::NewLine();
 			}
-			if (aScene->GetRegistry().any_of<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
+		}
+		if (aScene->GetRegistry().any_of<TextComponent>(selectedEntity))
+		{
+			if (ImGui::CollapsingHeader("TextComponent"))
 			{
-				if (ImGui::CollapsingHeader("TextComponent"))
+				std::shared_ptr<Text> text = aScene->GetRegistry().get<TextComponent>(selectedEntity).myText;
+				std::filesystem::path startName(text->GetText());
+				char curValue[256];
+				static char prevValue[256];
+				memcpy(prevValue, startName.string().c_str(), sizeof(startName));
+				memset(curValue, 0, sizeof(curValue));
+				memcpy(curValue, prevValue, sizeof(prevValue));
+				if (ImGui::InputText("Set Text", curValue, sizeof(curValue)))
 				{
-					std::shared_ptr<Text> text = aScene->GetRegistry().get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText;
-					std::filesystem::path startName(text->GetText());
-					char curValue[256];
-					static char prevValue[256];
-					memcpy(prevValue, startName.string().c_str(), sizeof(startName));
-					memset(curValue, 0, sizeof(curValue));
-					memcpy(curValue, prevValue, sizeof(prevValue));
-					if (ImGui::InputText("Set Text", curValue, sizeof(curValue)))
+					std::filesystem::path name(curValue);
+					text->SetText(name);
+					memcpy(prevValue, curValue, sizeof(curValue));
+				}
+				bool is2D = text->GetIs2D();
+				if (ImGui::Checkbox("2D", &is2D))
+				{
+					text->SetIs2D(is2D);
+				}
+				ImGui::NewLine();
+				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+				{
+					if (ImGui::MenuItem("Remove Component"))
 					{
-						std::filesystem::path name(curValue);
-						text->SetText(name);
-						memcpy(prevValue, curValue, sizeof(curValue));
+						aScene->RemoveText(aScene->GetRegistry().get<TextComponent>(selectedEntity).myText);
+						aScene->GetRegistry().remove<TextComponent>(selectedEntity);
 					}
-					bool is2D = text->GetIs2D();
-					if (ImGui::Checkbox("2D", &is2D))
-					{
-						text->SetIs2D(is2D);
-					}
-					ImGui::NewLine();
-					if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
-					{
-						if (ImGui::MenuItem("Remove Component"))
-						{
-							aScene->RemoveText(aScene->GetRegistry().get<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myText);
-							aScene->GetRegistry().remove<TextComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
-						}
-						ImGui::EndPopup();
-					}
+					ImGui::EndPopup();
 				}
 			}
-			if (aScene->GetRegistry().any_of<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
+		}
+		if (aScene->GetRegistry().any_of<ParticleSystemComponent>(selectedEntity))
+		{
+			if (ImGui::CollapsingHeader("ParticleSystemComponent"))
 			{
-				if (ImGui::CollapsingHeader("ParticleSystemComponent"))
+				bool isDirty = false;
+				std::shared_ptr<ParticleSystem> system = aScene->GetRegistry().get<ParticleSystemComponent>
+					(selectedEntity).myParticleSystem;
+				EmitterSettingsData& data = system->GetEmitters()[0].GetEmitterSettings();
+
+				if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, INT_MAX))
 				{
-					bool isDirty = false;
-					std::shared_ptr<ParticleSystem> system = aScene->GetRegistry().get<ParticleSystemComponent>
-						(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem;
-					EmitterSettingsData& data = system->GetEmitters()[0].GetEmitterSettings();
-
-					if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, INT_MAX))
+					isDirty = true;
+					if (data.SpawnRate <= 0)
 					{
-						isDirty = true;
-						if (data.SpawnRate <= 0)
-						{
-							data.SpawnRate = 0.1f;
-						}
-					}
-					if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, INT_MAX))
-					{
-						isDirty = true;
-						if (data.LifeTime <= 0)
-						{
-							data.LifeTime = 0.1f;
-						}
-					}
-
-					float startVelocity[3] = { data.StartVelocity.x, data.StartVelocity.y, data.StartVelocity.z };
-					ImGui::DragFloat3("Start Velocity", startVelocity, 1, -INT_MAX, INT_MAX);
-					data.StartVelocity = { startVelocity[0], startVelocity[1], startVelocity[2] };
-					float endVelocity[3] = { data.EndVelocity.x, data.EndVelocity.y, data.EndVelocity.z };
-					ImGui::DragFloat3("End Velocity", endVelocity, 1, -INT_MAX, INT_MAX);
-					data.EndVelocity = { endVelocity[0], endVelocity[1], endVelocity[2] };
-
-					ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, INT_MAX);
-					ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
-					ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
-
-					ImGui::ColorEdit4("Start Color", &data.StartColor.x);
-					ImGui::ColorEdit4("End Color", &data.EndColor.x);
-
-					ImGui::Checkbox("Looping", &data.Looping);
-					ImGui::Checkbox("HasDuration", &data.HasDuration);
-					if (data.HasDuration)
-						ImGui::DragFloat("Duration", &data.Duration, 1, 0, INT_MAX);
-
-					if (ImGui::Button("Refresh System"))
-					{
-						system->GetEmitters()[0].RefreshSystem();
-					}
-
-					if (isDirty)
-						system->GetEmitters()[0].RefreshValues(data);
-					ImGui::NewLine();
-					if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
-					{
-						if (ImGui::MenuItem("Remove Component"))
-						{
-							aScene->RemoveParticleSystem(aScene->GetRegistry().get<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]).myParticleSystem);
-							aScene->GetRegistry().remove<ParticleSystemComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
-						}
-						ImGui::EndPopup();
+						data.SpawnRate = 0.1f;
 					}
 				}
-			}
-			if (aScene->GetRegistry().any_of<PlayerComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]))
-			{
-				if (ImGui::CollapsingHeader("PlayerComponent"))
+				if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, INT_MAX))
 				{
-					ImGui::NewLine();
-					if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+					isDirty = true;
+					if (data.LifeTime <= 0)
 					{
-						if (ImGui::MenuItem("Remove Component"))
-						{
-							aScene->GetRegistry().remove<PlayerComponent>(aScene->GetEntitys(ObjectType::All)[selectedItem]);
-						}
-						ImGui::EndPopup();
+						data.LifeTime = 0.1f;
 					}
+				}
+
+				float startVelocity[3] = { data.StartVelocity.x, data.StartVelocity.y, data.StartVelocity.z };
+				ImGui::DragFloat3("Start Velocity", startVelocity, 1, -INT_MAX, INT_MAX);
+				data.StartVelocity = { startVelocity[0], startVelocity[1], startVelocity[2] };
+				float endVelocity[3] = { data.EndVelocity.x, data.EndVelocity.y, data.EndVelocity.z };
+				ImGui::DragFloat3("End Velocity", endVelocity, 1, -INT_MAX, INT_MAX);
+				data.EndVelocity = { endVelocity[0], endVelocity[1], endVelocity[2] };
+
+				ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, INT_MAX);
+				ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
+				ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
+
+				ImGui::ColorEdit4("Start Color", &data.StartColor.x);
+				ImGui::ColorEdit4("End Color", &data.EndColor.x);
+
+				ImGui::Checkbox("Looping", &data.Looping);
+				ImGui::Checkbox("HasDuration", &data.HasDuration);
+				if (data.HasDuration)
+					ImGui::DragFloat("Duration", &data.Duration, 1, 0, INT_MAX);
+
+				if (ImGui::Button("Refresh System"))
+				{
+					system->GetEmitters()[0].RefreshSystem();
+				}
+
+				if (isDirty)
+					system->GetEmitters()[0].RefreshValues(data);
+				ImGui::NewLine();
+				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+				{
+					if (ImGui::MenuItem("Remove Component"))
+					{
+						aScene->RemoveParticleSystem(aScene->GetRegistry().get<ParticleSystemComponent>(selectedEntity).myParticleSystem);
+						aScene->GetRegistry().remove<ParticleSystemComponent>(selectedEntity);
+					}
+					ImGui::EndPopup();
+				}
+			}
+		}
+		if (aScene->GetRegistry().any_of<PlayerComponent>(selectedEntity))
+		{
+			if (ImGui::CollapsingHeader("PlayerComponent"))
+			{
+				ImGui::NewLine();
+				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[selectedItem]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
+				{
+					if (ImGui::MenuItem("Remove Component"))
+					{
+						aScene->GetRegistry().remove<PlayerComponent>(selectedEntity);
+					}
+					ImGui::EndPopup();
 				}
 			}
 		}
 	}
 }
 
-void EditorInterface::AddComponentTab(bool aSomeThingSelected, std::shared_ptr<Scene> aScene)
+void EditorInterface::AddComponentTab(std::shared_ptr<Scene> aScene)
 {
-	if (aSomeThingSelected)
+	if (someSelected)
 	{
 		entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
-		entt::entity ent = aScene->GetEntitys(ObjectType::All)[selectedItem];
+		entt::entity ent = selectedEntity;
 
 		static bool addComponent = false;
 		if (ImGui::Button("Add Component"))

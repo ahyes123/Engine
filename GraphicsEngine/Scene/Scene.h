@@ -77,6 +77,19 @@ public:
 
 	std::vector<std::shared_ptr<SceneObject>> GetSceneObjects()
 	{
+		std::vector<std::shared_ptr<SceneObject>> obj;
+		for (size_t i = 0; i < myObjects.mySceneObjects.size(); i++)
+		{
+			if (myObjects.mySceneObjects[i]->myParent == nullptr)
+			{
+				obj.push_back(myObjects.mySceneObjects[i]);
+			}
+		}
+		return obj;
+	}
+
+	std::vector<std::shared_ptr<SceneObject>> GetAllSceneObjects()
+	{
 		return myObjects.mySceneObjects;
 	}
 
@@ -98,6 +111,7 @@ public:
 			myRegistry.emplace<ModelComponent>(aEntity);
 			myRegistry.get<ModelComponent>(aEntity).myModel = aModelInstance;
 		}
+		myObjects.mySceneObjects.back()->myEntity = aEntity;
 	}
 
 	void AddText(std::shared_ptr<Text> aText, entt::entity& aEntity)
@@ -106,6 +120,7 @@ public:
 		myTextObject.myTexts.push_back(aText);
 		myObjects.myEntitys.push_back(aEntity);
 		myObjects.mySceneObjects.push_back(aText);
+		myObjects.mySceneObjects.back()->myEntity = aEntity;
 		if (!myRegistry.any_of<TransformComponent>(aEntity))
 		{
 			myRegistry.emplace<TransformComponent>(aEntity);
@@ -123,6 +138,7 @@ public:
 		myParticleSystems.mySystems.push_back(aSystem);
 		myObjects.myEntitys.push_back(aEntity);
 		myObjects.mySceneObjects.push_back(aSystem);
+		myObjects.mySceneObjects.back()->myEntity = aEntity;
 		if (!myRegistry.any_of<TransformComponent>(aEntity))
 		{
 			myRegistry.emplace<TransformComponent>(aEntity);
