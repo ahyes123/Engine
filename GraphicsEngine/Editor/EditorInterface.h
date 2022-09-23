@@ -23,5 +23,7 @@ private:
 	static entt::entity selectedEntity;
 	static bool EditorGuizmo(entt::entity aObjectMatrix);
 	static void DragAndDropHierchy(const int& aIndex);
-	static void ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObectVector);
+	static void ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector);
+	static void DragAndDrop(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector);
+	static bool HasConnection(std::shared_ptr<SceneObject> aFirstObject, std::shared_ptr<SceneObject> aSecondObject);
 };

@@ -819,34 +819,35 @@ void EditorInterface::DragAndDropHierchy(const int& aIndex)
 	{
 		if (InputHandler::GetKeyIsHeld('M'))
 			SelectedObjects.push_back(object);
-		if (ImGui::BeginDragDropSource())
-		{
-			if (!InputHandler::GetKeyIsHeld('M'))
-				SelectedObjects.push_back(object);
-			ImGui::SetDragDropPayload("ENTITY", &SelectedObjects, sizeof(std::vector<std::shared_ptr<SceneObject>>));
-			ImGui::EndDragDropSource();
-		}
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
-			{
-				std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
-				auto parent = object;
-				for (size_t i = 0; i < child.size(); i++)
-				{
-					if (child[i] != object)
-					{
-						if (child[i]->myParent)
-							if (child[i]->myParent->myChildren.size() > 0)
-								child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
-									child[i]->myParent->myChildren.end(), child[i]));
-						parent->myChildren.push_back(child[i]);
-						child[i]->myParent = parent;
-					}
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
+		DragAndDrop(object, SelectedObjects);
+		//if (ImGui::BeginDragDropSource())
+		//{
+		//	if (!InputHandler::GetKeyIsHeld('M'))
+		//		SelectedObjects.push_back(object);
+		//	ImGui::SetDragDropPayload("ENTITY", &SelectedObjects, sizeof(std::vector<std::shared_ptr<SceneObject>>));
+		//	ImGui::EndDragDropSource();
+		//}
+		//if (ImGui::BeginDragDropTarget())
+		//{
+		//	if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+		//	{
+		//		std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+		//		auto parent = object;
+		//		for (size_t i = 0; i < child.size(); i++)
+		//		{
+		//			if (child[i] != object)
+		//			{
+		//				if (child[i]->myParent)
+		//					if (child[i]->myParent->myChildren.size() > 0)
+		//						child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+		//							child[i]->myParent->myChildren.end(), child[i]));
+		//				parent->myChildren.push_back(child[i]);
+		//				child[i]->myParent = parent;
+		//			}
+		//		}
+		//	}
+		//	ImGui::EndDragDropTarget();
+		//}
 		selectedEntity = object->myEntity;
 		selectedItem = aIndex;
 		ShowObjectChildren(object, SelectedObjects);
@@ -855,7 +856,7 @@ void EditorInterface::DragAndDropHierchy(const int& aIndex)
 	}
 }
 
-void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObectVector)
+void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector)
 {
 	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
 	bool removedObj = false;
@@ -866,42 +867,11 @@ void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, 
 			childName.string().c_str()))
 		{
 			if (InputHandler::GetKeyIsHeld('M'))
-				aObectVector.push_back(aObject->myChildren[j]);
-			if (ImGui::BeginDragDropSource())
-			{
-				if (!InputHandler::GetKeyIsHeld('M'))
-					aObectVector.push_back(aObject->myChildren[j]);
-				ImGui::SetDragDropPayload("ENTITY", &aObectVector,
-					sizeof(std::vector<std::shared_ptr<SceneObject>>));
-				ImGui::EndDragDropSource();
-			}
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
-				{
-					std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
-					auto parent = aObject->myChildren[j];
-					for (size_t i = 0; i < child.size(); i++)
-					{
-						if (child[i] != aObject)
-						{
-							if (child[i]->myParent)
-								if (child[i]->myParent->myChildren.size() > 0)
-								{
-									removedObj = true;
-									child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
-										child[i]->myParent->myChildren.end(), child[i]), child[i]->myParent->myChildren.end());
-								}
-							parent->myChildren.push_back(child[i]);
-							child[i]->myParent = parent;
-						}
-					}
-				}
-				ImGui::EndDragDropTarget();
-			}
+				aObjectVector.push_back(aObject->myChildren[j]);
+			DragAndDrop(aObject->myChildren[j], aObjectVector);
 			if (!removedObj)
 			{
-				ShowObjectChildren(aObject->myChildren[j], aObectVector);
+				ShowObjectChildren(aObject->myChildren[j], aObjectVector);
 				selectedEntity = aObject->myChildren[j]->myEntity;
 				selectedItem = j;
 				someSelected = true;
@@ -909,6 +879,60 @@ void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, 
 			ImGui::TreePop();
 		}
 	}
+}
+
+void EditorInterface::DragAndDrop(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector)
+{
+	if (ImGui::BeginDragDropSource())
+	{
+		if (!InputHandler::GetKeyIsHeld('M'))
+			aObjectVector.push_back(aObject);
+		ImGui::SetDragDropPayload("ENTITY", &aObjectVector,
+			sizeof(std::vector<std::shared_ptr<SceneObject>>));
+		ImGui::EndDragDropSource();
+	}
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
+		{
+			std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+			auto parent = aObject;
+			for (size_t i = 0; i < child.size(); i++)
+			{
+				if (!HasConnection(child[i], aObject))
+				{
+					if (child[i]->myParent)
+						if (child[i]->myParent->myChildren.size() > 0)
+						{
+							child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+								child[i]->myParent->myChildren.end(), child[i]), child[i]->myParent->myChildren.end());
+						}
+					parent->myChildren.push_back(child[i]);
+					child[i]->myParent = parent;
+				}
+			}
+		}
+		ImGui::EndDragDropTarget();
+	}
+}
+
+bool EditorInterface::HasConnection(std::shared_ptr<SceneObject> aFirstObject, std::shared_ptr<SceneObject> aSecondObject)
+{
+	if (aFirstObject == aSecondObject)
+		return true;
+	std::vector<std::shared_ptr<SceneObject>> checkObjects;
+	while (aFirstObject->myChildren.size() > 0)
+	{
+		for (size_t i = 0; i < aFirstObject->myChildren.size(); i++)
+		{
+			if (aFirstObject->myChildren[i] == aSecondObject)
+				return true;
+			checkObjects.push_back(aFirstObject->myChildren[i]);
+		}
+		if (checkObjects.size() > 0)
+			aFirstObject = checkObjects[0];
+	}
+	return false;
 }
 
 void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
