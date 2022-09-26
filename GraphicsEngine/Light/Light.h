@@ -12,7 +12,7 @@ class Light : public SceneObject
 public:
 	struct LightBufferData
 	{
-		Matrix4x4f LightView;
+		Matrix4x4f LightView[6];
 		Matrix4x4f LightProjection;
 
 		Vector3f Color;
@@ -35,17 +35,18 @@ public:
 	};
 
 protected:
-	std::unique_ptr<DepthStencil> myShadowMap;
 
 public:
+	std::shared_ptr<DepthStencil> myShadowMap;
+	std::shared_ptr<DepthStencil> myExtraShadowMaps[5];
 	LightBufferData myLightBufferData;
 
 	virtual ~Light() override = default;
 	virtual void Init(Vector3f aColor, float anIntensity);
 	virtual void SetAsResource(ComPtr<ID3D11Buffer> aLightBuffer) = 0;
 
-	void ClearShadowMap();
-	void SetShadowMapAsDepth();
+	void ClearShadowMap(unsigned aIndex);
+	void SetShadowMapAsDepth(unsigned aIndex);
 	void SetShadowMapAsResource(int aSlot);
 
 	FORCEINLINE Vector3f GetColor() const { return myLightBufferData.Color; }

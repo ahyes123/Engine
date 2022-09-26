@@ -2,7 +2,7 @@ SamplerState pointClampSampler : register(s1);
 
 struct LightData
 {
-	float4x4 View;
+	float4x4 View[6];
 	float4x4 Projection;
 
 	float3 Color;
@@ -30,3 +30,10 @@ cbuffer LightBuffer : register(b3)
 }
 
 Texture2D dirLightShadowMap : register(t20);
+Texture2D spotLightShadowMap : register(t21);
+Texture2D pointLightShadowMap1 : register(t22);
+Texture2D pointLightShadowMap2 : register(t23);
+Texture2D pointLightShadowMap3 : register(t24);
+Texture2D pointLightShadowMap4 : register(t25);
+Texture2D pointLightShadowMap5 : register(t26);
+Texture2D pointLightShadowMap6 : register(t27);

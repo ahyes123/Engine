@@ -246,6 +246,18 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 #endif
 	myGBuffer->SetAsResource(0);
 	aDirectionalLight->SetShadowMapAsResource(20);
+	for(auto& light : aLightList)
+	{
+		switch (light->myLightBufferData.LightType)
+		{
+		case 2:
+			light->SetShadowMapAsResource(21);            
+			break;
+		case 1:
+			light->SetShadowMapAsResource(22);
+			break;
+		}
+	}
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
 	DX11::Context->Draw(3, 0);
 	//Viewport

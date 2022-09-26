@@ -73,10 +73,10 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	Editor::LoadSettings();
 	ComponentHandler::Init();
 
-	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 45, -45, 0 }, { 0, 1000, -500 });
+	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 90, -5, 0 }, { 0, 1000, -500 });
 	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
-	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0, 1 }, 10000, 1000, 1, { 50, 50, 0 });
-	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 50000, 1000, 1, 5, 50, { 0, -1, 0 }, { 0, 100, 0 });
+	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0, 1 }, 500000, 1000, 1, { 0, 500, 0 });
+	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 500000, 1000, 1, 1, 55, { 90, 0, 0 }, { 0, 600, 0 });
 
 	myLights.push_back(point);
 	myLights.push_back(spot);
@@ -274,29 +274,44 @@ void GraphicsEngine::RenderFrame()
 	ComponentHandler::Update();
 
 	ImGui::Begin("Lights");
-	//ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 1, 0, INT_MAX);
-	//ImGui::DragFloat("Intensity", &myLights[0]->myLightBufferData.Intensity, 1, 0, INT_MAX);
-	//ImGui::DragFloat3("Position", &myLights[0]->myLightBufferData.Position.x, 1, -INT_MAX, INT_MAX);
-	//ImGui::DragFloat3("Color", &myLights[0]->myLightBufferData.Color.x, 0.01f, 0, 1);
-	//ImGui::DragFloat("Inner rad", &myLights[0]->myLightBufferData.SpotInnerRadius, 1, 0, INT_MAX);
-	//ImGui::DragFloat("Outer rad", &myLights[0]->myLightBufferData.SpotOuterRadius, 1, 0, INT_MAX);
-	//ImGui::DragFloat3("Direction", &myLights[0]->myLightBufferData.Direction.x, 0.01f, -1, 1);
-	ImGui::DragFloat3("Position", &myDirectionalLight->GetTransform().GetPositionMutable().x, 1, -INT_MAX, INT_MAX);
-	ImGui::DragFloat3("Direction", &myDirectionalLight->myLightBufferData.Direction.x, 0.01f, -1, 1);
+	ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 10, 0, INT_MAX);
+	ImGui::DragFloat("Intensity", &myLights[0]->myLightBufferData.Intensity, 100, 0, INT_MAX);
+	ImGui::DragFloat3("Position", &myLights[0]->myLightBufferData.Position.x, 10, -INT_MAX, INT_MAX);
+	ImGui::DragFloat3("Color", &myLights[0]->myLightBufferData.Color.x, 0.01f, 0, 1);
+	//ImGui::DragFloat("Inner rad", &myLights[1]->myLightBufferData.SpotInnerRadius, 1, 0, INT_MAX);
+	//ImGui::DragFloat("Outer rad", &myLights[1]->myLightBufferData.SpotOuterRadius, 1, 0, INT_MAX);
+	//ImGui::DragFloat3("Direction", &myLights[1]->myLightBufferData.Direction.x, 0.01f, -1, 1);
+	//ImGui::DragFloat3("Position", &myDirectionalLight->GetTransform().GetPositionMutable().x, 1, -INT_MAX, INT_MAX);
+	//ImGui::DragFloat3("Direction", &myDirectionalLight->myLightBufferData.Direction.x, 0.01f, -1, 1);
 	ImGui::End();
 
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
 	DX11::Context->ClearRenderTargetView(GBuffer::GetVPRTV().Get(), &ourClearColor[0]);
-	myDeferredRenderer.ClearGBuffer();
-	myDirectionalLight->ClearShadowMap();
-	myDirectionalLight->SetShadowMapAsDepth();
 
 	DX11::SetViewPort(2048.f, 2048.f);
+	RenderStateManager::SetSamplerState(RenderStateManager::SamplerState::SS_PointClamp, 1);
+	myDeferredRenderer.ClearGBuffer();
 
+	LightAssetHandler::Update();
+
+	myDirectionalLight->ClearShadowMap(0);
+	myDirectionalLight->SetShadowMapAsDepth(0);
 	myShadowRenderer.Render(myDirectionalLight, mdlInstancesToRender);
+
+	myLights[1]->ClearShadowMap(0);
+	myLights[1]->SetShadowMapAsDepth(0);
+	myShadowRenderer.Render(myLights[1], mdlInstancesToRender);
+
+	for(int i = 0; i < 6; i++)
+	{
+		myLights[0]->ClearShadowMap(i);
+		myLights[0]->SetShadowMapAsDepth(i);
+		myShadowRenderer.RenderPoint(myLights[0], mdlInstancesToRender, i);
+	}
 
 	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left),
 		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));
+	RenderStateManager::ResetStates();
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);

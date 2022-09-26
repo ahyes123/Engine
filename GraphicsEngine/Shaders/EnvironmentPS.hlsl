@@ -17,7 +17,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 	DeferredPixelOutput result;
 
 	const float4 albedo = albedoTexture.Sample(defaultSampler, input.UV);
-	if(albedo.a == 0)
+	if (albedo.a == 0)
 	{
 		discard;
 		result.Color = float4(0, 0, 0, 0);
@@ -52,21 +52,21 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 
 	if (LB_DirectionalLight.CastShadows)
 	{
-		const float4 worldToLightView = mul(LB_DirectionalLight.View, worldPosition);
+		const float4 worldToLightView = mul(LB_DirectionalLight.View[0], worldPosition);
 		const float4 lightViewToLightProj = mul(LB_DirectionalLight.Projection, worldToLightView);
 
 		float2 projectedTexCoord;
 		projectedTexCoord.x = lightViewToLightProj.x / lightViewToLightProj.w / 2.0f + 0.5f;
 		projectedTexCoord.y = -lightViewToLightProj.y / lightViewToLightProj.w / 2.0f + 0.5f;
 
-		if(saturate(projectedTexCoord.x) == projectedTexCoord.x && saturate(projectedTexCoord.y) == projectedTexCoord.y)
+		if (saturate(projectedTexCoord.x) == projectedTexCoord.x && saturate(projectedTexCoord.y) == projectedTexCoord.y)
 		{
 			const float shadowBias = 0.0005f;
 			const float shadow = 0.0f;
 			const float viewDepth = (lightViewToLightProj.z / lightViewToLightProj.w) - shadowBias;
 			const float lightDepth = dirLightShadowMap.Sample(pointClampSampler, projectedTexCoord).r;
 
-			if(lightDepth < viewDepth)
+			if (lightDepth < viewDepth)
 			{
 				directLighting *= shadow;
 			}
@@ -94,12 +94,85 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 		{
 			pointLight += EvaluatePointLight(diffuseColor, specularColor, normal, material.g, Light.Color,
 				Light.Intensity, Light.Range, Light.Position, toEye, worldPosition);
+			for (int i = 0; i < 6; i++)
+			{
+				if (Light.CastShadows)
+				{
+					const float4 worldToLightView = mul(Light.View[i], worldPosition);
+					const float4 lightViewToLightProj = mul(Light.Projection, worldToLightView);
+
+					float2 projectedTexCoord;
+					projectedTexCoord.x = lightViewToLightProj.x / lightViewToLightProj.w / 2.0f + 0.5f;
+					projectedTexCoord.y = -lightViewToLightProj.y / lightViewToLightProj.w / 2.0f + 0.5f;
+
+					if (saturate(projectedTexCoord.x) == projectedTexCoord.x && saturate(projectedTexCoord.y) == projectedTexCoord.y)
+					{
+						const float shadowBias = 0.0005f;
+						const float shadow = 0.0f;
+						const float viewDepth = (lightViewToLightProj.z / lightViewToLightProj.w) - shadowBias;
+						float lightDepth = 0;
+
+						switch (i)
+						{
+							case 0:
+								lightDepth = pointLightShadowMap1.Sample(pointClampSampler, projectedTexCoord).r;
+								break;
+							case 1:
+								lightDepth = pointLightShadowMap2.Sample(pointClampSampler, projectedTexCoord).r;
+								break;
+							case 2:
+								lightDepth = pointLightShadowMap3.Sample(pointClampSampler, projectedTexCoord).r;
+								break;
+							case 3:
+								lightDepth = pointLightShadowMap4.Sample(pointClampSampler, projectedTexCoord).r;
+								break;
+							case 4:
+								lightDepth = pointLightShadowMap5.Sample(pointClampSampler, projectedTexCoord).r;
+								break;
+							case 5:
+								lightDepth = pointLightShadowMap6.Sample(pointClampSampler, projectedTexCoord).r;
+								break;
+						}
+
+						if (lightDepth < viewDepth)
+						{
+							pointLight *= shadow;
+						}
+					}
+				}
+			}
 			break;
 		}
 		case 2:
 		{
 			spotLight += EvaluateSpotLight(diffuseColor, specularColor, normal, material.g, Light.Color,
 				Light.Intensity, Light.Range, Light.Position, Light.Direction, Light.SpotOuterRadius, Light.SpotInnerRadius, toEye, worldPosition);
+			if (Light.CastShadows)
+			{
+				const float4 worldToLightView = mul(Light.View[0], worldPosition);
+				const float4 lightViewToLightProj = mul(Light.Projection, worldToLightView);
+
+				float2 projectedTexCoord;
+				projectedTexCoord.x = lightViewToLightProj.x / lightViewToLightProj.w / 2.0f + 0.5f;
+				projectedTexCoord.y = -lightViewToLightProj.y / lightViewToLightProj.w / 2.0f + 0.5f;
+
+				if (saturate(projectedTexCoord.x) == projectedTexCoord.x && saturate(projectedTexCoord.y) == projectedTexCoord.y)
+				{
+					const float shadowBias = 0.0005f;
+					const float shadow = 0.0f;
+					const float viewDepth = (lightViewToLightProj.z / lightViewToLightProj.w) - shadowBias;
+					const float lightDepth = spotLightShadowMap.Sample(pointClampSampler, projectedTexCoord).r;
+
+					if (lightDepth < viewDepth)
+					{
+						spotLight *= shadow;
+					}
+
+					//result.Color.rgb = dif;
+					//result.Color.a = 1;
+					//return result;
+				}
+			}
 			break;
 		}
 		case 3:

@@ -71,12 +71,12 @@ std::unique_ptr<GBuffer> TextureAssetHandler::CreateGBuffer(RECT aWindowSize)
 	return gbuffer;
 }
 
-std::unique_ptr<DepthStencil> TextureAssetHandler::CreateDepthStencil(const std::wstring& aName, size_t aWidth,
-	size_t aHeight)
+std::shared_ptr<DepthStencil> TextureAssetHandler::CreateDepthStencil(const std::wstring& aName, size_t aWidth,
+																	  size_t aHeight)
 {
 	HRESULT result = S_FALSE;
 
-	std::unique_ptr<DepthStencil> output = std::make_unique<DepthStencil>();
+	std::shared_ptr<DepthStencil> output = std::make_shared<DepthStencil>();
 	output->myName = aName;
 
 	D3D11_TEXTURE2D_DESC desc = { 0 };

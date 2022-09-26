@@ -22,6 +22,7 @@ class TextureAssetHandler
 
 		static std::unique_ptr<GBuffer> CreateGBuffer(RECT aWindowSize);
 
-		static std::unique_ptr<DepthStencil> CreateDepthStencil(const std::wstring& aName, size_t aWidth, size_t aHeight);
+		static std::shared_ptr<DepthStencil> CreateDepthStencil(const std::wstring& aName, size_t aWidth,
+																size_t aHeight);
 };
 
