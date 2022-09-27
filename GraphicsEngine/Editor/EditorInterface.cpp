@@ -16,6 +16,7 @@
 #include "../Particle/ParticleAssetHandler.h"
 #include "../Text/TextFactory.h"
 #include <UtilityFunctions.hpp>
+#include <queue>
 
 using std::filesystem::directory_iterator;
 using namespace CommonUtilities;
@@ -414,17 +415,24 @@ void EditorInterface::MenuBar()
 			ImGui::End();
 		}
 		static bool showUpgift = false;
-		if (ImGui::BeginMenu("U3 Read Me"))
+		if (ImGui::BeginMenu("U4 Read Me"))
 		{
 			showUpgift = true;
 			ImGui::EndMenu();
 		}
 		if (showUpgift)
 		{
-			ImGui::Begin("U3");
-			ImGui::Text("Du kan ctrl + z for att angra namn, spawn av objekt och bort tagandet av objekt och du kan undo allt detta");
+			ImGui::Begin("U4");
+			ImGui::Text("Tjena! Du kan gora objekten till foralderlost genom att dra de till 'Scene' objektet.");
 			ImGui::NewLine();
-			ImGui::Text("Du kan aven byta ut textur attributerna enskillt genom componentens combo eller genom drag and drop");
+			ImGui::Text("Nar du haller in 'M' sa har du multi select igang och nar du slapper sa forsvinner det du selectat");
+			ImGui::NewLine();
+			ImGui::Text("OBS: Objekt laggs bara till nar man klickar sa att de blir selectade sa det gar inte att multiselecta pa ett redan oppet item");
+			ImGui::Text("Du kan dock dubbelklicka pa det for att oppna det igen, tror det bara ar sa tree nodes funkar men kan ha fel men jag skiver ut i konsol fonstret nar du lagger till/tar bort for fortydligande");
+
+			//ImGui::Text("Du kan ctrl + z for att angra namn, spawn av objekt och bort tagandet av objekt och du kan undo allt detta");
+			//ImGui::NewLine();
+			//ImGui::Text("Du kan aven byta ut textur attributerna enskillt genom componentens combo eller genom drag and drop");
 			if (InputHandler::GetKeyIsPressed(VK_ESCAPE))
 			{
 				showUpgift = false;
@@ -794,23 +802,38 @@ void EditorInterface::DragAndDropHierchy(const int& aIndex)
 	std::shared_ptr<SceneObject> object = scene->GetSceneObjects()[aIndex];
 	std::filesystem::path objName = object->GetName();
 	static std::vector<std::shared_ptr<SceneObject>> SelectedObjects;
+
+	static bool acceptedDragDrop = false;
+
 	if (!InputHandler::GetKeyIsHeld('M'))
 	{
-		SelectedObjects.clear();
+		if (SelectedObjects.size() > 0)
+		{
+			std::cout << "Cleared " << std::endl;
+			SelectedObjects.clear();
+		}
 	}
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
 		{
-			std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
-			for (size_t i = 0; i < child.size(); i++)
+			if (!acceptedDragDrop)
 			{
-				if (child[i]->myParent)
-					if (child[i]->myParent->myChildren.size() > 0)
-						child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
-							child[i]->myParent->myChildren.end(), child[i]));
-				child[i]->myParent = nullptr;
+				acceptedDragDrop = true;
+				std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+				for (size_t i = 0; i < child.size(); i++)
+				{
+					if (child[i]->myParent)
+						if (child[i]->myParent->myChildren.size() > 0)
+							child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+								child[i]->myParent->myChildren.end(), child[i]));
+					child[i]->myParent = nullptr;
+				}
 			}
+		}
+		else
+		{
+			acceptedDragDrop = false;
 		}
 		ImGui::EndDragDropTarget();
 	}
@@ -818,70 +841,51 @@ void EditorInterface::DragAndDropHierchy(const int& aIndex)
 	if (ImGui::TreeNodeEx((void*)object->GetId(), ImGuiTreeNodeFlags_None, objName.string().c_str()))
 	{
 		if (InputHandler::GetKeyIsHeld('M'))
-			SelectedObjects.push_back(object);
-		DragAndDrop(object, SelectedObjects);
-		//if (ImGui::BeginDragDropSource())
-		//{
-		//	if (!InputHandler::GetKeyIsHeld('M'))
-		//		SelectedObjects.push_back(object);
-		//	ImGui::SetDragDropPayload("ENTITY", &SelectedObjects, sizeof(std::vector<std::shared_ptr<SceneObject>>));
-		//	ImGui::EndDragDropSource();
-		//}
-		//if (ImGui::BeginDragDropTarget())
-		//{
-		//	if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
-		//	{
-		//		std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
-		//		auto parent = object;
-		//		for (size_t i = 0; i < child.size(); i++)
-		//		{
-		//			if (child[i] != object)
-		//			{
-		//				if (child[i]->myParent)
-		//					if (child[i]->myParent->myChildren.size() > 0)
-		//						child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
-		//							child[i]->myParent->myChildren.end(), child[i]));
-		//				parent->myChildren.push_back(child[i]);
-		//				child[i]->myParent = parent;
-		//			}
-		//		}
-		//	}
-		//	ImGui::EndDragDropTarget();
-		//}
+			if (ImGui::IsItemClicked())
+			{
+				std::cout << "Added Object: " << objName.string() << std::endl;
+				SelectedObjects.push_back(object);
+			}
+		DragAndDrop(object, SelectedObjects, acceptedDragDrop);
 		selectedEntity = object->myEntity;
 		selectedItem = aIndex;
-		ShowObjectChildren(object, SelectedObjects);
+		ShowObjectChildren(object, SelectedObjects, acceptedDragDrop);
 		ImGui::TreePop();
 		someSelected = true;
 	}
 }
 
-void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector)
+void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector, bool& aAcceptedDragDrop)
 {
 	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
 	bool removedObj = false;
+
 	for (size_t j = 0; j < aObject->myChildren.size(); j++)
 	{
-		std::filesystem::path childName = aObject->myChildren[j]->GetName();
-		if (ImGui::TreeNodeEx((void*)aObject->myChildren[j]->GetId(), ImGuiTreeNodeFlags_None,
+		std::shared_ptr<SceneObject> objectsChild = aObject->myChildren[j];
+		std::filesystem::path childName = objectsChild->GetName();
+		if (ImGui::TreeNodeEx((void*)objectsChild->GetId(), ImGuiTreeNodeFlags_None,
 			childName.string().c_str()))
 		{
 			if (InputHandler::GetKeyIsHeld('M'))
-				aObjectVector.push_back(aObject->myChildren[j]);
-			DragAndDrop(aObject->myChildren[j], aObjectVector);
-			if (!removedObj)
-			{
-				ShowObjectChildren(aObject->myChildren[j], aObjectVector);
-				selectedEntity = aObject->myChildren[j]->myEntity;
-				selectedItem = j;
-				someSelected = true;
-			}
+				if (ImGui::IsItemClicked())
+				{
+					std::cout << "Added Object: " << childName.string() << std::endl;
+					aObjectVector.push_back(objectsChild);
+				}
+			DragAndDrop(objectsChild, aObjectVector, aAcceptedDragDrop);
+
+			ShowObjectChildren(objectsChild, aObjectVector, aAcceptedDragDrop);
+			selectedEntity = objectsChild->myEntity;
+			selectedItem = j;
+			someSelected = true;
+
 			ImGui::TreePop();
 		}
 	}
 }
 
-void EditorInterface::DragAndDrop(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector)
+void EditorInterface::DragAndDrop(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector, bool& aAcceptedDragDrop)
 {
 	if (ImGui::BeginDragDropSource())
 	{
@@ -895,22 +899,30 @@ void EditorInterface::DragAndDrop(std::shared_ptr<SceneObject>& aObject, std::ve
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY"))
 		{
-			std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
-			auto parent = aObject;
-			for (size_t i = 0; i < child.size(); i++)
+			if (!aAcceptedDragDrop)
 			{
-				if (!HasConnection(child[i], aObject))
+				aAcceptedDragDrop = true;
+				std::vector<std::shared_ptr<SceneObject>> child = *(std::vector<std::shared_ptr<SceneObject>>*)payload->Data;
+				auto parent = aObject;
+				for (size_t i = 0; i < child.size(); i++)
 				{
-					if (child[i]->myParent)
-						if (child[i]->myParent->myChildren.size() > 0)
-						{
-							child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
-								child[i]->myParent->myChildren.end(), child[i]), child[i]->myParent->myChildren.end());
-						}
-					parent->myChildren.push_back(child[i]);
-					child[i]->myParent = parent;
+					if (!HasConnection(child[i], parent))
+					{
+						if (child[i]->myParent)
+							if (child[i]->myParent->myChildren.size() > 0)
+							{
+								child[i]->myParent->myChildren.erase(std::remove(child[i]->myParent->myChildren.begin(),
+									child[i]->myParent->myChildren.end(), child[i]), child[i]->myParent->myChildren.end());
+							}
+						parent->myChildren.push_back(child[i]);
+						child[i]->myParent = parent;
+					}
 				}
 			}
+		}
+		else
+		{
+			aAcceptedDragDrop = false;
 		}
 		ImGui::EndDragDropTarget();
 	}
@@ -920,17 +932,20 @@ bool EditorInterface::HasConnection(std::shared_ptr<SceneObject> aFirstObject, s
 {
 	if (aFirstObject == aSecondObject)
 		return true;
-	std::vector<std::shared_ptr<SceneObject>> checkObjects;
+	std::queue<std::shared_ptr<SceneObject>> checkObjects;
 	while (aFirstObject->myChildren.size() > 0)
 	{
 		for (size_t i = 0; i < aFirstObject->myChildren.size(); i++)
 		{
 			if (aFirstObject->myChildren[i] == aSecondObject)
 				return true;
-			checkObjects.push_back(aFirstObject->myChildren[i]);
+			checkObjects.push(aFirstObject->myChildren[i]);
 		}
-		if (checkObjects.size() > 0)
-			aFirstObject = checkObjects[0];
+		if (!checkObjects.empty())
+		{
+			aFirstObject = checkObjects.front();
+			checkObjects.pop();
+		}
 	}
 	return false;
 }
