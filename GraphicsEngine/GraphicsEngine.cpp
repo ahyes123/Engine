@@ -75,7 +75,7 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 
 	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 90, -5, 0 }, { 0, 1000, -500 });
 	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
-	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0, 1 }, 500000, 1000, 1, { 0, 500, 0 });
+	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0.5f, 1 }, 5000000, 1000, 1, { 0, 500, 0 });
 	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 500000, 1000, 1, 1, 55, { 90, 0, 0 }, { 0, 600, 0 });
 
 	myLights.push_back(point);
@@ -313,6 +313,7 @@ void GraphicsEngine::RenderFrame()
 		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));
 	RenderStateManager::ResetStates();
 
+	RenderStateManager::SetSamplerState(RenderStateManager::SamplerState::SS_Default, 1);
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());

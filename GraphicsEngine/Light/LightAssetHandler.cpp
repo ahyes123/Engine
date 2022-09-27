@@ -27,16 +27,17 @@ void LightAssetHandler::Update()
 		}
 		case 1:
 		{
+			transform.SetRotation({ 0, 0, 0 });
 			light->myLightBufferData.LightView[0] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
-			transform.SetRotation({ 0, 90, 0 });
-			light->myLightBufferData.LightView[1] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 			transform.SetRotation({ 0, 180, 0 });
+			light->myLightBufferData.LightView[1] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
+			transform.SetRotation({ 0, 90, 0 });
 			light->myLightBufferData.LightView[2] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 			transform.SetRotation({ 0, 270, 0 });
 			light->myLightBufferData.LightView[3] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
-			transform.SetRotation({ 90, 0, 0 });
-			light->myLightBufferData.LightView[4] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 			transform.SetRotation({ 270, 0, 0 });
+			light->myLightBufferData.LightView[4] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
+			transform.SetRotation({ 90, 0, 0 });
 			light->myLightBufferData.LightView[5] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 			break;
 		}
@@ -126,24 +127,25 @@ std::shared_ptr<PointLight> LightAssetHandler::CreatePointLight(Vector3f aColor,
 	lightProjection(1, 1) = myXScale;
 	lightProjection(2, 2) = myYScale;
 	lightProjection(3, 3) = Q;
-	lightProjection(3, 4) = 1 / Q;
 	lightProjection(4, 3) = -Q * nearPlane;
+	lightProjection(3, 4) = 1.f / Q;
 	lightProjection(4, 4) = 0;
 
 	result->myLightBufferData.LightProjection = lightProjection;
 
 	Transform transform = result->GetTransform();
 
+	transform.SetRotation({ 0, 0, 0 });
 	result->myLightBufferData.LightView[0] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
-	transform.SetRotation({ 0, 90, 0 });
-	result->myLightBufferData.LightView[1] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 	transform.SetRotation({ 0, 180, 0 });
+	result->myLightBufferData.LightView[1] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
+	transform.SetRotation({ 0, 90, 0 });
 	result->myLightBufferData.LightView[2] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 	transform.SetRotation({ 0, 270, 0 });
 	result->myLightBufferData.LightView[3] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
-	transform.SetRotation({ 90, 0, 0 });
-	result->myLightBufferData.LightView[4] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 	transform.SetRotation({ 270, 0, 0 });
+	result->myLightBufferData.LightView[4] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
+	transform.SetRotation({ 90, 0, 0 });
 	result->myLightBufferData.LightView[5] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 
 	result->myLightBufferData.CastShadows = true;

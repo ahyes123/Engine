@@ -92,11 +92,14 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 			break;
 		case 1:
 		{
+			bool evaluatePointLight = false;
+
 			pointLight += EvaluatePointLight(diffuseColor, specularColor, normal, material.g, Light.Color,
-				Light.Intensity, Light.Range, Light.Position, toEye, worldPosition);
-			for (int i = 0; i < 6; i++)
+				Light.Intensity, Light.Range, Light.Position, toEye, worldPosition.xyz);
+
+			if (Light.CastShadows)
 			{
-				if (Light.CastShadows)
+				for (int i = 0; i < 6; i++)
 				{
 					const float4 worldToLightView = mul(Light.View[i], worldPosition);
 					const float4 lightViewToLightProj = mul(Light.Projection, worldToLightView);
@@ -110,29 +113,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 						const float shadowBias = 0.0005f;
 						const float shadow = 0.0f;
 						const float viewDepth = (lightViewToLightProj.z / lightViewToLightProj.w) - shadowBias;
-						float lightDepth = 0;
-
-						switch (i)
-						{
-							case 0:
-								lightDepth = pointLightShadowMap1.Sample(pointClampSampler, projectedTexCoord).r;
-								break;
-							case 1:
-								lightDepth = pointLightShadowMap2.Sample(pointClampSampler, projectedTexCoord).r;
-								break;
-							case 2:
-								lightDepth = pointLightShadowMap3.Sample(pointClampSampler, projectedTexCoord).r;
-								break;
-							case 3:
-								lightDepth = pointLightShadowMap4.Sample(pointClampSampler, projectedTexCoord).r;
-								break;
-							case 4:
-								lightDepth = pointLightShadowMap5.Sample(pointClampSampler, projectedTexCoord).r;
-								break;
-							case 5:
-								lightDepth = pointLightShadowMap6.Sample(pointClampSampler, projectedTexCoord).r;
-								break;
-						}
+						float lightDepth = pointLightShadowMap[i].Sample(pointClampSampler, projectedTexCoord).r;
 
 						if (lightDepth < viewDepth)
 						{

@@ -109,6 +109,7 @@ void Editor::EditorActionHandler()
 				if (reg.any_of<TextComponent>(action.oldEntity))
 					SceneHandler::GetActiveScene()->RemoveText(reg.get<TextComponent>(action.oldEntity).myText);
 			}
+			AddUndoAction(action);
 			myRedoActions.erase(myRedoActions.begin() + myRedoActions.size() - 1);
 		}
 	}
