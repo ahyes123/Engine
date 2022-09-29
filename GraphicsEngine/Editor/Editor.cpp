@@ -18,11 +18,13 @@ using std::filesystem::directory_iterator;
 std::vector<Editor::EditorActions> Editor::myUndoActions;
 std::vector<Editor::EditorActions> Editor::myRedoActions;
 
-void Editor::AddUndoAction(const EditorActions& anAction)
+void Editor::AddUndoAction(const EditorActions& anAction, const bool& aNewAction)
 {
 	myUndoActions.push_back(anAction);
 	if (myUndoActions.size() >= 15)
 		myUndoActions.erase(myUndoActions.begin() + 0);
+	if (aNewAction)
+		myRedoActions.clear();
 }
 
 void Editor::AddRedoActoin(const EditorActions& anAction)
@@ -109,7 +111,7 @@ void Editor::EditorActionHandler()
 				if (reg.any_of<TextComponent>(action.oldEntity))
 					SceneHandler::GetActiveScene()->RemoveText(reg.get<TextComponent>(action.oldEntity).myText);
 			}
-			AddUndoAction(action);
+			AddUndoAction(action, false);
 			myRedoActions.erase(myRedoActions.begin() + myRedoActions.size() - 1);
 		}
 	}

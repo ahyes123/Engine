@@ -23,7 +23,7 @@ public:
 		std::wstring beforeName;
 		entt::entity oldEntity;
 	};
-	static void AddUndoAction(const EditorActions& anAction);
+	static void AddUndoAction(const EditorActions& anAction, const bool& aNewAction = true);
 	static void AddRedoActoin(const EditorActions& anAction);
 	static void EditorActionHandler();
 	static void SaveCurrentScene();
