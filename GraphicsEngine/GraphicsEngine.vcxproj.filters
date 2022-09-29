@@ -199,7 +199,11 @@
       <Filter>Light</Filter>
     </ClInclude>
     <ClInclude Include="Texture\DepthStencil.h" />
-    <ClInclude Include="Engine\ShadowRenderer.h" />
+    <ClInclude Include="Engine\ShadowRenderer.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\PostProcessRenderer.h" />
+    <ClInclude Include="Engine\RenderTarget.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GraphicsEngine.pch.cpp" />
@@ -307,7 +311,13 @@
       <Filter>Light</Filter>
     </ClCompile>
     <ClCompile Include="Texture\DepthStencil.cpp" />
-    <ClCompile Include="Engine\ShadowRenderer.cpp" />
+    <ClCompile Include="Engine\ShadowRenderer.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\PostProcessRenderer.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\RenderTarget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -338,6 +348,18 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\EnvironmentPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PP_Luminance.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PP_Copy.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PP_Gaussian.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PP_Bloom.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -161,15 +161,13 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 		}
 	}
 
-	result.Color.rgb = LinearToGamma(directLighting + ambientLighting + pointLight + spotLight);
+	result.Color.rgb = directLighting + ambientLighting + pointLight + spotLight + (emissive * emissiveStr * albedo);
 	result.Color.a = 1;
 
 #ifdef _DEBUG
 	switch (FB_RenderMode)
 	{
 	case 0: //Default
-		result.Color.rgb = LinearToGamma(directLighting + ambientLighting + pointLight + spotLight);
-		result.Color.a = 1;
 		break;
 	case 1: //UV1
 		result.Color = float4(input.UV.x, input.UV.y, 0, 1);

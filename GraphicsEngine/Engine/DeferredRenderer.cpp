@@ -238,7 +238,7 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 
 	//Viewport
 #ifdef _DEBUG
-	DX11::Context->OMSetRenderTargets(1, myGBuffer->GetVPRTV().GetAddressOf(), DX11::DepthBuffer.Get());
+	GraphicsEngine::myIntermediateTargetA->SetAsTarget();
 #endif
 	//Normal
 	//DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());

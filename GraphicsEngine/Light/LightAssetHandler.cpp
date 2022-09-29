@@ -78,7 +78,7 @@ std::shared_ptr<DirectionalLight> LightAssetHandler::CreateDirectionalLight(Vect
 
 	myDirectionalLight->myShadowMap = TextureAssetHandler::CreateDepthStencil(L"shadow", resolution.x, resolution.y);
 
-	myDirectionalLight->myLightBufferData.CastShadows = false;
+	myDirectionalLight->myLightBufferData.CastShadows = true;
 
 	return myDirectionalLight;
 }
@@ -148,7 +148,7 @@ std::shared_ptr<PointLight> LightAssetHandler::CreatePointLight(Vector3f aColor,
 	transform.SetRotation({ 90, 0, 0 });
 	result->myLightBufferData.LightView[5] = Matrix4x4f::GetFastInverse(transform.GetMatrix());
 
-	result->myLightBufferData.CastShadows = true;
+	result->myLightBufferData.CastShadows = false;
 
 	result->myShadowMap = TextureAssetHandler::CreateDepthStencil(L"point", resolution.x, resolution.y);
 	for (int i = 0; i < 5; i++)
@@ -201,7 +201,7 @@ std::shared_ptr<SpotLight> LightAssetHandler::CreateSpotLight(Vector3f aColor, f
 
 	result->myLightBufferData.LightProjection = lightProjection;
 	result->myLightBufferData.LightView[0] = Matrix4x4f::GetFastInverse(result->GetTransform().GetMatrix());
-	result->myLightBufferData.CastShadows = false;
+	result->myLightBufferData.CastShadows = true;
 
 	result->myShadowMap = TextureAssetHandler::CreateDepthStencil(L"SpotShadow", resolution.x, resolution.y);
 

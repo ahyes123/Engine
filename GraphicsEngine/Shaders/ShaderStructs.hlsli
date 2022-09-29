@@ -85,3 +85,15 @@ struct DeferredPixelOutput
 {
 	float4 Color : SV_TARGET;
 };
+
+struct PostProcessVertexToPixel
+{
+	float4 Position : SV_POSITION;
+	float2 UV : TEXCOORD;
+};
+
+struct PostProcessPixelOutput
+{
+	float4 Color : SV_TARGET;
+
+};

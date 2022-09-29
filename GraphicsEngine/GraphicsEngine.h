@@ -2,6 +2,8 @@
 #include <memory>
 
 #include "DeferredRenderer.h"
+#include "PostProcessRenderer.h"
+#include "RenderTarget.h"
 #include "ShadowRenderer.h"
 #include "Engine/TextRenderer.h"
 #include "Engine/ForwardRenderer.h"
@@ -32,16 +34,20 @@ enum class RenderMode : unsigned int
 class GraphicsEngine
 {
 	SIZE myWindowSize{ 0,0 };
+
 	static HWND myWindowHandle;
 	static std::shared_ptr<Camera> myCamera;
+
 	ForwardRenderer myForwardRenderer;
 	DeferredRenderer myDeferredRenderer;
 	ShadowRenderer myShadowRenderer;
 	TextRenderer myTextRenderer;
 	ModelAssetHandler myModelAssetHandler;
+
 	std::shared_ptr<DirectionalLight> myDirectionalLight;
 	std::shared_ptr<EnvironmentLight> myEnvironmentLight;
 	std::vector<std::shared_ptr<Light>> myLights;
+
 	static RenderMode myRenderMode;
 	static RECT windowRect;
 	// Container window message pump.
@@ -50,7 +56,18 @@ class GraphicsEngine
 	static std::array<FLOAT, 4> ourClearColor;
 	static bool myAutoSave;
 	static bool myFileExists;
+
+	std::unique_ptr<RenderTarget> myIntermediateTargetB;
+	std::unique_ptr<RenderTarget> myHalfSizeTarget;
+	std::unique_ptr<RenderTarget> myQuarterSizeTarget;
+	std::unique_ptr<RenderTarget> myBlurTargetA;
+	std::unique_ptr<RenderTarget> myBlurTargetB;
+
+	PostProcessRenderer myPPRenderer;
+
 public:
+	static std::unique_ptr<RenderTarget> myIntermediateTargetA;
+
 	static bool myClearColorBlending;
 	static float myClearColorBlendFactor;
 	static std::array<std::array<FLOAT, 4>, 2> myClearColorPresets;

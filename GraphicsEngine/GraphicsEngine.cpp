@@ -18,6 +18,8 @@
 #include "Light/SpotLight.hpp"
 #include "imgui/imgui.h"
 #include <shellapi.h>
+
+#include "Texture/TextureAssetHandler.h"
 using namespace CommonUtilities;
 using std::filesystem::directory_iterator;
 
@@ -32,6 +34,7 @@ bool GraphicsEngine::myFileExists;
 float GraphicsEngine::myClearColorBlendFactor;
 std::string GraphicsEngine::myCurrentClearColorPreset;
 std::array<std::array<FLOAT, 4>, 2> GraphicsEngine::myClearColorPresets;
+std::unique_ptr<RenderTarget> GraphicsEngine::myIntermediateTargetA;
 
 bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	unsigned someWidth, unsigned someHeight,
@@ -75,7 +78,7 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 
 	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 90, -5, 0 }, { 0, 1000, -500 });
 	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
-	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0.5f, 1 }, 5000000, 1000, 1, { 0, 500, 0 });
+	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0.5f, 1 }, 500000, 1000, 1, { 300, 500, 0 });
 	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 500000, 1000, 1, 1, 55, { 90, 0, 0 }, { 0, 600, 0 });
 
 	myLights.push_back(point);
@@ -102,6 +105,20 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 
 	if (!myTextRenderer.Initialize())
 		return false;
+
+	if (!myPPRenderer.Initialize())
+		return false;
+
+	UINT windowX;
+	UINT windowY;
+	windowX = DX11::ClientRect.right - DX11::ClientRect.left;
+	windowY = DX11::ClientRect.bottom - DX11::ClientRect.top;
+	myIntermediateTargetA = TextureAssetHandler::CreateRenderTarget(windowX, windowY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	myIntermediateTargetB = TextureAssetHandler::CreateRenderTarget(windowX, windowY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	myHalfSizeTarget = TextureAssetHandler::CreateRenderTarget(windowX / 2, windowY / 2, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	myQuarterSizeTarget = TextureAssetHandler::CreateRenderTarget(windowX / 4, windowY / 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	myBlurTargetA = TextureAssetHandler::CreateRenderTarget(windowX / 4, windowY / 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	myBlurTargetB = TextureAssetHandler::CreateRenderTarget(windowX / 4, windowY / 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	return true;
 }
@@ -234,6 +251,13 @@ void GraphicsEngine::BeginFrame()
 {
 	// F1 - This is where we clear our buffers and start the DX frame.
 
+	myIntermediateTargetA->Clear();
+	myIntermediateTargetB->Clear();
+	myHalfSizeTarget->Clear();
+	myQuarterSizeTarget->Clear();
+	myBlurTargetA->Clear();
+	myBlurTargetB->Clear();
+
 	DX11::BeginFrame(ourClearColor);
 	RenderStateManager::ResetStates();
 }
@@ -326,6 +350,50 @@ void GraphicsEngine::RenderFrame()
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Additive);
 	myForwardRenderer.RenderParticles(camera, SceneHandler::GetActiveScene()->GetParticleSystems());
+
+	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
+	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
+	RenderStateManager::SetSamplerState(RenderStateManager::SamplerState::SS_Default, 1);
+
+	myIntermediateTargetB->SetAsTarget();
+	myIntermediateTargetA->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Luminance);
+
+	myHalfSizeTarget->SetAsTarget();
+	myIntermediateTargetB->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Copy);
+
+	myQuarterSizeTarget->SetAsTarget();
+	myHalfSizeTarget->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Copy);
+
+	myBlurTargetA->SetAsTarget();
+	myQuarterSizeTarget->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Gaussian);
+
+	myBlurTargetB->SetAsTarget();
+	myBlurTargetA->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Gaussian);
+
+	myQuarterSizeTarget->SetAsTarget();
+	myBlurTargetB->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Copy);
+
+	myHalfSizeTarget->SetAsTarget();
+	myQuarterSizeTarget->SetAsResource(30);
+	myPPRenderer.Render(PostProcessRenderer::PP_Copy);
+
+	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left),
+		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));
+
+	DX11::Context->OMSetRenderTargets(1, GBuffer::GetVPRTV().GetAddressOf(), DX11::DepthBuffer.Get());
+	myIntermediateTargetA->SetAsResource(30);
+	myHalfSizeTarget->SetAsResource(31);
+	myPPRenderer.Render(PostProcessRenderer::PP_Bloom);
+
+	myIntermediateTargetA->RemoveResource(30);
+	myHalfSizeTarget->RemoveResource(31);
+
 	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
 }
 

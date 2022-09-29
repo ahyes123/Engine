@@ -115,6 +115,17 @@ bool RenderStateManager::Initialize()
 		return false;
 	}
 
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+	result = DX11::Device->CreateSamplerState(&samplerDesc, mySamplerStates[SamplerState::SS_Wrap].GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return false;
+	}
+
 	D3D11_SAMPLER_DESC pointSampleDesc = {};
 	pointSampleDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 	pointSampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -130,6 +141,18 @@ bool RenderStateManager::Initialize()
 	{
 		return false;
 	}
+
+	pointSampleDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	pointSampleDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	pointSampleDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+	result = DX11::Device->CreateSamplerState(&pointSampleDesc, mySamplerStates[SamplerState::SS_PointWrap].GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return false;
+	}
+
 
 	DX11::Context->PSSetSamplers(0, 1, mySamplerStates[SamplerState::SS_Default].GetAddressOf());
 }
@@ -154,5 +177,7 @@ void RenderStateManager::ResetStates()
 	SetBlendState(BlendState::Opaque);
 	SetDepthStencilState(DepthStencilState::ReadWrite);
 	SetSamplerState(SamplerState::SS_Default, 0);
-	SetSamplerState(SamplerState::SS_PointClamp, 1);
+	SetSamplerState(SamplerState::SS_Wrap, 1);
+	SetSamplerState(SamplerState::SS_PointClamp, 2);
+	SetSamplerState(SamplerState::SS_PointWrap, 3);
 }

@@ -26,7 +26,9 @@ class RenderStateManager
 		enum class SamplerState
 		{
 			SS_Default,
-			SS_PointClamp
+			SS_PointClamp,
+			SS_Wrap,
+			SS_PointWrap
 		};
 
 		RenderStateManager() = default;

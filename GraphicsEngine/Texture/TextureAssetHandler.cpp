@@ -114,3 +114,45 @@ std::shared_ptr<DepthStencil> TextureAssetHandler::CreateDepthStencil(const std:
 
 	return output;
 }
+
+std::unique_ptr<RenderTarget> TextureAssetHandler::CreateRenderTarget(UINT aWidth, UINT aHeight, DXGI_FORMAT aFormat)
+{
+	std::unique_ptr<RenderTarget> renderTarget = std::make_unique<RenderTarget>();
+
+	D3D11_TEXTURE2D_DESC textureDesc = { 0 };
+	textureDesc.Width = aWidth;
+	textureDesc.Height = aHeight;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = aFormat;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.MipLevels = 1;
+
+	HRESULT result = DX11::Device->CreateTexture2D(&textureDesc, nullptr, renderTarget->myTexture.GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	result = DX11::Device->CreateRenderTargetView(renderTarget->myTexture.Get(), nullptr, renderTarget->myRTV.GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	result = DX11::Device->CreateShaderResourceView(renderTarget->myTexture.Get(), nullptr, renderTarget->mySRV.GetAddressOf());
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	renderTarget->myViewport = D3D11_VIEWPORT({ 0.0f,0.0f, static_cast<float>(aWidth), static_cast<float>(aHeight), 0.0f, 1.0f });
+
+	return renderTarget;
+}
