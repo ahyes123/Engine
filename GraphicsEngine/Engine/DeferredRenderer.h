@@ -24,6 +24,9 @@ class DeferredRenderer
 		float FarPlane;
 		float DeltaTime;
 		float TotalTime;
+		CommonUtilities::Vector2<unsigned> Resolution;
+		Vector2f padding;
+		Vector4f FrustrumCorners[4];
 	} myFrameBufferData;
 
 	struct ObjectBufferData
@@ -52,9 +55,10 @@ class DeferredRenderer
 	ComPtr<ID3D11VertexShader> myFullscreenShader;
 	ComPtr<ID3D11PixelShader> myEnvironmentShader;
 	ComPtr<ID3D11InputLayout> myGBufferLayout;
-	std::unique_ptr<GBuffer> myGBuffer;
 
 public:
+	std::unique_ptr<GBuffer> myGBuffer;
+
 	bool Initialize();
 	void GenerateGBuffer(const std::shared_ptr<Camera>& aCamera, const std::vector<std::shared_ptr<ModelInstance>>& aModelList, float aDeltaTime, float aTotalTime);
 	void Render(const std::shared_ptr<Camera>& aCamera, const std::shared_ptr<DirectionalLight>& aDirectionalLight, 

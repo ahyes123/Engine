@@ -63,9 +63,12 @@ class GraphicsEngine
 	std::unique_ptr<RenderTarget> myBlurTargetA;
 	std::unique_ptr<RenderTarget> myBlurTargetB;
 
+	std::shared_ptr<Texture> myNoiseTexture;
+
 	PostProcessRenderer myPPRenderer;
 
 public:
+	static inline std::unique_ptr<RenderTarget> mySSAOTarget;
 	static std::unique_ptr<RenderTarget> myIntermediateTargetA;
 
 	static bool myClearColorBlending;

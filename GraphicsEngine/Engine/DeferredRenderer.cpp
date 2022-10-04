@@ -165,6 +165,7 @@ void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
 			DX11::Context->DrawIndexed(meshData.myNumberOfIndices, 0, 0);
 		}
 	}
+	myGBuffer->ClearTarget();
 }
 
 void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
@@ -258,6 +259,10 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 			break;
 		}
 	}
+
+	GraphicsEngine::myIntermediateTargetA->SetAsTarget();
+	GraphicsEngine::mySSAOTarget->SetAsResource(8);
+
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
 	DX11::Context->Draw(3, 0);
 	//Viewport

@@ -10,6 +10,7 @@ Texture2D materialTexture : register(t2);
 Texture2D vertexNormalTexture : register(t3);
 Texture2D worldPositionTexture : register(t4);
 Texture2D ambientOcclusionTexture : register(t5);
+Texture2D SSAOTexture : register(t8);
 TextureCube environmentTexture : register(t10);
 
 DeferredPixelOutput main(DeferredVertexToPixel input)
@@ -41,10 +42,14 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 	const float3 specularColor = lerp((float3)0.04f, albedo, metalness);
 	const float3 diffuseColor = lerp((float3)0.00f, albedo, 1 - metalness);
 
-	const float3 ambientLighting = EvaluateAmbience(
+	const float ssaoValue = SSAOTexture.Sample(defaultSampler, input.UV).r;
+
+	float3 ambientLighting = EvaluateAmbience(
 		defaultSampler,
 		environmentTexture, normal, vertexNormal,
 		toEye, roughness, ambientOcclusion, diffuseColor, specularColor);
+
+	ambientLighting *= ssaoValue;
 
 	float3 directLighting = EvaluateDirectionalLight(
 		diffuseColor, specularColor, normal, roughness,

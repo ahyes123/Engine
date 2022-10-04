@@ -24,6 +24,14 @@ class ForwardRenderer
 		Matrix4x4f Projection;
 		Vector3f CamTranslation;
 		unsigned int RenderMode;
+
+		float NearPlane;
+		float FarPlane;
+		float DeltaTime;
+		float TotalTime;
+		CommonUtilities::Vector2<unsigned> Resolution;
+		Vector2f padding;
+		Vector4f FrustrumCorners[4];
 	} myFrameBufferData;
 
 	struct ObjectBufferData

@@ -13,6 +13,7 @@ class Camera : public SceneObject
 	float myNearPlane = 0.1f;
 	float myFarPlane = 1500.0f;
 	float myCameraSpeed;
+	float myFov;
 
 public:
 	bool Init(float aHorizontalFOV, CommonUtilities::Vector2<unsigned int> aResolution, float aNearPlane, float aFarPlane);
@@ -22,5 +23,6 @@ public:
 	FORCEINLINE float GetNearPlane() const { return myNearPlane; }
 	FORCEINLINE float GetFarPlane() const { return myFarPlane; }
 	FORCEINLINE float& GetCameraSpeed() { return myCameraSpeed; }
+	FORCEINLINE float GetFOV() const { return myFov; }
 };
 

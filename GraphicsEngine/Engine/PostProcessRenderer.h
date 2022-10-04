@@ -2,6 +2,8 @@
 #include "Matrix4x4.hpp"
 #include <wrl.h>
 
+#include "Camera.h"
+
 using namespace Microsoft::WRL;
 
 class PostProcessRenderer
@@ -13,11 +15,13 @@ public:
 		PP_Luminance,
 		PP_Gaussian,
 		PP_Bloom,
+		PP_SSAO,
 		PP_Count
 	};
 
 	bool Initialize();
 	void Render(PostProcessPass aPass);
+	void Render(PostProcessPass aPass, std::shared_ptr<Camera> aCamera);
 
 private:
 	struct FrameBufferData
@@ -30,6 +34,9 @@ private:
 		float FarPlane;
 		float DeltaTime;
 		float TotalTime;
+		CommonUtilities::Vector2<unsigned> Resolution;
+		Vector2f padding;
+		Vector4f FrustrumCorners[4];
 	} myFrameBufferData;
 
 	ComPtr<ID3D11Buffer> myFrameBuffer;

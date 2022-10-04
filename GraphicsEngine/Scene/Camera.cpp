@@ -15,8 +15,9 @@ bool Camera::Init(float aHorizontalFOV, CommonUtilities::Vector2<unsigned> aReso
 
 	myNearPlane = aNearPlane;
 	myFarPlane = aFarPlane;
+	myFov = aHorizontalFOV;
 
-	const float hFoVRad = aHorizontalFOV * (3.14159265358979323846f / 180.0f);
+	const float hFoVRad = myFov * (3.14159265358979323846f / 180.0f);
 
 	const float vFovRad =
 		2 * std::atan(std::tan(hFoVRad * 0.5f)

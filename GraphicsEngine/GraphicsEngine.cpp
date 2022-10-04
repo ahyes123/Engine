@@ -120,6 +120,11 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	myBlurTargetA = TextureAssetHandler::CreateRenderTarget(windowX / 4, windowY / 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
 	myBlurTargetB = TextureAssetHandler::CreateRenderTarget(windowX / 4, windowY / 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
+	mySSAOTarget = TextureAssetHandler::CreateRenderTarget(windowX, windowY, DXGI_FORMAT_R32G32B32A32_FLOAT);
+	if (TextureAssetHandler::LoadTexture(L"Sprites/BlueNoise.dds"))
+	{
+		myNoiseTexture = TextureAssetHandler::GetTexture(L"Sprites/BlueNoise.dds");
+	}
 	return true;
 }
 
@@ -257,6 +262,7 @@ void GraphicsEngine::BeginFrame()
 	myQuarterSizeTarget->Clear();
 	myBlurTargetA->Clear();
 	myBlurTargetB->Clear();
+	mySSAOTarget->Clear();
 
 	DX11::BeginFrame(ourClearColor);
 	RenderStateManager::ResetStates();
@@ -341,7 +347,13 @@ void GraphicsEngine::RenderFrame()
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());
+
+	mySSAOTarget->SetAsTarget();
+	myNoiseTexture->SetAsResource(8);
+	myPPRenderer.Render(PostProcessRenderer::PP_SSAO, camera);
+
 	myDeferredRenderer.Render(camera, myDirectionalLight, myLights, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
+
 	//myForwardRenderer.RenderModels(camera, mdlInstancesToRender, myDirectionalLight, myEnvironmentLight);
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::TextBlend);
@@ -354,6 +366,10 @@ void GraphicsEngine::RenderFrame()
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetSamplerState(RenderStateManager::SamplerState::SS_Default, 1);
+
+	//myDeferredRenderer.myGBuffer->ClearTarget(); //loladsgsedhbna<swerhnmkpwsermop
+	myDeferredRenderer.myGBuffer->ClearResource(0);
+	mySSAOTarget->RemoveResource(8);
 
 	myIntermediateTargetB->SetAsTarget();
 	myIntermediateTargetA->SetAsResource(30);
@@ -382,6 +398,8 @@ void GraphicsEngine::RenderFrame()
 	myHalfSizeTarget->SetAsTarget();
 	myQuarterSizeTarget->SetAsResource(30);
 	myPPRenderer.Render(PostProcessRenderer::PP_Copy);
+
+
 
 	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left),
 		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));

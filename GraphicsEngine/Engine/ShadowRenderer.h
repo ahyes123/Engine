@@ -21,6 +21,10 @@ class ShadowRenderer
 		float FarPlane;
 		float DeltaTime;
 		float TotalTime;
+
+		CommonUtilities::Vector2<unsigned> Resolution;
+		Vector2f padding;
+		Vector4f FrustrumCorners[4];
 	} myFrameBufferData;
 
 	struct ObjectBufferData
