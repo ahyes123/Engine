@@ -85,7 +85,7 @@ std::shared_ptr<Scene> SceneHandler::LoadScene(const std::wstring& aSceneName)
 		}
 	}
 	const std::wstring scenePath = L"./Json/Scenes";
-	const std::wstring scenePathFull = L"./Json/Scenes" + realName + L".json";
+	const std::wstring scenePathFull = L"./Json/Scenes" + realName + L".scene";
 	for (const auto& file : std::filesystem::directory_iterator(scenePath))
 	{
 		if (file.path() == scenePathFull)
@@ -128,8 +128,8 @@ void SceneHandler::LoadAllScenes()
 	const std::string path = "./Json/Scenes/";
 	for (const auto& file : directory_iterator(path))
 	{
-		std::wstring name = file.path().filename().wstring();
-		name = name.erase(name.size() - 5);
-		AddEmptyScene(name);
+		std::filesystem::path sceneName = file.path().filename();
+		sceneName.replace_extension("");
+		AddEmptyScene(sceneName);
 	}
 }

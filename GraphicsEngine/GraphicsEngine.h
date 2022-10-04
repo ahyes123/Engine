@@ -10,6 +10,9 @@
 #include "Scene/Scene.h"
 #include "Model/ModelAssetHandler.h"
 #include "../External/entt/entt.hpp"
+#include <filesystem>
+
+using std::filesystem::directory_iterator;
 
 enum class RenderMode : unsigned int
 {
@@ -79,6 +82,9 @@ public:
 	bool Initialize(unsigned someX, unsigned someY, unsigned someWidth, unsigned someHeight, bool enableDeviceDebug);
 
 	static void DragDrop(WPARAM aWparam);
+	static bool HasFile(const std::string& aFile, const std::string aFileExtension);
+	static void AddMissingFile(const std::string& aFile, const std::string aFileExtension);
+	static void AddAssets(std::filesystem::path aFilePath);
 
 	void BeginFrame();
 	void EndFrame();

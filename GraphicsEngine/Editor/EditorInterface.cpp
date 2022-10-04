@@ -2,12 +2,12 @@
 #include "EditorInterface.h"
 #include "imgui/imgui.h"
 #include "imgui/ImGuizmo.h"
-#include <filesystem>
 #include "../GraphicsEngine.h"
 #include "../Tools/InputHandler.h"
 #include "../Tools/Timer.h"
 #include "Editor.h"
 #include "../Scene/SceneHandler.h"
+#include "../Texture/TextureAssetHandler.h"
 #include <commdlg.h>
 #include <fstream>
 
@@ -18,13 +18,13 @@
 #include <UtilityFunctions.hpp>
 #include <queue>
 
-using std::filesystem::directory_iterator;
 using namespace CommonUtilities;
 
 bool EditorInterface::addAnimation;
 bool EditorInterface::someSelected;
 int EditorInterface::selectedItem;
 entt::entity EditorInterface::selectedEntity;
+std::filesystem::path EditorInterface::myCurrentPath = ".\\";
 
 void EditorInterface::ShowEditor()
 {
@@ -34,6 +34,7 @@ void EditorInterface::ShowEditor()
 	EnableDocking();
 	MenuBar();
 	ModelLoader();
+	AssetBrowser();
 	SceneHierchy(scene);
 }
 
@@ -131,13 +132,13 @@ void EditorInterface::MenuBar()
 				{
 					std::shared_ptr<Scene> scene = SceneHandler::AddEmptyScene(name);
 					SceneHandler::LoadScene(scene);
-					std::ofstream fileName("Json/Scenes/" + name.string() + ".json");
+					std::ofstream fileName("Json/Scenes/" + name.string() + ".scene");
 
 					using nlohmann::json;
 					json j;
 					j["SceneName"] = name.string();
 					j["Size"] = 0;
-					std::ofstream oStream("Json/Scenes/" + name.string() + ".json");
+					std::ofstream oStream("Json/Scenes/" + name.string() + ".scene");
 					oStream << j;
 					createScene = false;
 				}
@@ -166,7 +167,7 @@ void EditorInterface::MenuBar()
 				ofn.hwndOwner = GraphicsEngine::GetWindowHandle();
 				ofn.lpstrFile = szFile;
 				ofn.nMaxFile = sizeof(szFile);
-				ofn.lpstrFilter = "Scene (.json)\0*.json\0";
+				ofn.lpstrFilter = "Scene (.scene)\0*.scene\0";
 				ofn.nFilterIndex = 1;
 				ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 				if (GetOpenFileNameA(&ofn) == TRUE)
@@ -625,12 +626,12 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 	{
 		for (size_t i = 0; i < aScene->GetSceneObjects().size(); i++)
 		{
-			DragAndDropHierchy(i);
 			if (i >= aScene->GetSceneObjects().size())
 				continue;
+			DragAndDropHierchy(i);
 			if (someSelected)
 			{
-				static bool deleteItem = false;
+				bool deleteItem = false;
 				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[i]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
 				{
 					if (ImGui::MenuItem("Change Name"))
@@ -781,19 +782,73 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 	AddComponentTab(aScene);
 
 	ImGui::End();
+	ImGui::End();
 	ImGui::Begin("ViewPort");
 	Vector2f windowWidth(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
 	ImGui::Image((void*)GBuffer::GetVPSRV().Get(), { windowWidth.x, windowWidth.y });
 	ImGuiViewport viewport;
+	viewPortPos = { ImGui::GetWindowPos().x, ImGui::GetWindowPos().y };
+	viewPortSize = windowWidth;
 	if (someSelected)
 	{
 		entt::entity entity = selectedEntity;
 		Transform transform = aScene->GetRegistry().get<TransformComponent>(entity).myTransform;
 		EditorGuizmo(entity);
-		//scene->GetRegistry().get<TransformComponent>(entity).myTransform.SetPosition(transform.GetPosition());
 	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Assets"))
+		{
+			std::string item = (const char*)payload->Data;
+			std::filesystem::path items = item;
+			GraphicsEngine::AddAssets(items);
+		}
+		ImGui::EndDragDropTarget();
+	}
+	static float timer = 0.0f;
+	if (CANTDROPHERE)
+	{
+		timer += Timer::GetDeltaTime();
+		if (timer >= 1)
+		{
+			timer = 0.0f;
+			CANTDROPHERE = false;
+		}
+		ImGui::OpenPopup("CANT DROP HERE");
+		if (ImGui::BeginPopup("CANT DROP HERE"))
+		{
+			ImGui::Text("CANT DROP HERE XD");
+			ImGui::EndPopup();
+		}
+	}
+
+
 	ImGui::End();
-	ImGui::End();
+}
+
+bool EditorInterface::IsInsideViewPort(Vector2f aPos)
+{
+	if (viewPortPos.x <= aPos.x && viewPortPos.x + viewPortSize.x >= aPos.x)
+	{
+		if (viewPortPos.y <= aPos.y && viewPortPos.y + viewPortSize.y >= aPos.y)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool EditorInterface::IsInsideAssetBrowser(Vector2f aPos)
+{
+	if (assetBrowserPos.x <= aPos.x && assetBrowserPos.x + assetBrowserSize.x >= aPos.x)
+	{
+		if (assetBrowserPos.y <= aPos.y && assetBrowserPos.y + assetBrowserSize.y >= aPos.y)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 void EditorInterface::DragAndDropHierchy(const int& aIndex)
@@ -1237,6 +1292,104 @@ void EditorInterface::AddComponentTab(std::shared_ptr<Scene> aScene)
 				ImGui::EndCombo();
 			}
 		}
+	}
+	ImGui::End();
+}
+
+void EditorInterface::AssetBrowser()
+{
+	ImGui::Begin("Asset Browser");
+
+	static std::vector<std::filesystem::path> currentFiles;
+	currentFiles.clear();
+	auto windowSize = ImGui::GetWindowSize();
+	int count = static_cast<int>(std::floor(windowSize.x / 100));
+
+	assetBrowserPos = { ImGui::GetWindowPos().x, ImGui::GetWindowPos().y };
+	assetBrowserSize = { ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y };
+
+	std::shared_ptr<Texture> backArrow;
+	if (TextureAssetHandler::LoadTexture(L".\\Editor\\Icons\\icon_back.dds"))
+	{
+		backArrow = TextureAssetHandler::GetTexture(L".\\Editor\\Icons\\icon_back.dds");
+	}
+	if (ImGui::ImageButton(backArrow->GetSRV().Get(), ImVec2(20, 20)) && myCurrentPath != ".\\")
+	{
+		myCurrentPath._Remove_filename_and_separator();
+		myCurrentPath.remove_filename();
+	}
+	ImGui::SameLine();
+	ImGui::Text(myCurrentPath.string().c_str());
+
+	if (ImGui::BeginTable("##ContentBrowserTable", count, 0))
+	{
+		for (const auto& file : directory_iterator(myCurrentPath))
+		{
+			std::filesystem::path currentItem = file;
+			std::shared_ptr<Texture> currentIcon;
+			if (file.is_directory())
+			{
+				if (TextureAssetHandler::LoadTexture(L".\\Editor\\Icons\\icon_directory.dds"))
+				{
+					currentIcon = TextureAssetHandler::GetTexture(L".\\Editor\\Icons\\icon_directory.dds");
+				}
+			}
+			else if (currentItem.extension() == ".dds")
+			{
+				if (TextureAssetHandler::LoadTexture(L".\\Editor\\Icons\\icon_texture.dds"))
+				{
+					currentIcon = TextureAssetHandler::GetTexture(L".\\Editor\\Icons\\icon_texture.dds");
+				}
+			}
+			else if (currentItem.extension() == ".fbx")
+			{
+				if (TextureAssetHandler::LoadTexture(L".\\Editor\\Icons\\icon_mesh.dds"))
+				{
+					currentIcon = TextureAssetHandler::GetTexture(L".\\Editor\\Icons\\icon_mesh.dds");
+				}
+			}
+			else if (currentItem.extension() == ".cso")
+			{
+				if (TextureAssetHandler::LoadTexture(L".\\Editor\\Icons\\icon_material.dds"))
+				{
+					currentIcon = TextureAssetHandler::GetTexture(L".\\Editor\\Icons\\icon_material.dds");
+				}
+			}
+			else if (currentItem.extension() == ".json" || currentItem.extension() == ".scene")
+			{
+				if (TextureAssetHandler::LoadTexture(L".\\Editor\\Icons\\icon_file.dds"))
+				{
+					currentIcon = TextureAssetHandler::GetTexture(L".\\Editor\\Icons\\icon_file.dds");
+				}
+			}
+			else
+				continue;
+			ImGui::TableNextColumn();
+
+			ImGui::ImageButton(currentIcon->GetSRV().Get(), ImVec2(100, 100));
+
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && file.is_directory())
+			{
+				myCurrentPath += currentItem.filename();
+				myCurrentPath += "\\";
+			}
+
+			currentFiles.push_back(currentItem);
+
+
+			if (InputHandler::GetMouseOneIsHeld() && !file.is_directory() && ImGui::IsItemHovered())
+			{
+				if (ImGui::BeginDragDropSource())
+				{
+					std::string item = currentItem.string();
+					ImGui::SetDragDropPayload("Assets", item.c_str(),
+						item.size() +1);
+					ImGui::EndDragDropSource();
+				}
+			}
+			ImGui::Text(currentItem.filename().string().c_str());
+		}
+		ImGui::EndTable();
 	}
 	ImGui::End();
 }

@@ -11,13 +11,13 @@
 #include "Editor/EditorInterface.h"
 #include "Editor/Editor.h"
 #include "Scene/SceneHandler.h"
-#include <filesystem>
 #include "Engine/ComponentHandler.h"
 #include "../GraphicsEngine/Engine/ComponentHandler.h"
 #include "Light/PointLight.hpp"
 #include "Light/SpotLight.hpp"
 #include "imgui/imgui.h"
 #include <shellapi.h>
+#include <WinUser.h>
 
 #include "Texture/TextureAssetHandler.h"
 using namespace CommonUtilities;
@@ -170,86 +170,129 @@ void GraphicsEngine::DragDrop(WPARAM aWparam)
 	DragQueryFile(hDrop, 0, filePath, MAX_PATH);
 	std::wstring wpath = filePath;
 	std::filesystem::path path = std::filesystem::path(wpath.begin(), wpath.end());
-	if (path.extension() == ".fbx")
+	BOOL f = TRUE;
+	SwitchToThisWindow(myWindowHandle, f);
+	static bool c = false;
+	if (EditorInterface::IsInsideAssetBrowser(InputHandler::GetMousePosition()))
+	{
+		if (path.extension() == ".fbx")
+		{
+			if (!HasFile(path.string(), ".fbx"))
+			{
+				AddMissingFile(path.string(), ".fbx");
+			}
+		}
+		else if (path.extension() == ".scene")
+		{
+			if (!HasFile(path.string(), ".scene"))
+			{
+				AddMissingFile(path.string(), ".scene");
+			}
+		}
+		else if (path.extension() == ".dds")
+		{
+			if (!HasFile(path.string(), ".dds"))
+			{
+				AddMissingFile(path.string(), ".dds");
+			}
+		}
+	}
+	else if (EditorInterface::IsInsideViewPort(InputHandler::GetMousePosition()))
+	{
+		AddAssets(path);
+	}
+	else
+	{
+		EditorInterface::CANTDROPHERE = true;
+	}
+	DragFinish(hDrop);
+}
+
+void GraphicsEngine::AddAssets(std::filesystem::path aFilePath)
+{
+	if (aFilePath.extension() == ".fbx")
 	{
 		Editor::EditorActions action;
 		entt::entity ent = SceneHandler::GetActiveScene()->GetRegistry().create();
-		std::shared_ptr<ModelInstance> mdl = ModelAssetHandler::LoadModel(path);
+		std::shared_ptr<ModelInstance> mdl = ModelAssetHandler::LoadModel(aFilePath);
 		SceneHandler::GetActiveScene()->AddModelInstance(mdl, ent);
 		action.AddedObject = true;
 		action.Object = mdl;
 		action.oldEntity = ent;
 		Editor::AddUndoAction(action);
 	}
-	else if (path.extension() == ".json")
+	else if (aFilePath.extension() == ".scene")
 	{
-		SceneHandler::LoadScene(path);
+		std::filesystem::path newFileName = EditorInterface::GetCurrentPath().wstring() + aFilePath.filename().wstring();
+		SceneHandler::LoadScene(aFilePath);
 	}
-	else if (path.extension() == ".dds")
+	else if (aFilePath.extension() == ".dds")
 	{
-		const std::string animPath = ".\\Models\\Textures";
-		bool found = false;
-		for (const auto& file : directory_iterator(animPath))
+		std::filesystem::path name = aFilePath;
+		size_t index = name.string().find("Bin\\");
+		if (index < name.string().size())
 		{
-			std::filesystem::path test = path;
-			size_t index = test.string().find("\\Models\\Textures\\" + test.filename().string());
-			if (index < test.string().size())
-			{
-				std::string finalPath = test.string().substr(index, test.string().size());
-				std::string otherPath = file.path().string().substr(1, file.path().string().size());
-				if (finalPath == otherPath)
-				{
-					found = true;
-					break;
-				}
-			}
-			else
-			{
-				break;
-			}
+			name = name.string().substr(index + 3, name.string().size());
+			name = "." + name.string();
 		}
-		if (found)
+		EditorInterface::SetTexture(name.wstring());
+	}
+}
+
+bool GraphicsEngine::HasFile(const std::string& aFile, const std::string aFileExtension)
+{
+	const std::string animPath = EditorInterface::GetCurrentPath().string();
+	for (const auto& file : directory_iterator(animPath))
+	{
+		std::filesystem::path name = file;
+		std::filesystem::path name2 = aFile;
+		size_t index = name2.string().find("Bin\\");
+		if (index < name2.string().size())
 		{
-			std::filesystem::path newFileName = L"./Models/Textures/" + path.filename().wstring();
-			EditorInterface::SetTexture(newFileName.filename().wstring());
-		}
-		else
-		{
-			const std::string animPath = ".\\Models\\Textures";
-			int numCount = 1;
-			std::filesystem::path originalPath = path;
-			bool found = false;
-			for (const auto& file : directory_iterator(animPath))
+			name2 = name2.string().substr(index + 3, name2.string().size());
+			if (name.string() == "." + name2.string())
 			{
-				std::string fileName = file.path().string();
-				std::filesystem::path test(file);
-				if (numCount > 0)
-				{
-					path = originalPath;
-					path = path.replace_extension("");
-					path += "_";
-					path += std::to_string(numCount);
-					path += ".dds";
-				}
-				if (path.filename() == test.filename())
-				{
-					found = true;
-					path = path.replace_extension("");
-					path += "_";
-					path += std::to_string(numCount);
-					path += ".dds";
-					numCount++;
-				}
-				else if (found)
-					break;
+				return true;
 			}
-			BOOL f = true;
-			std::filesystem::path newFileName = L".\\Models\\Textures\\" + path.filename().wstring();
-			CopyFile(originalPath.wstring().c_str(), newFileName.c_str(), f);
-			EditorInterface::SetTexture(newFileName.filename().wstring());
 		}
 	}
-	DragFinish(hDrop);
+	return false;
+}
+
+void GraphicsEngine::AddMissingFile(const std::string& aFile, const std::string aFileExtension)
+{
+	const std::string animPath = EditorInterface::GetCurrentPath().string();
+	int numCount = 0;
+	std::filesystem::path originalPath = aFile;
+	std::filesystem::path path = aFile;
+	bool found = false;
+	for (const auto& file : directory_iterator(animPath))
+	{
+		std::string fileName = file.path().string();
+		std::filesystem::path test(file);
+		if (path.filename() == test.filename())
+		{
+			found = true;
+			path = path.replace_extension("");
+			path += "_";
+			path += std::to_string(numCount);
+			path += aFileExtension;
+			numCount++;
+		}
+		if (numCount > 0)
+		{
+			path = originalPath;
+			path = path.replace_extension("");
+			path += "_";
+			path += std::to_string(numCount);
+			path += aFileExtension;
+		}
+		else if (found)
+			break;
+	}
+	BOOL f = true;
+	std::filesystem::path newFileName = EditorInterface::GetCurrentPath().wstring() + path.filename().wstring();
+	CopyFile(originalPath.wstring().c_str(), newFileName.c_str(), f);
 }
 
 void GraphicsEngine::BeginFrame()
@@ -332,7 +375,7 @@ void GraphicsEngine::RenderFrame()
 	myLights[1]->SetShadowMapAsDepth(0);
 	myShadowRenderer.Render(myLights[1], mdlInstancesToRender);
 
-	for(int i = 0; i < 6; i++)
+	for (int i = 0; i < 6; i++)
 	{
 		myLights[0]->ClearShadowMap(i);
 		myLights[0]->SetShadowMapAsDepth(i);

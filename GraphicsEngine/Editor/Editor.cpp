@@ -123,7 +123,7 @@ void Editor::SaveCurrentScene()
 	nlohmann::json json;
 	const std::string path = "./Json/Scenes/";
 	bool isFileFound = false;
-	std::filesystem::path sceneName(scene->GetSceneName() + L".json");
+	std::filesystem::path sceneName(scene->GetSceneName() + L".scene");
 	for (const auto& file : directory_iterator(path))
 	{
 		if (sceneName == file.path().filename().string())
@@ -161,7 +161,7 @@ void Editor::SaveScenes()
 		nlohmann::json json;
 		const std::string path = "./Json/Scenes/";
 		bool isFileFound = false;
-		std::filesystem::path sceneName(SceneHandler::GetScenes()[i]->GetSceneName() + L".json");
+		std::filesystem::path sceneName(SceneHandler::GetScenes()[i]->GetSceneName() + L".scene");
 		for (const auto& file : directory_iterator(path))
 		{
 			if (sceneName == file.path().filename().string())
@@ -196,7 +196,7 @@ void Editor::LoadCurrentScene()
 {
 	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
 	nlohmann::json json;
-	std::ifstream ifStream(L"Json/Scenes/" + scene->GetSceneName() + L".json");
+	std::ifstream ifStream(L"Json/Scenes/" + scene->GetSceneName() + L".scene");
 	if (ifStream.fail())
 		return;
 	ifStream >> json;

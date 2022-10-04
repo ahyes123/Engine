@@ -20,5 +20,7 @@ class Texture
 		virtual ~Texture();
 
 		void SetAsResource(unsigned int aSlot);
+
+		ComPtr<ID3D11ShaderResourceView> GetSRV() { return mySRV; }
 };
 

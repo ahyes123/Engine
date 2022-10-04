@@ -13,6 +13,7 @@
 #include "UtilityFunctions.hpp"
 #include "../Scene/SceneHandler.h"
 #include <filesystem>
+#include "Editor/EditorInterface.h"
 
 std::unordered_map<std::wstring, std::shared_ptr<Model>> ModelAssetHandler::myModelRegistry;
 std::unordered_map<std::wstring, std::shared_ptr<Material>> ModelAssetHandler::myMaterialRegistry;
@@ -697,7 +698,7 @@ void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, con
 		std::shared_ptr<Material> meshMaterial = aMdl->GetMeshData(i).myMaterial;
 		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'C')
 		{
-			undefiledName = L"Models/Textures/" + undefiledName + L".dds";
+			undefiledName = aName + L".dds";
 			if (TextureAssetHandler::LoadTexture(undefiledName))
 			{
 				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(undefiledName));
@@ -710,7 +711,7 @@ void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, con
 
 		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'N')
 		{
-			undefiledName = L"Models/Textures/" + baseName + L".dds";
+			undefiledName = aName + L".dds";
 			if (TextureAssetHandler::LoadTexture(undefiledName))
 			{
 				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(undefiledName));
@@ -723,7 +724,7 @@ void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, con
 
 		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'M')
 		{
-			undefiledName = L"Models/Textures/" + undefiledName + L".dds";
+			undefiledName = aName + L".dds";
 			if (TextureAssetHandler::LoadTexture(undefiledName))
 			{
 				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(undefiledName));
