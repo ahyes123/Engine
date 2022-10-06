@@ -71,6 +71,7 @@ class GraphicsEngine
 	PostProcessRenderer myPPRenderer;
 
 public:
+	static inline bool enableSSAO = true;
 	static inline std::unique_ptr<RenderTarget> mySSAOTarget;
 	static std::unique_ptr<RenderTarget> myIntermediateTargetA;
 

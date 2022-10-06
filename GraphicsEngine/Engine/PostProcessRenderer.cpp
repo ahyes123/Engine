@@ -41,6 +41,7 @@ bool PostProcessRenderer::Initialize()
 	shaderPaths[PP_Gaussian] = "Shaders/PP_Gaussian.cso";
 	shaderPaths[PP_Bloom] = "Shaders/PP_Bloom.cso";
 	shaderPaths[PP_SSAO] = "Shaders/PP_SSAO.cso";
+	shaderPaths[PP_Tonemap] = "Shaders/PP_Tonemap.cso";
 
 	std::ifstream psFile;
 	std::string psData;

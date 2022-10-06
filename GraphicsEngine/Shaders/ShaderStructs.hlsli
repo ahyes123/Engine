@@ -26,7 +26,7 @@ cbuffer FrameBuffer : register(b0)
 	float FB_FarPlane;
 	float FB_DeltaTime;
 	float FB_TotalTime;
-	float2 FB_Resolution;
+	uint2 FB_Resolution;
 	float2 padding;
 	float4 FB_FrustrumCorners[4];
 }
