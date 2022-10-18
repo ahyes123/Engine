@@ -1,7 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "GBuffer.h"
 
-#include "DX11.h"
 #include "GraphicsEngine.h"
 
 ComPtr<ID3D11ShaderResourceView> GBuffer::GBufferVPSRV;
@@ -58,7 +57,7 @@ bool GBuffer::Init()
 
 void GBuffer::SetAsTarget() const
 {
-	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT];
+	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT]{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 	for (unsigned t = 0; t < myRTVs.size(); t++)
 	{
 		myRTVList[t] = myRTVs[t].Get();
@@ -68,7 +67,7 @@ void GBuffer::SetAsTarget() const
 
 void GBuffer::ClearTarget() const
 {
-	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT];
+	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT]{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 	for (unsigned t = 0; t < myRTVs.size(); t++)
 	{
 		myRTVList[t] = nullptr;
@@ -78,7 +77,7 @@ void GBuffer::ClearTarget() const
 
 void GBuffer::SetAsResource(unsigned aStartSlot) const
 {
-	ID3D11ShaderResourceView* mySRVList[GBufferTexture::GB_COUNT];
+	ID3D11ShaderResourceView* mySRVList[GBufferTexture::GB_COUNT]{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 	for (unsigned t = 0; t < mySRVs.size(); t++)
 	{
 		mySRVList[t] = mySRVs[t].Get();
@@ -89,7 +88,7 @@ void GBuffer::SetAsResource(unsigned aStartSlot) const
 
 void GBuffer::ClearResource(unsigned aStartSlot) const
 {
-	ID3D11ShaderResourceView* mySRVList[GBufferTexture::GB_COUNT];
+	ID3D11ShaderResourceView* mySRVList[GBufferTexture::GB_COUNT]{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 	for (unsigned t = 0; t < mySRVs.size(); t++)
 	{
 		mySRVList[t] = nullptr;
@@ -100,12 +99,13 @@ void GBuffer::ClearResource(unsigned aStartSlot) const
 void GBuffer::Clear() const
 {
 	std::array<FLOAT, 4> clearColor = { 0,0,0,0 };
-	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT];
+	ID3D11RenderTargetView* myRTVList[GBufferTexture::GB_COUNT]{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 	for (unsigned t = 0; t < myRTVs.size(); t++)
 	{
 		myRTVList[t] = myRTVs[t].Get();
 	}
-	DX11::Context->ClearRenderTargetView(myRTVList[0], &clearColor[0]);
+	if (myRTVList[0])
+		DX11::Context->ClearRenderTargetView(myRTVList[0], &clearColor[0]);
 	DX11::Context->ClearRenderTargetView(GBufferVPRTV.Get(), &GraphicsEngine::GetClearColor()[0]);
 
 	ClearTarget();

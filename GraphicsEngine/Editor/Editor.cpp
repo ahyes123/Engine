@@ -232,7 +232,7 @@ void Editor::SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::enti
 	if (reg.any_of<ModelComponent>(aEntity))
 	{
 		std::filesystem::path name(reg.get<ModelComponent>(aEntity).myModel->GetName());
-		aJson[aNum]["Name"] = name;
+		aJson[aNum]["Name"] = name.string();
 		ids.push_back(0);
 	}
 	if (reg.any_of<PlayerComponent>(aEntity))
@@ -250,13 +250,13 @@ void Editor::SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::enti
 	if (reg.any_of<ParticleSystemComponent>(aEntity))
 	{
 		std::filesystem::path name(reg.get<ParticleSystemComponent>(aEntity).myParticleSystem->GetName());
-		aJson[aNum]["Name"] = name;
+		aJson[aNum]["Name"] = name.string();
 		ids.push_back(3);
 	}
 	if (reg.any_of<TextComponent>(aEntity))
 	{
 		std::filesystem::path name(reg.get<TextComponent>(aEntity).myText->GetName());
-		aJson[aNum]["Name"] = name;
+		aJson[aNum]["Name"] = name.string();
 		ids.push_back(4);
 	}
 	for (size_t k = 0; k < ids.size(); k++)
@@ -338,7 +338,7 @@ void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, in
 		{
 			aJson[num]["IsAnim"] = true;
 			std::filesystem::path animName(mdl->GetCurrentAnimation().myName);
-			aJson[num]["AnimationPaths"]["0"] = animName;
+			aJson[num]["AnimationPaths"]["0"] = animName.string();
 			int id = 1;
 			for (size_t k = 0; k < mdl->GetAnimNames().size(); k++)
 			{
@@ -346,7 +346,7 @@ void Editor::SaveModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, in
 				{
 					std::wstring animNames = mdl->GetAnimNames()[k];
 					std::filesystem::path modelName(animNames);
-					aJson[num]["AnimationPaths"][std::to_string(id)] = modelName;
+					aJson[num]["AnimationPaths"][std::to_string(id)] = modelName.string();
 					id++;
 				}
 			}
@@ -385,7 +385,7 @@ void Editor::LoadModels(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, st
 		}
 		else
 		{
-			std::string name = aJson[aNum]["AnimationPaths"]["0"];
+			name = aJson[aNum]["AnimationPaths"]["0"];
 			std::filesystem::path firstAnimName(name);
 			reg.get<ModelComponent>(entity).myModel = ModelAssetHandler::LoadModelWithAnimation(modelName, firstAnimName);
 			for (size_t i = 1; i < aJson[aNum]["AnimationPaths"].size(); i++)
@@ -408,7 +408,7 @@ void Editor::SaveTexts(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int
 		std::string num = std::to_string(aNum);
 		std::shared_ptr<Text> text = aScene->GetTexts()[i];
 		std::filesystem::path test(text->GetText());
-		aJson[num]["Text"] = test;
+		aJson[num]["Text"] = test.string();
 		aJson[num]["FontSize"] = text->GetFont()->Atlas.Size;
 		aJson[num]["Is2D"] = text->GetIs2D();
 

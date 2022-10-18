@@ -1,5 +1,4 @@
 #pragma once
-#include <Windows.h>
 #include <bitset>
 #include "Math/Vector2.hpp"
 

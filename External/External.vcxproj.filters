@@ -37,6 +37,8 @@
     <ClInclude Include="imgui\ImGuizmo.h">
       <Filter>imgui</Filter>
     </ClInclude>
+    <ClInclude Include="nloman\json.hpp" />
+    <ClInclude Include="Tool\DDSTextureLoader11.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -63,5 +65,6 @@
     <ClCompile Include="imgui\imgui_demo.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Tool\DDSTextureLoader11.cpp" />
   </ItemGroup>
 </Project>

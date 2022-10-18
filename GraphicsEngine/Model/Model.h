@@ -1,7 +1,4 @@
 #pragma once
-#include <memory>
-#include <string>
-#include <vector>
 #include <wrl.h>
 #include "Material.h"
 #include "Skeleton.hpp"

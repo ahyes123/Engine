@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 #include "DeferredRenderer.h"
 #include "PostProcessRenderer.h"

@@ -39,8 +39,8 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 	const float ambientOcclusion = ambientOcclusionTexture.Sample(defaultSampler, input.UV).r;
 	const float3 toEye = normalize(FB_CamTranslation.xyz - vertexNormal.xyz);
 
-	const float3 specularColor = lerp((float3)0.04f, albedo, metalness);
-	const float3 diffuseColor = lerp((float3)0.00f, albedo, 1 - metalness);
+	const float3 specularColor = lerp((float4)0.04f, albedo, metalness).rgb;
+	const float3 diffuseColor = lerp((float4)0.00f, albedo, 1 - metalness).rgb;
 
 	const float ssaoValue = SSAOTexture.Sample(defaultSampler, input.UV).r;
 
@@ -85,6 +85,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 	float3 pointLight = 0;
 	float3 spotLight = 0;
 
+	[unroll(8)]
 	for (unsigned int l = 0; l < LB_NumLights; l++)
 	{
 		const LightData Light = LB_Lights[l];
@@ -104,6 +105,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 
 			if (Light.CastShadows)
 			{
+				[unroll(6)]
 				for (int i = 0; i < 6; i++)
 				{
 					const float4 worldToLightView = mul(Light.View[i], worldPosition);
@@ -132,7 +134,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 		case 2:
 		{
 			spotLight += EvaluateSpotLight(diffuseColor, specularColor, normal, material.g, Light.Color,
-				Light.Intensity, Light.Range, Light.Position, Light.Direction, Light.SpotOuterRadius, Light.SpotInnerRadius, toEye, worldPosition);
+				Light.Intensity, Light.Range, Light.Position, Light.Direction, Light.SpotOuterRadius, Light.SpotInnerRadius, toEye, worldPosition.xyz);
 			if (Light.CastShadows)
 			{
 				const float4 worldToLightView = mul(Light.View[0], worldPosition);
@@ -166,7 +168,7 @@ DeferredPixelOutput main(DeferredVertexToPixel input)
 		}
 	}
 
-	result.Color.rgb = directLighting + ambientLighting + pointLight + spotLight + (emissive * emissiveStr * albedo);
+	result.Color.rgb = directLighting + ambientLighting + pointLight + spotLight + (emissive * emissiveStr * albedo.rgb);
 	result.Color.a = 1;
 
 #ifdef _DEBUG

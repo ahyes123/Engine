@@ -16,6 +16,11 @@ GBufferOutput main(VertexToPixel input)
 	{
 		discard;
 		result.Albedo = float4(0, 0, 0, 0);
+		result.Normal = float4(0, 0, 0, 0);
+		result.Material = float4(0, 0, 0, 0);
+		result.VertexNormal = float4(0, 0, 0, 0);
+		result.WorldPosition = float4(0, 0, 0, 0);
+		result.AmbientOcclusion = 0.f;
 		return result;
 	}
 

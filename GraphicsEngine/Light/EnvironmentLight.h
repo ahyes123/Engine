@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 #include "Light/Light.h"
 #include "Texture/Texture.h"

@@ -12,8 +12,8 @@ class Camera : public SceneObject
 
 	float myNearPlane = 0.1f;
 	float myFarPlane = 1500.0f;
-	float myCameraSpeed;
-	float myFov;
+	float myCameraSpeed = 0.f;
+	float myFov = 90.f;
 
 public:
 	bool Init(float aHorizontalFOV, CommonUtilities::Vector2<unsigned int> aResolution, float aNearPlane, float aFarPlane);

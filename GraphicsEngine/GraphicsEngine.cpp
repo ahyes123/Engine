@@ -1,7 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "GraphicsEngine.h"
 #include <iostream>
-#include "DX11.h"
 #include "InputHandler.h"
 #include "Timer.h"
 #include "Light/LightAssetHandler.h"
@@ -145,14 +144,12 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 	}
 	if (uMsg == WM_DESTROY || uMsg == WM_CLOSE)
 	{
-#ifdef _DEBUG
 		if (myAutoSave)
 		{
 			Editor::SaveScenes();
 			Editor::SaveClearColorPreset(myCurrentClearColorPreset);
 			Editor::SaveSettings();
 		}
-#endif // _DEBUG
 		PostQuitMessage(0);
 	}
 	else if (uMsg == WM_CREATE)
@@ -316,7 +313,7 @@ void GraphicsEngine::RenderFrame()
 	myCamera->Update(Timer::GetDeltaTime());
 	SceneHandler::UpdateCurrentScene();
 	const std::shared_ptr<Camera> camera = SceneHandler::GetActiveScene()->GetCamera();
-#ifdef _DEBUG
+
 	EditorInterface::ShowEditor();
 
 	if (InputHandler::GetKeyIsPressed(VK_F6))
@@ -346,21 +343,20 @@ void GraphicsEngine::RenderFrame()
 	{
 		enableSSAO = !enableSSAO;
 	}
-#endif // _DEBUG
 
 	ComponentHandler::Update();
 
-	ImGui::Begin("Lights");
-	ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 10, 0, INT_MAX);
-	ImGui::DragFloat("Intensity", &myLights[0]->myLightBufferData.Intensity, 100, 0, INT_MAX);
-	ImGui::DragFloat3("Position", &myLights[0]->myLightBufferData.Position.x, 10, -INT_MAX, INT_MAX);
-	ImGui::DragFloat3("Color", &myLights[0]->myLightBufferData.Color.x, 0.01f, 0, 1);
+	//ImGui::Begin("Lights");
+	//ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 10, 0, INT_MAX);
+	//ImGui::DragFloat("Intensity", &myLights[0]->myLightBufferData.Intensity, 100, 0, INT_MAX);
+	//ImGui::DragFloat3("Position", &myLights[0]->myLightBufferData.Position.x, 10, -INT_MAX, INT_MAX);
+	//ImGui::DragFloat3("Color", &myLights[0]->myLightBufferData.Color.x, 0.01f, 0, 1);
 	//ImGui::DragFloat("Inner rad", &myLights[1]->myLightBufferData.SpotInnerRadius, 1, 0, INT_MAX);
 	//ImGui::DragFloat("Outer rad", &myLights[1]->myLightBufferData.SpotOuterRadius, 1, 0, INT_MAX);
 	//ImGui::DragFloat3("Direction", &myLights[1]->myLightBufferData.Direction.x, 0.01f, -1, 1);
 	//ImGui::DragFloat3("Position", &myDirectionalLight->GetTransform().GetPositionMutable().x, 1, -INT_MAX, INT_MAX);
 	//ImGui::DragFloat3("Direction", &myDirectionalLight->myLightBufferData.Direction.x, 0.01f, -1, 1);
-	ImGui::End();
+	//ImGui::End();
 
 	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
 	DX11::Context->ClearRenderTargetView(GBuffer::GetVPRTV().Get(), &ourClearColor[0]);
@@ -393,7 +389,8 @@ void GraphicsEngine::RenderFrame()
 	RenderStateManager::SetSamplerState(RenderStateManager::SamplerState::SS_Default, 1);
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
-	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());
+	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, 
+		Timer::GetDeltaTime(), static_cast<float>(Timer::GetTotalTime()));
 	
 	if (enableSSAO)
 	{
@@ -409,7 +406,8 @@ void GraphicsEngine::RenderFrame()
 
 	myIntermediateTargetA->SetAsTarget();
 
-	myDeferredRenderer.Render(camera, myDirectionalLight, myLights, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
+	myDeferredRenderer.Render(camera, myDirectionalLight, myLights, myEnvironmentLight,
+		Timer::GetDeltaTime(), static_cast<float>(Timer::GetTotalTime()));
 
 	mySSAOTarget->RemoveResource(8);
 

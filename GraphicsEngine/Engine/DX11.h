@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include <wrl.h>
 
 using namespace Microsoft::WRL;

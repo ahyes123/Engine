@@ -104,7 +104,8 @@ entt::entity& ComponentHandler::DuplicateEntity(const entt::entity aEntity)
 		reg.get<ParticleSystemComponent>(entity).myParticleSystem = reg.get<ParticleSystemComponent>(aEntity).myParticleSystem;
 	if (reg.all_of<TextComponent>(aEntity))
 		reg.get<TextComponent>(entity).myText = reg.get<TextComponent>(aEntity).myText;
-	return entity;
+	std::shared_ptr<entt::entity> ent = std::make_shared<entt::entity>(entity);
+	return *ent;
 }
 
 template<typename T>

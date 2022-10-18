@@ -2,9 +2,9 @@
 #include "TextFactory.h"
 #include <fstream>
 
-#include "DDSTextureLoader11.h"
+#include "../External/Tool/DDSTextureLoader11.h"
 #include "DX11.h"
-#include "json.hpp"
+#include "../External/nloman/json.hpp"
 #include "Vertex.hpp"
 #include "../Scene/SceneHandler.h"
 
@@ -13,8 +13,6 @@ std::unordered_map<std::wstring, Font> TextFactory::myFonts;
 
 void TextFactory::Init()
 {
-	HRESULT result;
-
 	std::wstring fontFileName = L"Fonts/cgothic";
 	const static::std::wstring atlasFileName = fontFileName + L".dds";
 	const static::std::wstring fontDefinition = fontFileName + L".json";
@@ -83,7 +81,6 @@ Font TextFactory::GetFont(std::wstring aFontName)
 std::shared_ptr<Text> TextFactory::CreateText(const std::wstring& someText, const int someWorldSize, const int aFontSize, const bool aIs2D)
 {
 	const std::string asciiString = std::string(someText.begin(), someText.end());
-	const size_t strLen = strlen(asciiString.c_str());
 
 	std::wstring fontName = L"Fonts/cgothic";
 	auto It = myFonts.find(fontName);
@@ -105,7 +102,7 @@ std::shared_ptr<Text> TextFactory::CreateText(const std::wstring& someText, cons
 
 		if (!aIs2D)
 		{
-			actualWorldSize = font.Atlas.Size;
+			actualWorldSize = static_cast<float>(font.Atlas.Size);
 			charAdvance *= actualWorldSize;
 
 			offset.x = font[c].PlaneBounds.x * charAdvance;

@@ -1,6 +1,5 @@
 #include "GraphicsEngine.pch.h"
 #include "RenderStateManager.h"
-#include "DX11.h"
 
 std::unordered_map<RenderStateManager::BlendState, ComPtr<ID3D11BlendState>> RenderStateManager::myBlendStates;
 std::unordered_map<RenderStateManager::DepthStencilState, ComPtr<ID3D11DepthStencilState>> RenderStateManager::myDepthStencilStates;
@@ -155,6 +154,7 @@ bool RenderStateManager::Initialize()
 
 
 	DX11::Context->PSSetSamplers(0, 1, mySamplerStates[SamplerState::SS_Default].GetAddressOf());
+	return true;
 }
 
 void RenderStateManager::SetBlendState(BlendState aState)

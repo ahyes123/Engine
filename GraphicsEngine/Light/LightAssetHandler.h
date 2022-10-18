@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 #include "DirectionalLight.h"
 #include "EnvironmentLight.h"

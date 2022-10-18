@@ -1,7 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "LightAssetHandler.h"
 
-#include "DX11.h"
 #include "SceneHandler.h"
 #include "UtilityFunctions.hpp"
 #include "Texture/TextureAssetHandler.h"

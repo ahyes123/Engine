@@ -1,6 +1,5 @@
 #include "GraphicsEngine.pch.h"
 #include "InputHandler.h"
-#include <iostream>
 
 namespace CommonUtilities
 {
@@ -39,6 +38,7 @@ namespace CommonUtilities
 
 	bool InputHandler::UpdateEvents(UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		lParam;
 		switch (message)
 		{
 			case WM_KEYDOWN:

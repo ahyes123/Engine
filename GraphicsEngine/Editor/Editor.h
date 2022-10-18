@@ -1,9 +1,10 @@
 #pragma once
-#include <memory>
+
+#include "SceneHandler.h"
 #include "../GraphicsEngine/Scene/Transform.h"
 #include "../External/entt/entity/entity.hpp"
 #include "../Scene/SceneObject.h"
-#include "../Tools/json.hpp"
+#include "../External/nloman/json.hpp"
 #include "../Scene/Scene.h"
 class ModelInstance;
 
@@ -16,12 +17,12 @@ public:
 		bool AddedObject = false;
 		bool RemovedObject = false;
 		bool MovedObject = false;
-		std::shared_ptr<SceneObject> Object;
+		std::shared_ptr<SceneObject> Object = nullptr;
 		Transform OldTransform;
 		Transform beforeTransform;
-		std::wstring OldName;
-		std::wstring beforeName;
-		entt::entity oldEntity;
+		std::wstring OldName = L"";
+		std::wstring beforeName = L"";
+		entt::entity oldEntity = SceneHandler::GetActiveScene()->GetRegistry().create();
 	};
 	static void AddUndoAction(const EditorActions& anAction, const bool& aNewAction = true);
 	static void AddRedoActoin(const EditorActions& anAction);

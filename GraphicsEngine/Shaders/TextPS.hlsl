@@ -30,7 +30,7 @@ PixelOutput main(VertexToPixel input)
 	float screenPxDist = ScreenPxRange(input.myUV) * (sd - 0.5);
 	float opacity = clamp(screenPxDist + 0.5, 0.0, 1.0);
 
-	float bgColor = float3(0, 0, 0);
+	float bgColor = 0.f;
 	float3 fgColor = float3(1, 1, 1);
 
 	result.myColor.rgb = lerp(bgColor, fgColor, opacity);

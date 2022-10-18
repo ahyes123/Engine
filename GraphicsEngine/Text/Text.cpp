@@ -1,8 +1,7 @@
 #include "GraphicsEngine.pch.h"
 #include "Text.h"
 #include "TextFactory.h"
-#include <Model/Vertex.hpp>
-#include <Engine/DX11.cpp>
+#include "Model/Vertex.hpp"
 
 void Text::Init(TextData someTextData, std::wstring someText, std::shared_ptr<Font> aFont, bool aIs2D)
 {
@@ -15,7 +14,6 @@ void Text::Init(TextData someTextData, std::wstring someText, std::shared_ptr<Fo
 void Text::SetText(const std::wstring someText)
 {
 	const std::string asciiString = std::string(someText.begin(), someText.end());
-	const size_t strLen = strlen(asciiString.c_str());
 
 	std::wstring fontName = L"Fonts/cgothic";
 	Font font = TextFactory::GetFont(fontName);
@@ -36,7 +34,7 @@ void Text::SetText(const std::wstring someText)
 
 		if (!myIs2D)
 		{
-			actualWorldSize = font.Atlas.Size;
+			actualWorldSize = static_cast<float>(font.Atlas.Size);
 			charAdvance *= actualWorldSize;
 
 			offset.x = font[c].PlaneBounds.x * charAdvance;

@@ -1,12 +1,8 @@
 #pragma once
-#include <memory>
-#include <vector>
-#include "Math/Matrix4x4.hpp"
 #include <wrl.h>
-#include "Scene/Camera.h"
-#include <d3d11.h>
-#include <memory>
 
+#include "Scene/Camera.h"
+#include "Math/Matrix4x4.hpp"
 #include "Light/DirectionalLight.h"
 #include "Light/EnvironmentLight.h"
 #include "Model/ModelInstance.h"

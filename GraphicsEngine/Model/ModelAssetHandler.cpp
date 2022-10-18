@@ -5,7 +5,6 @@
 
 #include "Model.h"
 #include <fstream>
-#include <d3d11.h>
 #include "Engine/DX11.h"
 #include "FBXImporter.h"
 #include "Vertex.hpp"
@@ -601,7 +600,7 @@ bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std:
 	{
 		Animation result;
 		result.myName = std::wstring(tgaAnimation.Name.begin(), tgaAnimation.Name.end());
-		result.myDuration = tgaAnimation.Duration;
+		result.myDuration = static_cast<float>(tgaAnimation.Duration);
 		result.myFPS = tgaAnimation.FramesPerSecond;
 		result.myLength = tgaAnimation.Length;
 
@@ -679,7 +678,7 @@ HRESULT ModelAssetHandler::CreateInputLayout(std::string* aVSData, ComPtr<ID3D11
 
 void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, const std::wstring& aName)
 {
-	for (size_t i = 0; i < aMdl->GetNumMeshes(); ++i)
+	for (unsigned i = 0; i < aMdl->GetNumMeshes(); ++i)
 	{
 		std::filesystem::path fileName(aName);
 		std::wstring baseName = fileName.filename().replace_extension("");

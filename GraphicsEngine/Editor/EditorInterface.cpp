@@ -11,7 +11,6 @@
 #include <commdlg.h>
 #include <fstream>
 
-#include "DX11.h"
 #include "../Engine/ComponentHandler.h"
 #include "../Particle/ParticleAssetHandler.h"
 #include "../Text/TextFactory.h"
@@ -29,7 +28,6 @@ std::filesystem::path EditorInterface::myCurrentPath = ".\\";
 void EditorInterface::ShowEditor()
 {
 	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
-	bool someThingSelected = false;
 	Editor::EditorActionHandler();
 	EnableDocking();
 	MenuBar();
@@ -249,10 +247,10 @@ void EditorInterface::MenuBar()
 		{
 			ImGui::Begin("Settings", &openedSettings);
 
-			ImGui::DragFloat("Camera Speed", &SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed(), 0.1f, 0, INT_MAX);
+			ImGui::DragFloat("Camera Speed", &SceneHandler::GetActiveScene()->GetCamera()->GetCameraSpeed(), 0.1f, 0, 999.f);
 
 			float timeScale = CommonUtilities::Timer::GetTimeScale();
-			ImGui::DragFloat("Time Scale", &timeScale, 0.05f, 0, INT_MAX);
+			ImGui::DragFloat("Time Scale", &timeScale, 0.05f, 0, 999.f);
 			CommonUtilities::Timer::SetTimeScale(timeScale);
 			if (!GraphicsEngine::myClearColorBlending)
 			{
@@ -456,14 +454,8 @@ void EditorInterface::ModelLoader()
 	static bool selectable = false;
 	if (ImGui::Button("Get Models"))
 	{
-		for (int i = models.size() - 1; i >= 0; i--)
-		{
-			models.erase(models.begin() + i);
-		}
-		for (int i = animations.size() - 1; i >= 0; i--)
-		{
-			animations.erase(animations.begin() + i);
-		}
+		models.clear();
+		animations.clear();
 		const std::string modelPath = "./Models";
 		for (const auto& file : directory_iterator(modelPath))
 		{
@@ -508,7 +500,7 @@ void EditorInterface::ModelLoader()
 			{
 				if (ImGui::Selectable(models[i].filename().string().c_str(), &selectable))
 				{
-					selectedModel = i;
+					selectedModel = static_cast<int>(i);
 				}
 				if (selectable)
 				{
@@ -534,7 +526,7 @@ void EditorInterface::ModelLoader()
 					{
 						if (ImGui::Selectable(animations[i].filename().string().c_str(), &selectable))
 						{
-							selectedAnimation = i;
+							selectedAnimation = static_cast<int>(i);
 						}
 						if (selectable)
 						{
@@ -586,7 +578,7 @@ void EditorInterface::ModelLoader()
 					{
 						if (ImGui::Selectable(animations[i].filename().string().c_str(), &selectable))
 						{
-							selectedAnimation = i;
+							selectedAnimation = static_cast<int>(i);
 						}
 						if (selectable)
 						{
@@ -628,13 +620,13 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 		{
 			if (i >= aScene->GetSceneObjects().size())
 				continue;
-			DragAndDropHierchy(i);
+			DragAndDropHierchy(static_cast<int>(i));
 			if (someSelected)
 			{
 				bool deleteItem = false;
 				if (i >= aScene->GetSceneObjects().size())
 				{
-					ImGui::TreePop;
+					ImGui::TreePop();
 					return;
 				}
 
@@ -662,7 +654,7 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 				}
 				if (deleteItem || InputHandler::GetKeyIsPressed(VK_DELETE))
 				{
-					for (size_t i = 0; i < aScene->GetSceneObjects()[selectedItem]->myChildren.size(); i++)
+					for (size_t j = 0; j < aScene->GetSceneObjects()[selectedItem]->myChildren.size(); j++)
 					{
 						Editor::EditorActions action;
 						entt::entity ent = aScene->GetSceneObjects()[selectedItem]->myEntity;
@@ -899,7 +891,7 @@ void EditorInterface::DragAndDropHierchy(const int& aIndex)
 		ImGui::EndDragDropTarget();
 	}
 
-	if (ImGui::TreeNodeEx((void*)object->GetId(), ImGuiTreeNodeFlags_None, objName.string().c_str()))
+	if (ImGui::TreeNodeEx(&object->GetId(), ImGuiTreeNodeFlags_None, objName.string().c_str()))
 	{
 		if (InputHandler::GetKeyIsHeld('M'))
 			if (ImGui::IsItemClicked())
@@ -919,13 +911,12 @@ void EditorInterface::DragAndDropHierchy(const int& aIndex)
 void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, std::vector<std::shared_ptr<SceneObject>>& aObjectVector, bool& aAcceptedDragDrop)
 {
 	std::shared_ptr<Scene> scene = SceneHandler::GetActiveScene();
-	bool removedObj = false;
 
 	for (size_t j = 0; j < aObject->myChildren.size(); j++)
 	{
 		std::shared_ptr<SceneObject> objectsChild = aObject->myChildren[j];
 		std::filesystem::path childName = objectsChild->GetName();
-		if (ImGui::TreeNodeEx((void*)objectsChild->GetId(), ImGuiTreeNodeFlags_None,
+		if (ImGui::TreeNodeEx(&objectsChild->GetId(), ImGuiTreeNodeFlags_None,
 			childName.string().c_str()))
 		{
 			if (InputHandler::GetKeyIsHeld('M'))
@@ -938,7 +929,7 @@ void EditorInterface::ShowObjectChildren(std::shared_ptr<SceneObject>& aObject, 
 
 			ShowObjectChildren(objectsChild, aObjectVector, aAcceptedDragDrop);
 			selectedEntity = objectsChild->myEntity;
-			selectedItem = j;
+			selectedItem = static_cast<int>(j);
 			someSelected = true;
 
 			ImGui::TreePop();
@@ -1025,7 +1016,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 				static bool madeChange = false;
 				static Transform oldTransform = transform;
 
-				if (ImGui::DragFloat3("Position", &transform.GetPositionMutable().x, 1, -INT_MAX, INT_MAX))
+				if (ImGui::DragFloat3("Position", &transform.GetPositionMutable().x, 1, -99999.f, 99999.f))
 				{
 					madeChange = true;
 				}
@@ -1033,7 +1024,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 				{
 					madeChange = true;
 				}
-				if (ImGui::DragFloat3("Scale", &transform.GetScaleMutable().x, 0.1f, -INT_MAX, INT_MAX))
+				if (ImGui::DragFloat3("Scale", &transform.GetScaleMutable().x, 0.1f, -99999.f, 99999.f))
 				{
 					madeChange = true;
 				}
@@ -1072,7 +1063,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 						{
 							if (ImGui::Selectable(textureNames[i].filename().string().c_str(), &selectable))
 							{
-								selectedTexture = i;
+								selectedTexture = static_cast<int>(i);
 							}
 							if (selectable)
 							{
@@ -1091,7 +1082,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 				if (mdl->HasBones() && mdl->GetAnimNames().size() >= 1)
 				{
 					static int selectedAnim = 0;
-					static bool selectable = false;
+					static bool selectable1 = false;
 					std::vector<std::filesystem::path> models;
 					for (size_t i = 0; i < mdl->GetAnimNames().size(); i++)
 					{
@@ -1105,11 +1096,11 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 					{
 						for (size_t i = 0; i < models.size(); i++)
 						{
-							if (ImGui::Selectable(models[i].filename().string().c_str(), &selectable))
+							if (ImGui::Selectable(models[i].filename().string().c_str(), &selectable1))
 							{
-								selectedAnim = i;
+								selectedAnim = static_cast<int>(i);
 							}
-							if (selectable)
+							if (selectable1)
 							{
 								ImGui::SetItemDefaultFocus();
 							}
@@ -1186,7 +1177,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 					(selectedEntity).myParticleSystem;
 				EmitterSettingsData& data = system->GetEmitters()[0].GetEmitterSettings();
 
-				if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, INT_MAX))
+				if (ImGui::DragFloat("Spawn Rate", &data.SpawnRate, 1, 0.1f, 999.f))
 				{
 					isDirty = true;
 					if (data.SpawnRate <= 0)
@@ -1194,7 +1185,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 						data.SpawnRate = 0.1f;
 					}
 				}
-				if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, INT_MAX))
+				if (ImGui::DragFloat("LifeTime", &data.LifeTime, 1, 0.1f, 999.f))
 				{
 					isDirty = true;
 					if (data.LifeTime <= 0)
@@ -1204,15 +1195,15 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 				}
 
 				float startVelocity[3] = { data.StartVelocity.x, data.StartVelocity.y, data.StartVelocity.z };
-				ImGui::DragFloat3("Start Velocity", startVelocity, 1, -INT_MAX, INT_MAX);
+				ImGui::DragFloat3("Start Velocity", startVelocity, 1, -999.f, 999.f);
 				data.StartVelocity = { startVelocity[0], startVelocity[1], startVelocity[2] };
 				float endVelocity[3] = { data.EndVelocity.x, data.EndVelocity.y, data.EndVelocity.z };
-				ImGui::DragFloat3("End Velocity", endVelocity, 1, -INT_MAX, INT_MAX);
+				ImGui::DragFloat3("End Velocity", endVelocity, 1, -999.f, 999.f);
 				data.EndVelocity = { endVelocity[0], endVelocity[1], endVelocity[2] };
 
-				ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, INT_MAX);
-				ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, INT_MAX);
-				ImGui::DragFloat("End Size", &data.EndSize, 1, 0, INT_MAX);
+				ImGui::DragFloat("Gravity Scale", &data.GravityScale, 1, 0, 999.f);
+				ImGui::DragFloat("Start Size", &data.StartSize, 1, 0, 999.f);
+				ImGui::DragFloat("End Size", &data.EndSize, 1, 0, 999.f);
 
 				ImGui::ColorEdit4("Start Color", &data.StartColor.x);
 				ImGui::ColorEdit4("End Color", &data.EndColor.x);
@@ -1220,7 +1211,7 @@ void EditorInterface::Properties(std::shared_ptr<Scene> aScene)
 				ImGui::Checkbox("Looping", &data.Looping);
 				ImGui::Checkbox("HasDuration", &data.HasDuration);
 				if (data.HasDuration)
-					ImGui::DragFloat("Duration", &data.Duration, 1, 0, INT_MAX);
+					ImGui::DragFloat("Duration", &data.Duration, 1, 0, 999.f);
 
 				if (ImGui::Button("Refresh System"))
 				{
@@ -1263,9 +1254,6 @@ void EditorInterface::AddComponentTab(std::shared_ptr<Scene> aScene)
 {
 	if (someSelected)
 	{
-		entt::registry& reg = SceneHandler::GetActiveScene()->GetRegistry();
-		entt::entity ent = selectedEntity;
-
 		static bool addComponent = false;
 		if (ImGui::Button("Add Component"))
 		{
@@ -1286,7 +1274,7 @@ void EditorInterface::AddComponentTab(std::shared_ptr<Scene> aScene)
 				{
 					if (ImGui::Selectable(components[i].string().c_str(), &selectable))
 					{
-						selectedComponent = i;
+						selectedComponent = static_cast<int>(i);
 						ComponentHandler::AddComponent(selectedComponent, aScene->GetEntitys(ObjectType::All)[selectedItem]);
 						addComponent = false;
 					}

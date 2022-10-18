@@ -9,7 +9,6 @@ struct Vertex
 
 	Vertex(std::initializer_list<float> aList)
 	{
-		auto iterator = aList.begin();
 		int i = 0;
 		for (const auto& element : aList)
 		{

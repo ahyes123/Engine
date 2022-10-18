@@ -23,8 +23,8 @@ struct Font
 
 	struct Glyph
 	{
-		char Character;
-		float Advance;
+		char Character = 0;
+		float Advance = 0.f;
 		Vector4f PlaneBounds;
 		Vector4f UVBounds;
 	};

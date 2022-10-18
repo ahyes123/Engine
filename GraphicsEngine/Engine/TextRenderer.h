@@ -1,12 +1,8 @@
 #pragma once
-#include <memory>
-#include <vector>
-#include "Math/Matrix4x4.hpp"
 #include <wrl.h>
-#include "Scene/Camera.h"
-#include <d3d11.h>
-#include <memory>
 
+#include "Math/Matrix4x4.hpp"
+#include "Scene/Camera.h"
 #include "Text/Text.h"
 
 using namespace Microsoft::WRL;

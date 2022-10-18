@@ -1,6 +1,4 @@
 #include "GraphicsEngine.pch.h"
-#include "DX11.h"
-#include <d3d11.h>
 
 ComPtr<ID3D11Device> DX11::Device;
 ComPtr<ID3D11DeviceContext> DX11::Context;

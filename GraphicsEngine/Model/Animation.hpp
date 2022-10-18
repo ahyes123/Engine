@@ -18,10 +18,10 @@ struct Animation
 
 	std::vector<Frame> myFrames;
 
-	unsigned int myLength;
-	float myDuration;
-	float myFPS;
-	AnimationState myState;
-	std::wstring myName;
+	unsigned int myLength = 0;
+	float myDuration = 0.f;
+	float myFPS = 0.f;
+	AnimationState myState = AnimationState::Finished;
+	std::wstring myName = L"";
 	size_t myCurrentFrame = 0;
 };

@@ -81,12 +81,14 @@
     <OutDir>$(SolutionDir)Lib\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir);$(ProjectDir)Engine\;$(ProjectDir)Math\;$(ProjectDir)Model\;$(ProjectDir)Scene\;$(ProjectDir)Shaders\;$(ProjectDir)Tools\;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)Lib\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir);$(ProjectDir)Engine\;$(ProjectDir)Math\;$(ProjectDir)Model\;$(ProjectDir)Scene\;$(ProjectDir)Shaders\;$(ProjectDir)Tools\;$(IncludePath)</IncludePath>
+    <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -124,7 +126,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;_SOLUTIONDIR=R"($(SolutionDir))";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -132,6 +134,8 @@
       <PrecompiledHeaderFile>GraphicsEngine.pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DisableSpecificWarnings>4244;26819;26800;26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -146,7 +150,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -156,6 +160,8 @@
       <PrecompiledHeaderFile>GraphicsEngine.pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>..\External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DisableSpecificWarnings>4244;26819;26800;26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -224,9 +230,7 @@
     <ClInclude Include="Text\Font.hpp" />
     <ClInclude Include="Text\Text.h" />
     <ClInclude Include="Text\TextFactory.h" />
-    <ClInclude Include="Tools\DDSTextureLoader11.h" />
     <ClInclude Include="Tools\InputHandler.h" />
-    <ClInclude Include="Tools\json.hpp" />
     <ClInclude Include="Tools\Timer.h" />
     <ClInclude Include="Tools\UtilityFunctions.hpp" />
   </ItemGroup>
@@ -273,7 +277,6 @@
     <ClCompile Include="Texture\TextureAssetHandler.cpp" />
     <ClCompile Include="Text\Text.cpp" />
     <ClCompile Include="Text\TextFactory.cpp" />
-    <ClCompile Include="Tools\DDSTextureLoader11.cpp" />
     <ClCompile Include="Tools\InputHandler.cpp" />
     <ClCompile Include="Tools\Timer.cpp" />
   </ItemGroup>

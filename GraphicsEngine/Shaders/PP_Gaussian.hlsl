@@ -24,6 +24,8 @@ PostProcessPixelOutput main(PostProcessVertexToPixel input)
 
 	const float2 rad = Radius / 2048.f;
 
+#pragma warning(push)
+#pragma warning (disable : 3570)
 	for (float d = 0.0f; d < Pi2; d += Pi2 / Directions)
 	{
 		for (float i = 1.0f / Quality; i <= 1.0f; i += 1.0f / Quality)
@@ -31,6 +33,7 @@ PostProcessPixelOutput main(PostProcessVertexToPixel input)
 			color += TextureSlot1.Sample(defaultSampler, input.UV + float2(cos(d), sin(d)) * rad * i);
 		}
 	}
+#pragma warning(pop)
 
 	color /= Quality * Directions - 15.0f;
 

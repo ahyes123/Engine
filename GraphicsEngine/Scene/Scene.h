@@ -1,6 +1,4 @@
 #pragma once
-#include <memory>
-#include <vector>
 #include "Camera.h"
 #include "Model/Model.h"
 #include "Model/ModelInstance.h"
@@ -65,6 +63,7 @@ public:
 				return myObjects.mySceneObjects[i];
 			}
 		}
+		return nullptr;
 	}
 
 	std::vector<entt::entity>& GetEntitys(const ObjectType& aEntityType = ObjectType::Model)
@@ -81,6 +80,9 @@ public:
 			return myTextObject.myEntitys;
 			break;
 		case ObjectType::All:
+			return myObjects.myEntitys;
+			break;
+		default:
 			return myObjects.myEntitys;
 			break;
 		}

@@ -1,13 +1,9 @@
 #include "GraphicsEngine.pch.h"
-#include "ParticleEmitter.h"
-
 #include <fstream>
-#include <iostream>
 
-#include "DX11.h"
+#include "ParticleEmitter.h"
 #include "UtilityFunctions.hpp"
 #include "Texture/TextureAssetHandler.h"
-#include "../Tools/InputHandler.h"
 #include "../Scene/SceneHandler.h"
 
 void ParticleEmitter::InitParticle(size_t aParticleIndex)

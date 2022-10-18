@@ -2,8 +2,6 @@
 #include "DeferredRenderer.h"
 
 #include <fstream>
-
-#include "DX11.h"
 #include "GraphicsEngine.h"
 #include "RenderStateManager.h"
 #include "Texture/TextureAssetHandler.h"

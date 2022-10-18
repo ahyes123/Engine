@@ -1,7 +1,5 @@
 #include "GraphicsEngine.pch.h"
 #include "ForwardRenderer.h"
-#include "DX11.h"
-#include <d3d11.h>
 #include "Light/DirectionalLight.h"
 #include "Light/EnvironmentLight.h"
 #include "Light/Light.h"

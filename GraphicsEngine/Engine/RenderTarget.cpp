@@ -1,6 +1,5 @@
 #include "GraphicsEngine.pch.h"
 #include "RenderTarget.h"
-#include "DX11.h"
 #include "GraphicsEngine.h"
 
 void RenderTarget::SetAsTarget()

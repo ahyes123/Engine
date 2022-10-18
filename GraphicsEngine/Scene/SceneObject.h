@@ -1,13 +1,13 @@
 #pragma once
 #include "Transform.h"
 #include "../External/entt/entity/entity.hpp"
-#include <vector>
 
 class SceneObject
 {
 protected:
 	Transform myTransform;
-	int myId;
+	int myId = 0;
+	std::wstring myName = L"nothing";
 
 public:
 	SceneObject() = default;
@@ -30,9 +30,9 @@ public:
 	FORCEINLINE Transform const& GetTransform() const { return myTransform; }
 	FORCEINLINE Transform& GetTransform() { return myTransform; }
 
-	virtual std::wstring const& GetName() const { return L"nothing"; };
-	virtual void SetName(const std::wstring& aName) {};
+	virtual std::wstring const& GetName() const { return myName; };
+	virtual void SetName(const std::wstring& aName) { aName; };
 	int const& GetId() const { return myId; }
 	void SetId(int aId) { myId = aId; }
-	virtual void OnComponentAdded(entt::entity aEntity) {};
+	virtual void OnComponentAdded(entt::entity aEntity) { aEntity; };
 };

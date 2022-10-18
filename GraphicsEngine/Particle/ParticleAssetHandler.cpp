@@ -1,7 +1,7 @@
 #include "GraphicsEngine.pch.h"
 #include "ParticleAssetHandler.h"
 #include <fstream>
-#include "json.hpp"
+#include "../External/nloman/json.hpp"
 #include "../Scene/SceneHandler.h"
 
 int ParticleAssetHandler::id;

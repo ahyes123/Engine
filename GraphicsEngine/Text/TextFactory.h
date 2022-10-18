@@ -1,6 +1,5 @@
 #pragma once
 #include "Text.h"
-#include <vector>
 
 class TextFactory
 {

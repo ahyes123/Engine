@@ -99,7 +99,7 @@ std::shared_ptr<Scene> SceneHandler::LoadScene(const std::wstring& aSceneName)
 int SceneHandler::GetCurrentSceneID()
 {
 	int id = 0;
-	for (size_t i = 0; i < myScenes.size(); i++)
+	for (int i = 0; i < myScenes.size(); i++)
 	{
 		if (myScenes[i] == myCurrentScene)
 		{

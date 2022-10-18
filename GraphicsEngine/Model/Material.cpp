@@ -1,7 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "Material.h"
 
-#include "DX11.h"
 #include "Texture/Texture.h"
 
 Material::Material()

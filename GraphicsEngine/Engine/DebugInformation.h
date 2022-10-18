@@ -1,5 +1,5 @@
 #pragma once
-#include <memory>
+
 class TextFactory;
 class Text;
 

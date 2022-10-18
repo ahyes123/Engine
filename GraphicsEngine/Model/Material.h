@@ -1,7 +1,4 @@
 #pragma once
-#include <memory>
-#include <array>
-#include <string>
 #include <wrl.h>
 #include "Math/Vector3.hpp"
 

@@ -1,6 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "TextureAssetHandler.h"
-#include "DDSTextureLoader11.h"
+#include "../External/Tool/DDSTextureLoader11.h"
 #include "DX11.h"
 #include "Texture.h"
 

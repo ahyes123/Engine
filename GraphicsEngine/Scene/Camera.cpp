@@ -41,6 +41,7 @@ bool Camera::Init(float aHorizontalFOV, CommonUtilities::Vector2<unsigned> aReso
 
 void Camera::Update(float aDeltaTime)
 {
+	aDeltaTime;
 	Vector3f rot = GetRotation();
 	rot = { rot.x, rot.y, rot.z };
 	Vector3f pos = GetTransform().GetPosition();
@@ -95,12 +96,12 @@ void Camera::Update(float aDeltaTime)
 		float xRot = rot.x + deltaPos.y * 0.05f;
 		float yRot = rot.y + deltaPos.x * 0.05f;
 		SetRotation(Clamp(-180.f * 0.5f, 180.f * 0.5f, xRot), yRot, rot.z);
-		InputHandler::SetMousePosition(myCapturedMousePos.x, myCapturedMousePos.y);
+		InputHandler::SetMousePosition(static_cast<int>(myCapturedMousePos.x), static_cast<int>(myCapturedMousePos.y));
 	}
 
 	if (InputHandler::GetMouseTwoWasReleased())
 	{
-		InputHandler::SetMousePosition(myCapturedMousePos.x, myCapturedMousePos.y);
+		InputHandler::SetMousePosition(static_cast<int>(myCapturedMousePos.x), static_cast<int>(myCapturedMousePos.y));
 		InputHandler::ReleaseMouse();
 		InputHandler::ShowMouse();
 	}

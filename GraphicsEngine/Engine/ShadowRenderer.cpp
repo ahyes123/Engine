@@ -1,7 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "ShadowRenderer.h"
 
-#include "DX11.h"
 #include "Light/Light.h"
 #include "Model/ModelInstance.h"
 #include "Texture/TextureAssetHandler.h"

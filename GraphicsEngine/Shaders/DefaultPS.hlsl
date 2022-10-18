@@ -172,6 +172,8 @@ PixelOutput main(VertexToPixel input)
 		result.myColor.a = 1;
 		break;
 	default:
+		result.myColor.rgb = LinearToGamma(directLighting + ambientLighting + pointLight + spotLight);
+		result.myColor.a = 1;
 		break;
 	}
 #else

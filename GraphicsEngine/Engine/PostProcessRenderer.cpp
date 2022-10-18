@@ -3,7 +3,6 @@
 
 #include <fstream>
 
-#include "DX11.h"
 
 bool PostProcessRenderer::Initialize()
 {
@@ -50,7 +49,6 @@ bool PostProcessRenderer::Initialize()
 	{
 		psFile.open(shaderPaths[i], std::ios::binary);
 		psData = { std::istreambuf_iterator<char>(psFile), std::istreambuf_iterator<char>() };
-		ID3D11PixelShader* pixelShader;
 		result = DX11::Device->CreatePixelShader(psData.data(), psData.size(), nullptr, myPassShader[i].GetAddressOf());
 		psFile.close();
 
@@ -79,7 +77,6 @@ void PostProcessRenderer::Render(PostProcessPass aPass, std::shared_ptr<Camera> 
 {
 	DXGI_SWAP_CHAIN_DESC swapDesc;
 	DX11::SwapChain->GetDesc(&swapDesc);
-	const HWND windowHandle = swapDesc.OutputWindow;
 	const CommonUtilities::Vector2<unsigned> res = { static_cast<unsigned>(DX11::ClientRect.right - DX11::ClientRect.left),
 		 static_cast<unsigned>(DX11::ClientRect.bottom - DX11::ClientRect.top) };
 

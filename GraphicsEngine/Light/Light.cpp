@@ -1,7 +1,6 @@
 #include "GraphicsEngine.pch.h"
 #include "Light.h"
 
-#include "DX11.h"
 #include "GBuffer.h"
 
 void Light::Init(Vector3f aColor, float anIntensity)
