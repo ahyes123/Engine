@@ -180,12 +180,13 @@ void Editor::SaveScenes()
 			std::cout << "File Found" << std::endl;
 		}
 		json["SceneName"] = sceneName.string();
-		json["Size"] = scene->GetSceneObjects().size();
+		json["Size"] = scene->GetAllSceneObjects().size();
 
 		int num = 0;
 		SaveModels(scene, json, num);
 		SaveTexts(scene, json, num);
 		SaveParticleSystems(scene, json, num);
+		SaveParents(scene, json, num);
 
 		std::ofstream oStream(path + sceneName.string());
 		oStream << json;
@@ -200,6 +201,7 @@ void Editor::LoadCurrentScene()
 	if (ifStream.fail())
 		return;
 	ifStream >> json;
+	int index = json["Size"];
 	for (size_t i = 0; i < json["Size"]; i++)
 	{
 		std::string num = std::to_string(i);
@@ -219,6 +221,7 @@ void Editor::LoadCurrentScene()
 			}
 		}
 	}
+	LoadParents(scene, json, index);
 }
 
 void Editor::SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene)
@@ -279,6 +282,47 @@ void Editor::LoadComponents(nlohmann::json& aJson, std::string& aNum, entt::enti
 		reg.get<TransformComponent>(aEntity).myTransform.SetPosition(position);
 		reg.get<TransformComponent>(aEntity).myTransform.SetScale(scale);
 		reg.get<TransformComponent>(aEntity).myTransform.SetRotation(rotation);
+	}
+}
+
+void Editor::SaveParents(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum)
+{
+	auto obj = SceneHandler::GetActiveScene()->GetAllSceneObjects();
+	
+	for (size_t i = 0; i < aNum; i++)
+	{
+		std::string num = std::to_string(i);
+		bool children = obj[i]->myChildren.size();
+		for (size_t j = 0; j < obj[i]->myChildren.size(); j++)
+		{
+			aJson[num]["Children"][j] = obj[i]->myChildren[j]->GetId();
+		}
+		if (!children)
+			aJson[num]["Children"] = {};
+
+		aJson[num]["ID"] = obj[i]->GetId();
+	}
+}
+
+void Editor::LoadParents(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum)
+{
+	auto obj = SceneHandler::GetActiveScene()->GetAllSceneObjects();
+	for (size_t i = 0; i < aNum; i++)
+	{
+		std::string num = std::to_string(i);
+		obj[i]->SetId(aJson[num]["ID"]);
+	}
+	for (size_t i = 0; i < aNum; i++)
+	{
+		std::string num = std::to_string(i);
+		for (size_t j = 0; j < aJson[num]["Children"].size(); j++)
+		{
+			auto child = SceneHandler::GetActiveScene()->GetObjectByID(aJson[num]["Children"][j]);
+			if (!child)
+				continue;
+			obj[i]->myChildren.push_back(child);
+			child->myParent = obj[i];
+		}
 	}
 }
 

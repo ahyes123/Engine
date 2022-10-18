@@ -7,6 +7,7 @@ class SceneObject
 {
 protected:
 	Transform myTransform;
+	int myId;
 
 public:
 	SceneObject() = default;
@@ -31,6 +32,7 @@ public:
 
 	virtual std::wstring const& GetName() const { return L"nothing"; };
 	virtual void SetName(const std::wstring& aName) {};
-	virtual int const& GetId() const { return 0; };
+	int const& GetId() const { return myId; }
+	void SetId(int aId) { myId = aId; }
 	virtual void OnComponentAdded(entt::entity aEntity) {};
 };

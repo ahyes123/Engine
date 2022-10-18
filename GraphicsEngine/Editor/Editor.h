@@ -46,4 +46,6 @@ private:
 	static void LoadParticleSystems(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, std::string aNum);
 	static void SaveComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene);
 	static void LoadComponents(nlohmann::json& aJson, std::string& aNum, entt::entity aEntity, std::shared_ptr<Scene> aScene);
+	static void SaveParents(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum);
+	static void LoadParents(std::shared_ptr<Scene> aScene, nlohmann::json& aJson, int& aNum);
 };

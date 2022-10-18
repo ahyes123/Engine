@@ -56,6 +56,17 @@ public:
 		return myRegistry;
 	}
 
+	std::shared_ptr<SceneObject> GetObjectByID(const int& aId)
+	{
+		for (size_t i = 0; i < myObjects.mySceneObjects.size(); i++)
+		{
+			if (myObjects.mySceneObjects[i]->GetId() == aId)
+			{
+				return myObjects.mySceneObjects[i];
+			}
+		}
+	}
+
 	std::vector<entt::entity>& GetEntitys(const ObjectType& aEntityType = ObjectType::Model)
 	{
 		switch (aEntityType)
@@ -93,7 +104,18 @@ public:
 		return myObjects.mySceneObjects;
 	}
 
-	int GetNextId() { return myObjects.mySceneObjects.size(); }
+	int GetNextId() 
+	{
+		int random = rand() % INT_MAX;
+		auto obj = GetObjectByID(random);
+
+		while (obj)
+		{
+			random = rand() % INT_MAX;
+			obj = GetObjectByID(random);
+		}
+		return random;
+	}
 
 	void AddModelInstance(std::shared_ptr<ModelInstance> aModelInstance, entt::entity& aEntity)
 	{

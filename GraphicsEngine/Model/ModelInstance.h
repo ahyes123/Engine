@@ -8,7 +8,7 @@ class ModelInstance : public SceneObject
 	Animation myCurrentAnimation;
 	float myTimer;
 	bool isLooping;
-	int myId;
+	//int myId;
 	std::wstring myName;
 	std::wstring myPath;
 
@@ -29,8 +29,8 @@ class ModelInstance : public SceneObject
 	FORCEINLINE std::wstring const& GetPath() const { return myPath; }
 	FORCEINLINE void SetName(const std::wstring& aName) { myName = aName; }
 	FORCEINLINE bool HasBones() const { return myModel->GetSkeleton()->GetRoot() != nullptr; }
-	FORCEINLINE int const& GetId() const { return myId; }
-	FORCEINLINE const void SetId(int aId) { myId = aId; }
+	//FORCEINLINE int const& GetId() const { return myId; }
+	//FORCEINLINE void SetId(int aId) { myId = aId; }
 	FORCEINLINE std::vector<std::wstring> const& GetAnimNames() const { return myModel->GetAnimNames(); }
 	FORCEINLINE void RemoveAnimName(const std::wstring& aName) { myModel->RemoveAnimName(aName); }
 	FORCEINLINE Animation const& GetCurrentAnimation() const { return myCurrentAnimation; }

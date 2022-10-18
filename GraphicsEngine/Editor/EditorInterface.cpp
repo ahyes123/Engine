@@ -632,6 +632,12 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 			if (someSelected)
 			{
 				bool deleteItem = false;
+				if (i >= aScene->GetSceneObjects().size())
+				{
+					ImGui::TreePop;
+					return;
+				}
+
 				if (ImGui::BeginPopupContextWindow(std::to_string(aScene->GetSceneObjects()[i]->GetId()).c_str(), ImGuiPopupFlags_MouseButtonRight))
 				{
 					if (ImGui::MenuItem("Change Name"))
