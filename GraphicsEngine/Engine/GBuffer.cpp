@@ -89,7 +89,12 @@ void GBuffer::SetAsResource(unsigned aStartSlot) const
 
 void GBuffer::ClearResource(unsigned aStartSlot) const
 {
-	DX11::Context->ClearDepthStencilView(DX11::DepthBuffer.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, aStartSlot);
+	ID3D11ShaderResourceView* mySRVList[GBufferTexture::GB_COUNT];
+	for (unsigned t = 0; t < mySRVs.size(); t++)
+	{
+		mySRVList[t] = nullptr;
+	}
+	DX11::Context->PSSetShaderResources(aStartSlot, GBufferTexture::GB_COUNT, &mySRVList[0]);
 }
 
 void GBuffer::Clear() const

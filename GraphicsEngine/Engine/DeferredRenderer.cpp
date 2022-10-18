@@ -100,8 +100,19 @@ void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
 	myGBuffer->Clear();
 	myGBuffer->SetAsTarget();
 
-	HRESULT result = S_FALSE;
+	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE bufferData;
+
+	myFrameBufferData.View = Matrix4x4f::GetFastInverse(aCamera->GetTransform().GetMatrix());
+	myFrameBufferData.CamTranslation = aCamera->GetTransform().GetPosition();
+	myFrameBufferData.Projection = aCamera->GetProjection();
+	myFrameBufferData.RenderMode = static_cast<unsigned int>(GraphicsEngine::GetRenderMode());
+	myFrameBufferData.FarPlane = aCamera->GetFarPlane();
+	myFrameBufferData.NearPlane = aCamera->GetNearPlane();
+	myFrameBufferData.DeltaTime = aDeltaTime;
+	myFrameBufferData.TotalTime = aTotalTime;
+	myFrameBufferData.Resolution = { static_cast<unsigned>(DX11::ClientRect.right - DX11::ClientRect.left),
+		static_cast<unsigned>(DX11::ClientRect.bottom - DX11::ClientRect.top) };
 
 	ZeroMemory(&bufferData, sizeof(D3D11_MAPPED_SUBRESOURCE));
 	result = DX11::Context->Map(myFrameBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData);
@@ -166,6 +177,7 @@ void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
 		}
 	}
 	myGBuffer->ClearTarget();
+	myGBuffer->SetAsResource(0);
 }
 
 void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
@@ -237,14 +249,6 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 	DX11::Context->VSSetShader(myFullscreenShader.Get(), nullptr, 0);
 	DX11::Context->PSSetShader(myEnvironmentShader.Get(), nullptr, 0);
 
-	//Viewport
-#ifdef _DEBUG
-	GraphicsEngine::myIntermediateTargetA->SetAsTarget();
-#endif
-	//Normal
-	//DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
-#ifndef _DEBUG
-#endif
 	myGBuffer->SetAsResource(0);
 	aDirectionalLight->SetShadowMapAsResource(20);
 	for(auto& light : aLightList)
@@ -260,15 +264,10 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 		}
 	}
 
-	GraphicsEngine::myIntermediateTargetA->SetAsTarget();
-	GraphicsEngine::mySSAOTarget->SetAsResource(8);
-
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
 	DX11::Context->Draw(3, 0);
-	//Viewport
-#ifdef _DEBUG
-	//DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
-#endif
+
+	myGBuffer->ClearResource(0);
 }
 
 void DeferredRenderer::ClearGBuffer()

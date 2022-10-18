@@ -8,6 +8,7 @@ class RenderTarget
 {
 public:
 	void SetAsTarget();
+	void RemoveTarget();
 	void SetAsResource(unsigned int aSlot);
 	void RemoveResource(unsigned int aSlot);
 	void Clear();

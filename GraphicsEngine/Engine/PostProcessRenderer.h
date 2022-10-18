@@ -16,6 +16,7 @@ public:
 		PP_Gaussian,
 		PP_Bloom,
 		PP_SSAO,
+		PP_Tonemap,
 		PP_Count
 	};
 

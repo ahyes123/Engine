@@ -198,12 +198,18 @@
     <ClInclude Include="Light\SpotLight.hpp">
       <Filter>Light</Filter>
     </ClInclude>
-    <ClInclude Include="Texture\DepthStencil.h" />
     <ClInclude Include="Engine\ShadowRenderer.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\PostProcessRenderer.h" />
-    <ClInclude Include="Engine\RenderTarget.h" />
+    <ClInclude Include="Engine\PostProcessRenderer.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\RenderTarget.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture\DepthStencil.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GraphicsEngine.pch.cpp" />
@@ -310,14 +316,18 @@
     <ClCompile Include="Light\Light.cpp">
       <Filter>Light</Filter>
     </ClCompile>
-    <ClCompile Include="Texture\DepthStencil.cpp" />
     <ClCompile Include="Engine\ShadowRenderer.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="Engine\PostProcessRenderer.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\RenderTarget.cpp" />
+    <ClCompile Include="Engine\RenderTarget.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture\DepthStencil.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultPS.hlsl">
@@ -363,6 +373,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\PP_SSAO.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PP_Tonemap.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -25,7 +25,7 @@ float4 GetViewPosition(float2 uv)
 	return viewPosition;
 }
 
-float4 GetViewNormal(float uv)
+float4 GetViewNormal(float2 uv)
 {
 	const float4 worldNormal = float4(TextureSlot2.Sample(defaultSampler, uv).rgb, 0);
 	const float4 viewNormal = mul(FB_ToView, worldNormal);
@@ -57,10 +57,10 @@ PostProcessPixelOutput main(PostProcessVertexToPixel input)
 	const float radius = 0.002f;
 	const float offset = 0.707f;
 
-	int noiseWidth = 0;
+	int noiseWidth = 0; 
 	int noiseHeight = 0;
 	int numMips = 0;
-	TextureSlot8.GetDimensions(0, noiseWidth, noiseHeight, numMips);
+	TextureSlot9.GetDimensions(0, noiseWidth, noiseHeight, numMips);
 	const float2 randomUVScale = FB_Resolution / float2(noiseWidth, noiseHeight);
 	const float2 random = GetRandom(input.UV, randomUVScale);
 	const float4 pxPos = GetViewPosition(input.UV);

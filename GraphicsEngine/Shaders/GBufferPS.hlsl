@@ -4,6 +4,7 @@ SamplerState defaultSampler : register(s0);
 Texture2D albedoTexture : register(t0);
 Texture2D normalTexture : register(t1);
 Texture2D materialTexture : register(t2);
+
 TextureCube environmentTexture : register(t10);
 
 GBufferOutput main(VertexToPixel input)

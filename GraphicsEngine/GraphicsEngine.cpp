@@ -305,7 +305,6 @@ void GraphicsEngine::BeginFrame()
 	myQuarterSizeTarget->Clear();
 	myBlurTargetA->Clear();
 	myBlurTargetB->Clear();
-	mySSAOTarget->Clear();
 
 	DX11::BeginFrame(ourClearColor);
 	RenderStateManager::ResetStates();
@@ -341,6 +340,11 @@ void GraphicsEngine::RenderFrame()
 		}
 
 		myRenderMode = static_cast<RenderMode>(currentRenderMode);
+	}
+
+	if(InputHandler::GetKeyIsPressed('P'))
+	{
+		enableSSAO = !enableSSAO;
 	}
 #endif // _DEBUG
 
@@ -390,12 +394,24 @@ void GraphicsEngine::RenderFrame()
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, Timer::GetDeltaTime(), Timer::GetTotalTime());
+	
+	if (enableSSAO)
+	{
+		RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::None);
+		mySSAOTarget->SetAsTarget();
+		myNoiseTexture->SetAsResource(8);
+		myPPRenderer.Render(PostProcessRenderer::PP_SSAO, camera);
+		mySSAOTarget->RemoveTarget();
+		ComPtr<ID3D11ShaderResourceView> impostorSRV = nullptr;
+		DX11::Context->PSSetShaderResources(8, 1, impostorSRV.GetAddressOf());
+		mySSAOTarget->SetAsResource(8);
+	}
 
-	mySSAOTarget->SetAsTarget();
-	myNoiseTexture->SetAsResource(8);
-	myPPRenderer.Render(PostProcessRenderer::PP_SSAO, camera);
+	myIntermediateTargetA->SetAsTarget();
 
 	myDeferredRenderer.Render(camera, myDirectionalLight, myLights, myEnvironmentLight, Timer::GetDeltaTime(), Timer::GetTotalTime());
+
+	mySSAOTarget->RemoveResource(8);
 
 	//myForwardRenderer.RenderModels(camera, mdlInstancesToRender, myDirectionalLight, myEnvironmentLight);
 
@@ -442,8 +458,6 @@ void GraphicsEngine::RenderFrame()
 	myQuarterSizeTarget->SetAsResource(30);
 	myPPRenderer.Render(PostProcessRenderer::PP_Copy);
 
-
-
 	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left),
 		static_cast<float>(DX11::ClientRect.bottom - DX11::ClientRect.top));
 
@@ -456,6 +470,10 @@ void GraphicsEngine::RenderFrame()
 	myHalfSizeTarget->RemoveResource(31);
 
 	DX11::Context->OMSetRenderTargets(1, DX11::BackBuffer.GetAddressOf(), DX11::DepthBuffer.Get());
+
+	myIntermediateTargetB->SetAsResource(0);
+	myPPRenderer.Render(PostProcessRenderer::PP_Tonemap, camera);
+	myIntermediateTargetB->RemoveResource(0);
 }
 
 void GraphicsEngine::EndFrame()
