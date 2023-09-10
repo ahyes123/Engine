@@ -18,6 +18,11 @@ void Entity::Update()
 
 void Entity::AddComponent(std::shared_ptr<Component> aComp)
 {
+	auto it = myComponentMap.find(aComp->GetName());
+	if (it != myComponentMap.end())
+	{
+		return;
+	}
 	myComponents.push_back(aComp);
 	myComponents.back()->SetEntity(this);
 	myComponents.back()->Init();

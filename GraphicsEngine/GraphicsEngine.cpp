@@ -133,6 +133,7 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 	}
 	if (uMsg == WM_DESTROY || uMsg == WM_CLOSE)
 	{
+		ImGui::SaveIniSettingsToDisk(ImGui::GetIO().IniFilename);
 		if (myAutoSave)
 		{
 

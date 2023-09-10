@@ -201,7 +201,7 @@ void EditorInterface::Properties(std::shared_ptr<Entity> aEntity)
 		}
 	}
 
-	ImGui::Button("AddComponent");
+	ImGui::Button("Add Component");
 
 	ImGui::SetNextWindowSize({ ImGui::GetWindowWidth(), 300 });
 	if (ImGui::BeginPopupContextItem(std::to_string(aEntity->GetID()).c_str(), ImGuiPopupFlags_MouseButtonLeft))
@@ -241,7 +241,7 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 
 	for (auto& entity : aScene->GetEntities())
 	{
-		if (ImGui::Selectable(entity->GetName().c_str(), false))
+		if (ImGui::Selectable(entity->GetName().c_str(), (selectedEntity && selectedEntity->GetID() == entity->GetID()) ? true : false))
 		{
 			selectedEntity = entity;
 		}
@@ -258,7 +258,6 @@ void EditorInterface::SceneHierchy(std::shared_ptr<Scene> aScene)
 	Properties(selectedEntity);
 
 	ImGui::End();
-
 
 	// SHOULD BE MOVED
 	ImGui::Begin("ViewPort");
