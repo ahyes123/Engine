@@ -16,8 +16,6 @@ void DebugInformation::ShowFPSText()
 	{
 		myFpsText = TextFactory::CreateText(L"FPS: ", 1, 12, true);
 		myFpsText->SetPosition(-1, 0.85f, 0);
-		entt::entity entity = SceneHandler::GetActiveScene()->GetRegistry().create();
-		SceneHandler::GetActiveScene()->AddText(myFpsText, entity);
 	}
 	std::wstring fpsText;
 

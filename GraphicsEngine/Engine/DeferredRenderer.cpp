@@ -6,6 +6,7 @@
 #include "RenderStateManager.h"
 #include "Texture/TextureAssetHandler.h"
 #include "../Scene/SceneHandler.h"
+#include "Components/MeshComponent.h"
 
 bool DeferredRenderer::Initialize()
 {
@@ -93,7 +94,7 @@ bool DeferredRenderer::Initialize()
 }
 
 void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
-									   const std::vector<std::shared_ptr<ModelInstance>>& aModelList, float aDeltaTime, float aTotalTime)
+	const std::vector<std::shared_ptr<MeshComponent>>& aModelList, float aDeltaTime, float aTotalTime)
 {
 	myGBuffer->Clear();
 	myGBuffer->SetAsTarget();
@@ -126,52 +127,55 @@ void DeferredRenderer::GenerateGBuffer(const std::shared_ptr<Camera>& aCamera,
 	DX11::Context->VSSetConstantBuffers(0, 1, myFrameBuffer.GetAddressOf());
 	DX11::Context->PSSetConstantBuffers(0, 1, myFrameBuffer.GetAddressOf());
 
-	for (const std::shared_ptr<ModelInstance>& model : aModelList)
+	for (const std::shared_ptr<MeshComponent>& model : aModelList)
 	{
-		for (int i = 0; i < model->GetNumMeshes(); i++)
+		if (model->GetModel())
 		{
-			const Model::MeshData& meshData = model->GetMeshData(i);
-
-			myObjectBufferData.World = model->GetTransform().GetMatrix();
-			myObjectBufferData.HasBones = model->HasBones();
-
-			if (myObjectBufferData.HasBones)
+			for (int i = 0; i < model->GetNumMeshes(); i++)
 			{
-				memcpy_s(&myObjectBufferData.BoneData[0], sizeof(Matrix4x4f) * 128, model->myBoneTransforms, sizeof(Matrix4x4f) * 128);
+				const Model::MeshData& meshData = model->GetMeshData(i);
+
+				myObjectBufferData.World = model->GetEntity()->GetTransform().GetMatrix();
+				myObjectBufferData.HasBones = model->HasBones();
+
+				if (myObjectBufferData.HasBones)
+				{
+					memcpy_s(&myObjectBufferData.BoneData[0], sizeof(Matrix4x4f) * 128, model->myBoneTransforms, sizeof(Matrix4x4f) * 128);
+				}
+
+				ZeroMemory(&bufferData, sizeof(D3D11_MAPPED_SUBRESOURCE));
+
+				result = DX11::Context->Map(myObjectBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData);
+
+				if (FAILED(result))
+				{
+
+				}
+
+				memcpy_s(bufferData.pData, sizeof(ObjectBufferData), &myObjectBufferData, sizeof(ObjectBufferData));
+
+				DX11::Context->Unmap(myObjectBuffer.Get(), 0);
+
+				DX11::Context->VSSetConstantBuffers(1, 1, myObjectBuffer.GetAddressOf());
+				DX11::Context->PSSetConstantBuffers(1, 1, myObjectBuffer.GetAddressOf());
+
+				DX11::Context->IASetVertexBuffers(0, 1, meshData.myVertexBuffer.GetAddressOf(), &meshData.myStride, &meshData.myOffset);
+				DX11::Context->IASetIndexBuffer(meshData.myIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+				DX11::Context->IASetPrimitiveTopology(static_cast<D3D11_PRIMITIVE_TOPOLOGY>(meshData.myPrimitiveTopology));
+				DX11::Context->IASetInputLayout(meshData.myInputLayout.Get());
+
+				if (meshData.myMaterial)
+				{
+					meshData.myMaterial->SetAsResource(myMaterialBuffer);
+				}
+
+				DX11::Context->PSSetConstantBuffers(2, 1, myMaterialBuffer.GetAddressOf());
+				DX11::Context->GSSetShader(nullptr, nullptr, 0);
+				DX11::Context->VSSetShader(meshData.myVertexShader.Get(), nullptr, 0);
+				DX11::Context->PSSetShader(myGBufferPixelShader.Get(), nullptr, 0);
+
+				DX11::Context->DrawIndexed(meshData.myNumberOfIndices, 0, 0);
 			}
-
-			ZeroMemory(&bufferData, sizeof(D3D11_MAPPED_SUBRESOURCE));
-
-			result = DX11::Context->Map(myObjectBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData);
-
-			if (FAILED(result))
-			{
-
-			}
-
-			memcpy_s(bufferData.pData, sizeof(ObjectBufferData), &myObjectBufferData, sizeof(ObjectBufferData));
-
-			DX11::Context->Unmap(myObjectBuffer.Get(), 0);
-
-			DX11::Context->VSSetConstantBuffers(1, 1, myObjectBuffer.GetAddressOf());
-			DX11::Context->PSSetConstantBuffers(1, 1, myObjectBuffer.GetAddressOf());
-
-			DX11::Context->IASetVertexBuffers(0, 1, meshData.myVertexBuffer.GetAddressOf(), &meshData.myStride, &meshData.myOffset);
-			DX11::Context->IASetIndexBuffer(meshData.myIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-			DX11::Context->IASetPrimitiveTopology(static_cast<D3D11_PRIMITIVE_TOPOLOGY>(meshData.myPrimitiveTopology));
-			DX11::Context->IASetInputLayout(meshData.myInputLayout.Get());
-
-			if (meshData.myMaterial)
-			{
-				meshData.myMaterial->SetAsResource(myMaterialBuffer);
-			}
-
-			DX11::Context->PSSetConstantBuffers(2, 1, myMaterialBuffer.GetAddressOf());
-			DX11::Context->GSSetShader(nullptr, nullptr, 0);
-			DX11::Context->VSSetShader(meshData.myVertexShader.Get(), nullptr, 0);
-			DX11::Context->PSSetShader(myGBufferPixelShader.Get(), nullptr, 0);
-
-			DX11::Context->DrawIndexed(meshData.myNumberOfIndices, 0, 0);
 		}
 	}
 	myGBuffer->ClearTarget();
@@ -249,12 +253,12 @@ void DeferredRenderer::Render(const std::shared_ptr<Camera>& aCamera,
 
 	myGBuffer->SetAsResource(0);
 	aDirectionalLight->SetShadowMapAsResource(20);
-	for(auto& light : aLightList)
+	for (auto& light : aLightList)
 	{
 		switch (light->myLightBufferData.LightType)
 		{
 		case 2:
-			light->SetShadowMapAsResource(21);            
+			light->SetShadowMapAsResource(21);
 			break;
 		case 1:
 			light->SetShadowMapAsResource(22);

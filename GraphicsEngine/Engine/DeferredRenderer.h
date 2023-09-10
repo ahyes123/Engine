@@ -11,6 +11,7 @@
 using namespace Microsoft::WRL;
 
 struct ID3D11PixelShader;
+class MeshComponent;
 
 class DeferredRenderer
 {
@@ -60,7 +61,7 @@ public:
 	std::unique_ptr<GBuffer> myGBuffer;
 
 	bool Initialize();
-	void GenerateGBuffer(const std::shared_ptr<Camera>& aCamera, const std::vector<std::shared_ptr<ModelInstance>>& aModelList, float aDeltaTime, float aTotalTime);
+	void GenerateGBuffer(const std::shared_ptr<Camera>& aCamera, const std::vector<std::shared_ptr<MeshComponent>>& aModelList, float aDeltaTime, float aTotalTime);
 	void Render(const std::shared_ptr<Camera>& aCamera, const std::shared_ptr<DirectionalLight>& aDirectionalLight, 
 		const std::vector<std::shared_ptr<Light>>& aLightList, const std::shared_ptr<EnvironmentLight>& aEnvironmentLight, 
 		float aDeltaTime, float aTotalTime);

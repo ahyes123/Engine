@@ -28,7 +28,6 @@ std::shared_ptr<Scene> SceneHandler::AddEmptyScene(const std::wstring& aSceneNam
 	{
 		myCurrentScene = scene;
 		myCurrentScene->SetCamera(GraphicsEngine::GetCamera());
-		Editor::LoadCurrentScene();
 	}
 	myScenes.push_back(scene);
 	return scene;
@@ -39,7 +38,6 @@ void SceneHandler::AddNewScene(const std::shared_ptr<Scene>& aScene)
 	if (myScenes.size() == 0)
 	{
 		myCurrentScene = aScene;
-		Editor::LoadCurrentScene();
 	}
 	myScenes.push_back(aScene);
 }
@@ -52,8 +50,8 @@ void SceneHandler::LoadScene(const std::shared_ptr<Scene>& aScene)
 	//}
 	aScene->SetCamera(myCurrentScene->GetCamera());
 	myCurrentScene = aScene;
-	if (myCurrentScene->GetModels().size() == 0)
-		Editor::LoadCurrentScene();
+	//if (myCurrentScene->GetModels().size() == 0)
+	//	Editor::LoadCurrentScene();
 }
 
 std::shared_ptr<Scene> SceneHandler::LoadScene(const unsigned int& aSceneIndex)
@@ -64,35 +62,36 @@ std::shared_ptr<Scene> SceneHandler::LoadScene(const unsigned int& aSceneIndex)
 	//}
 	myScenes[aSceneIndex]->SetCamera(myCurrentScene->GetCamera());
 	myCurrentScene = myScenes[aSceneIndex];
-	if (myCurrentScene->GetModels().size() == 0)
-		Editor::LoadCurrentScene();
+	//if (myCurrentScene->GetModels().size() == 0)
+	//	Editor::LoadCurrentScene();
 	return myCurrentScene;
 }
 
 std::shared_ptr<Scene> SceneHandler::LoadScene(const std::wstring& aSceneName)
 {
-	std::filesystem::path name(aSceneName);
-	std::wstring realName = name.filename().replace_extension("").wstring();
-	for (size_t i = 0; i < myScenes.size(); i++)
-	{
-		if (myScenes[i]->GetSceneName() == realName)
-		{
-			myScenes[i]->SetCamera(myCurrentScene->GetCamera());
-			myCurrentScene = myScenes[i];
-			if (myCurrentScene->GetModels().size() == 0)
-				Editor::LoadCurrentScene();
-			return myCurrentScene;
-		}
-	}
-	const std::wstring scenePath = L"./Json/Scenes";
-	const std::wstring scenePathFull = L"./Json/Scenes" + realName + L".scene";
-	for (const auto& file : std::filesystem::directory_iterator(scenePath))
-	{
-		if (file.path() == scenePathFull)
-		{
-			return AddEmptyScene(realName);
-		}
-	}
+	aSceneName;
+	//std::filesystem::path name(aSceneName);
+	//std::wstring realName = name.filename().replace_extension("").wstring();
+	//for (size_t i = 0; i < myScenes.size(); i++)
+	//{
+	//	if (myScenes[i]->GetSceneName() == realName)
+	//	{
+	//		myScenes[i]->SetCamera(myCurrentScene->GetCamera());
+	//		myCurrentScene = myScenes[i];
+	//		if (myCurrentScene->GetModels().size() == 0)
+	//			Editor::LoadCurrentScene();
+	//		return myCurrentScene;
+	//	}
+	//}
+	//const std::wstring scenePath = L"./Json/Scenes";
+	//const std::wstring scenePathFull = L"./Json/Scenes" + realName + L".scene";
+	//for (const auto& file : std::filesystem::directory_iterator(scenePath))
+	//{
+	//	if (file.path() == scenePathFull)
+	//	{
+	//		return AddEmptyScene(realName);
+	//	}
+	//}
 	return nullptr;
 }
 
@@ -112,15 +111,11 @@ int SceneHandler::GetCurrentSceneID()
 
 void SceneHandler::UpdateCurrentScene()
 {
-	myCurrentScene->Update(CommonUtilities::Timer::GetDeltaTime());
 }
 
 void SceneHandler::EmptyScene()
 {
-	for (size_t i = 0; i < myCurrentScene->GetModels().size(); i++)
-	{
-		myCurrentScene->RemoveAllGameObjects();
-	}
+
 }
 
 void SceneHandler::LoadAllScenes()

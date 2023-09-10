@@ -82,7 +82,7 @@ std::shared_ptr<DirectionalLight> LightAssetHandler::CreateDirectionalLight(Vect
 	return myDirectionalLight;
 }
 
-std::shared_ptr<EnvironmentLight> LightAssetHandler::CreateEnvironmentLight(const std::wstring& aTextureName)
+std::shared_ptr<EnvironmentLight> LightAssetHandler::CreateEnvironmentLight(const std::string& aTextureName)
 {
 	myEnvironmentLight = std::make_shared<EnvironmentLight>();
 

@@ -4,6 +4,7 @@
 
 class Light;
 class ModelInstance;
+class MeshComponent;
 using namespace Microsoft::WRL;
 
 
@@ -41,7 +42,7 @@ class ShadowRenderer
 public:
 	bool Initialize();
 
-	void Render(const std::shared_ptr<Light>& aLight, const std::vector<std::shared_ptr<ModelInstance>>& aModelList);
-	void RenderPoint(const std::shared_ptr<Light>& aLight, const std::vector<std::shared_ptr<ModelInstance>>& aModelList, int aIndex);
+	void Render(const std::shared_ptr<Light>& aLight, const std::vector<std::shared_ptr<MeshComponent>>& aModelList);
+	void RenderPoint(const std::shared_ptr<Light>& aLight, const std::vector<std::shared_ptr<MeshComponent>>& aModelList, int aIndex);
 };
 

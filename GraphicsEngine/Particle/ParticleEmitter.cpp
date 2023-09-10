@@ -101,12 +101,12 @@ bool ParticleEmitter::Init(const ParticleEmitterTemplate& aTemplate)
 		return false;
 	}
 
-	if (!TextureAssetHandler::LoadTexture(L"Sprites/ParticleStar.dds"))
+	if (!TextureAssetHandler::LoadTexture("Sprites/ParticleStar.dds"))
 	{
 		return false;
 	}
 
-	myTexture = TextureAssetHandler::GetTexture(L"Sprites/ParticleStar.dds");
+	myTexture = TextureAssetHandler::GetTexture("Sprites/ParticleStar.dds");
 
 	return true;
 }
@@ -148,13 +148,13 @@ void ParticleEmitter::Update(float aDeltaTime)
 		if (myDuration >= myEmitterSettings.Duration)
 		{
 			std::shared_ptr<Scene> curScene = SceneHandler::GetActiveScene();
-			for (int i = 0; i < curScene->GetParticleSystems().size(); i++)
-			{
-				if (this == &curScene->GetParticleSystems()[i].get()->GetEmitters()[0])
-				{
-					curScene->RemoveParticleSystem(curScene->GetParticleSystems()[i]);
-				}
-			}
+			//for (int i = 0; i < curScene->GetParticleSystems().size(); i++)
+			//{
+			//	if (this == &curScene->GetParticleSystems()[i].get()->GetEmitters()[0])
+			//	{
+			//		curScene->RemoveParticleSystem(curScene->GetParticleSystems()[i]);
+			//	}
+			//}
 		}
 	}
 }

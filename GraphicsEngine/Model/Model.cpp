@@ -2,33 +2,30 @@
 #include "Model.h"
 #include <filesystem>
 
-void Model::Init(MeshData& someMeshData, const std::wstring& aPath)
+void Model::Init(MeshData& someMeshData, const std::string& aPath)
 {
 	myMeshData.push_back(someMeshData);
 	myPath = aPath;
-	std::filesystem::path name(aPath);
-	myName = name.filename();
+	myName = aPath;
 }
 
-void Model::Init(std::vector<MeshData>& someMeshData, const std::wstring& aPath)
+void Model::Init(std::vector<MeshData>& someMeshData, const std::string& aPath)
 {
 	myMeshData = someMeshData;
 	myPath = aPath;
-	std::filesystem::path name(aPath);
-	myName = name.filename();
+	myName = aPath;
 }
 
-void Model::Init(const std::vector<Model::MeshData>& someMeshData, const std::wstring& aPath,
+void Model::Init(const std::vector<Model::MeshData>& someMeshData, const std::string& aPath,
 	const Skeleton& aSkeleton)
 {
 	myMeshData = someMeshData;
 	myPath = aPath;
-	std::filesystem::path name(aPath);
-	myName = name.filename();
+	myName = aPath;
 	mySkeleton = aSkeleton;
 }
 
-void Model::SetName(const std::wstring& aName)
+void Model::SetName(const std::string& aName)
 {
 	myName = aName;
 }

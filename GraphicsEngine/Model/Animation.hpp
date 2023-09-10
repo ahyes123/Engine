@@ -22,6 +22,6 @@ struct Animation
 	float myDuration = 0.f;
 	float myFPS = 0.f;
 	AnimationState myState = AnimationState::Finished;
-	std::wstring myName = L"";
+	std::string myName = "";
 	size_t myCurrentFrame = 0;
 };

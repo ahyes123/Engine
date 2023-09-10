@@ -103,7 +103,7 @@ void ModelInstance::UpdateAnimationHierarchy(size_t aCurrentFrame, unsigned aBon
 	}
 }
 
-void ModelInstance::SetAnimation(const std::wstring& aName, bool aLoop)
+void ModelInstance::SetAnimation(const std::string& aName, bool aLoop)
 {
 	myCurrentAnimation = myModel->GetSkeleton()->myAnimations[aName];
 	myCurrentAnimation.myState = Animation::AnimationState::Playing;

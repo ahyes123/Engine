@@ -200,6 +200,5 @@ std::shared_ptr<Text> TextFactory::CreateText(const std::wstring& someText, cons
 
 	std::shared_ptr<Font> fontPtr = std::make_shared<Font>(font);
 	text->Init(textData, someText, fontPtr, aIs2D);
-	text->SetId(SceneHandler::GetActiveScene()->GetNextId());
 	return text;
 }

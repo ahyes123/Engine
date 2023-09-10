@@ -177,15 +177,18 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Components\MeshComponent.h" />
     <ClInclude Include="Editor\Editor.h" />
     <ClInclude Include="Editor\EditorInterface.h" />
-    <ClInclude Include="Engine\ComponentHandler.h" />
     <ClInclude Include="Engine\DebugInformation.h" />
     <ClInclude Include="Engine\DeferredRenderer.h" />
     <ClInclude Include="Engine\DX11.h" />
+    <ClInclude Include="Engine\EC\Component.h" />
+    <ClInclude Include="Engine\EC\ComponentRegistry.hpp" />
+    <ClInclude Include="Engine\EC\ECEssentials.hpp" />
+    <ClInclude Include="Engine\EC\Entity.h" />
     <ClInclude Include="Engine\ForwardRenderer.h" />
     <ClInclude Include="Engine\GBuffer.h" />
-    <ClInclude Include="Engine\Player.h" />
     <ClInclude Include="Engine\PostProcessRenderer.h" />
     <ClInclude Include="Engine\RenderStateManager.h" />
     <ClInclude Include="Engine\RenderTarget.h" />
@@ -219,6 +222,7 @@
     <ClInclude Include="Particle\ParticleEmitter.h" />
     <ClInclude Include="Particle\ParticleEmitterTemplate.hpp" />
     <ClInclude Include="Particle\ParticleSystem.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Scene\Camera.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\SceneHandler.h" />
@@ -235,15 +239,16 @@
     <ClInclude Include="Tools\UtilityFunctions.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Components\MeshComponent.cpp" />
     <ClCompile Include="Editor\Editor.cpp" />
     <ClCompile Include="Editor\EditorInterface.cpp" />
-    <ClCompile Include="Engine\ComponentHandler.cpp" />
     <ClCompile Include="Engine\DebugInformation.cpp" />
     <ClCompile Include="Engine\DeferredRenderer.cpp" />
     <ClCompile Include="Engine\DX11.cpp" />
+    <ClCompile Include="Engine\EC\Component.cpp" />
+    <ClCompile Include="Engine\EC\Entity.cpp" />
     <ClCompile Include="Engine\ForwardRenderer.cpp" />
     <ClCompile Include="Engine\GBuffer.cpp" />
-    <ClCompile Include="Engine\Player.cpp" />
     <ClCompile Include="Engine\PostProcessRenderer.cpp" />
     <ClCompile Include="Engine\RenderStateManager.cpp" />
     <ClCompile Include="Engine\RenderTarget.cpp" />
@@ -409,6 +414,9 @@
     <None Include="Shaders\PBRFunctions.hlsli" />
     <None Include="Shaders\ShaderStructs.hlsli" />
     <None Include="Shaders\TextStructs.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GraphicsEngine.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

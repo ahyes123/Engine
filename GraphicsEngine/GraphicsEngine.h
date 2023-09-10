@@ -8,8 +8,9 @@
 #include "Engine/ForwardRenderer.h"
 #include "Scene/Scene.h"
 #include "Model/ModelAssetHandler.h"
-#include "../External/entt/entt.hpp"
 #include <filesystem>
+
+#include "Components/MeshComponent.h"
 
 using std::filesystem::directory_iterator;
 

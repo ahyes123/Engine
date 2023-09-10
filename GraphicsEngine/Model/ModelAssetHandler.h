@@ -10,24 +10,23 @@ class Model;
 
 class ModelAssetHandler
 {
-	static std::unordered_map<std::wstring, std::shared_ptr<Model>> myModelRegistry;
-	static std::unordered_map<std::wstring, std::shared_ptr<Material>> myMaterialRegistry;
+	static std::unordered_map<std::string, std::shared_ptr<Model>> myModelRegistry;
+	static std::unordered_map<std::string, std::shared_ptr<Material>> myMaterialRegistry;
 
 
 public:
 	bool Initialize() const;
-	static std::shared_ptr<ModelInstance> CreateCube(const std::wstring& aName);
-	static std::shared_ptr<ModelInstance> LoadModel(const std::wstring& someFilePath);
-	static std::shared_ptr<ModelInstance> LoadModelWithAnimation(const std::wstring& aModelPath, const std::wstring& aAnimationPath);
-	static bool LoadAnimation(const std::wstring& aModelName, const std::wstring& someFilePath);
+	static std::shared_ptr<Model> CreateCube(const std::string& aName);
+	static std::shared_ptr<Model> LoadModel(const std::string& someFilePath);
+	static std::shared_ptr<Model> LoadModelWithAnimation(const std::string& aModelPath, const std::string& aAnimationPath);
+	static bool LoadAnimation(const std::string& aModelName, const std::string& someFilePath);
 
-	std::shared_ptr<Model> GetModel(const std::wstring& someFilePath) const;
-	static std::shared_ptr<ModelInstance> GetModelInstance(const std::wstring& someFilePath);
+	std::shared_ptr<Model> GetModel(const std::string& someFilePath) const;
+	static std::shared_ptr<Model> GetModelInstance(const std::string& someFilePath);
 
 	static HRESULT CreateInputLayout(std::string* aVSData, ComPtr<ID3D11InputLayout>& outInputLayout);
 
-	static void SetModelTexture(std::shared_ptr<ModelInstance> aMdl, const std::wstring& aName);
+	static void SetModelTexture(std::shared_ptr<Model> aMdl, const std::string& aName);
 private:
-	static int GetID();
 };
 

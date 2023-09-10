@@ -38,6 +38,12 @@
     <Filter Include="Editor">
       <UniqueIdentifier>{de8687a2-aed4-4874-acf2-1111f7d031f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\EC">
+      <UniqueIdentifier>{8ca2f3e7-01bc-4ac2-9a76-dc586b193ff8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{8dcf2d23-84a1-4547-b4f4-87c03f0bef81}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GraphicsEngine.pch.h" />
@@ -171,15 +177,6 @@
     <ClInclude Include="Engine\DebugInformation.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Scene\SceneHandler.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\ComponentHandler.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Player.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\GBuffer.h">
       <Filter>Engine</Filter>
     </ClInclude>
@@ -203,6 +200,25 @@
     </ClInclude>
     <ClInclude Include="Texture\DepthStencil.h">
       <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\EC\Entity.h">
+      <Filter>Engine\EC</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Engine\EC\Component.h">
+      <Filter>Engine\EC</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\EC\ComponentRegistry.hpp">
+      <Filter>Engine\EC</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\EC\ECEssentials.hpp">
+      <Filter>Engine\EC</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\MeshComponent.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene\SceneHandler.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -289,15 +305,6 @@
     <ClCompile Include="Engine\DebugInformation.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Scene\SceneHandler.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\ComponentHandler.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Player.cpp">
-      <Filter>Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\GBuffer.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
@@ -318,6 +325,18 @@
     </ClCompile>
     <ClCompile Include="Texture\DepthStencil.cpp">
       <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\EC\Entity.cpp">
+      <Filter>Engine\EC</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\EC\Component.cpp">
+      <Filter>Engine\EC</Filter>
+    </ClCompile>
+    <ClCompile Include="Components\MeshComponent.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene\SceneHandler.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -389,5 +408,10 @@
     <None Include="Shaders\LightBuffer.hlsli">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="GraphicsEngine.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

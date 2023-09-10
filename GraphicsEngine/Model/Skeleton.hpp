@@ -8,7 +8,7 @@
 
 struct Skeleton
 {
-	std::wstring myName;
+	std::string myName;
 
 	struct Bone
 	{
@@ -20,7 +20,7 @@ struct Skeleton
 
 	std::vector<Bone> myBones;
 	std::unordered_map<std::string, size_t> myBoneNameToIndex;
-	std::unordered_map<std::wstring, Animation> myAnimations;
+	std::unordered_map<std::string, Animation> myAnimations;
 
 	const Bone* GetRoot() const { if (!myBones.empty()) return &myBones[0]; return nullptr; }
 };

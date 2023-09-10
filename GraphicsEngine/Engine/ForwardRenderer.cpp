@@ -99,7 +99,7 @@ void ForwardRenderer::RenderModels(const std::shared_ptr<Camera>& aCamera, const
 		{
 			const Model::MeshData& meshData = model->GetMeshData(i);
 
-			myObjectBufferData.World = model->GetTransform().GetMatrix();
+			//myObjectBufferData.World = model->GetTransform().GetMatrix();
 			myObjectBufferData.HasBones = model->HasBones();
 
 			if (myObjectBufferData.HasBones)

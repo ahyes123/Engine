@@ -4,18 +4,19 @@
 #include "DX11.h"
 #include "Texture.h"
 
-std::shared_ptr<Texture> TextureAssetHandler::GetTexture(const std::wstring& aName)
+std::shared_ptr<Texture> TextureAssetHandler::GetTexture(const std::string& aName)
 {
 	return myRegistry[aName];
 }
 
-bool TextureAssetHandler::LoadTexture(const std::wstring& aFileName)
+bool TextureAssetHandler::LoadTexture(const std::string& aFileName)
 {
 	if (const auto It = myRegistry.find(aFileName); It == myRegistry.end())
 	{
 		Texture result;
 		result.myName = aFileName;
-		const HRESULT createResult = DirectX::CreateDDSTextureFromFile(DX11::Device.Get(), aFileName.c_str(), result.myTexture.GetAddressOf(), result.mySRV.GetAddressOf());
+		const HRESULT createResult = DirectX::CreateDDSTextureFromFile(DX11::Device.Get(), 
+			std::wstring(aFileName.begin(), aFileName.end()).c_str(), result.myTexture.GetAddressOf(), result.mySRV.GetAddressOf());
 
 		if (SUCCEEDED(createResult))
 		{

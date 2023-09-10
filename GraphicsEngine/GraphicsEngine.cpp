@@ -10,8 +10,6 @@
 #include "Editor/EditorInterface.h"
 #include "Editor/Editor.h"
 #include "Scene/SceneHandler.h"
-#include "Engine/ComponentHandler.h"
-#include "../GraphicsEngine/Engine/ComponentHandler.h"
 #include "Light/PointLight.hpp"
 #include "Light/SpotLight.hpp"
 #include "imgui/imgui.h"
@@ -72,24 +70,15 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	myCamera->SetRotation(0, 0, 0);
 
 	SceneHandler::LoadAllScenes();
-	Editor::LoadSettings();
-	ComponentHandler::Init();
 
 	myDirectionalLight = LightAssetHandler::CreateDirectionalLight({ 1, 1, 1 }, 1, { 90, -5, 0 }, { 0, 1000, -500 });
-	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight(L"skansen_cubemap.dds");
+	myEnvironmentLight = LightAssetHandler::CreateEnvironmentLight("skansen_cubemap.dds");
 	std::shared_ptr<PointLight> point = LightAssetHandler::CreatePointLight({ 0, 0.5f, 1 }, 500000, 1000, 1, { 300, 500, 0 });
 	std::shared_ptr<SpotLight> spot = LightAssetHandler::CreateSpotLight({ 1, 0, 0 }, 500000, 1000, 1, 1, 55, { 90, 0, 0 }, { 0, 600, 0 });
 
 	myLights.push_back(point);
 	myLights.push_back(spot);
 
-	/*for (size_t i = 0; i < SceneHandler::GetScenes().size(); i++)
-	{
-		SceneHandler::GetScenes()[i]->AddParticleSystem(ParticleAssetHandler::CreateParticleSystem(L"Json/BaseParticleSystem.json"));
-		SceneHandler::GetScenes()[i]->GetParticleSystems()[0]->SetPosition(0, 0, 100);
-		SceneHandler::GetScenes()[i]->AddParticleSystem(ParticleAssetHandler::CreateParticleSystem(L"Json/BaseParticleSystem.json"));
-		SceneHandler::GetScenes()[i]->GetParticleSystems()[1]->SetPosition(300, 0, 100);
-	}*/
 	myRenderMode = RenderMode::Default;
 	GetWindowRect(myWindowHandle, &windowRect);
 
@@ -120,9 +109,9 @@ bool GraphicsEngine::Initialize(unsigned someX, unsigned someY,
 	myBlurTargetB = TextureAssetHandler::CreateRenderTarget(windowX / 4, windowY / 4, DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	mySSAOTarget = TextureAssetHandler::CreateRenderTarget(windowX, windowY, DXGI_FORMAT_R32G32B32A32_FLOAT);
-	if (TextureAssetHandler::LoadTexture(L"Sprites/BlueNoise.dds"))
+	if (TextureAssetHandler::LoadTexture("Sprites/BlueNoise.dds"))
 	{
-		myNoiseTexture = TextureAssetHandler::GetTexture(L"Sprites/BlueNoise.dds");
+		myNoiseTexture = TextureAssetHandler::GetTexture("Sprites/BlueNoise.dds");
 	}
 	return true;
 }
@@ -146,9 +135,7 @@ LRESULT CALLBACK GraphicsEngine::WinProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WP
 	{
 		if (myAutoSave)
 		{
-			Editor::SaveScenes();
-			Editor::SaveClearColorPreset(myCurrentClearColorPreset);
-			Editor::SaveSettings();
+
 		}
 		PostQuitMessage(0);
 	}
@@ -200,7 +187,6 @@ void GraphicsEngine::DragDrop(WPARAM aWparam)
 	}
 	else
 	{
-		EditorInterface::CANTDROPHERE = true;
 	}
 	DragFinish(hDrop);
 }
@@ -209,14 +195,7 @@ void GraphicsEngine::AddAssets(std::filesystem::path aFilePath)
 {
 	if (aFilePath.extension() == ".fbx")
 	{
-		Editor::EditorActions action;
-		entt::entity ent = SceneHandler::GetActiveScene()->GetRegistry().create();
-		std::shared_ptr<ModelInstance> mdl = ModelAssetHandler::LoadModel(aFilePath);
-		SceneHandler::GetActiveScene()->AddModelInstance(mdl, ent);
-		action.AddedObject = true;
-		action.Object = mdl;
-		action.oldEntity = ent;
-		Editor::AddUndoAction(action);
+		
 	}
 	else if (aFilePath.extension() == ".scene")
 	{
@@ -232,7 +211,6 @@ void GraphicsEngine::AddAssets(std::filesystem::path aFilePath)
 			name = name.string().substr(index + 3, name.string().size());
 			name = "." + name.string();
 		}
-		EditorInterface::SetTexture(name.wstring());
 	}
 }
 
@@ -344,7 +322,6 @@ void GraphicsEngine::RenderFrame()
 		enableSSAO = !enableSSAO;
 	}
 
-	ComponentHandler::Update();
 
 	//ImGui::Begin("Lights");
 	//ImGui::DragFloat("Range", &myLights[0]->myLightBufferData.Range, 10, 0, INT_MAX);
@@ -358,7 +335,8 @@ void GraphicsEngine::RenderFrame()
 	//ImGui::DragFloat3("Direction", &myDirectionalLight->myLightBufferData.Direction.x, 0.01f, -1, 1);
 	//ImGui::End();
 
-	const std::vector<std::shared_ptr<ModelInstance>> mdlInstancesToRender = SceneHandler::GetActiveScene()->GetModels();
+	auto meshes = SceneHandler::GetActiveScene()->GetComponents<MeshComponent>();
+
 	DX11::Context->ClearRenderTargetView(GBuffer::GetVPRTV().Get(), &ourClearColor[0]);
 
 	DX11::SetViewPort(2048.f, 2048.f);
@@ -369,17 +347,17 @@ void GraphicsEngine::RenderFrame()
 
 	myDirectionalLight->ClearShadowMap(0);
 	myDirectionalLight->SetShadowMapAsDepth(0);
-	myShadowRenderer.Render(myDirectionalLight, mdlInstancesToRender);
+	myShadowRenderer.Render(myDirectionalLight, meshes);
 
 	myLights[1]->ClearShadowMap(0);
 	myLights[1]->SetShadowMapAsDepth(0);
-	myShadowRenderer.Render(myLights[1], mdlInstancesToRender);
+	myShadowRenderer.Render(myLights[1], meshes);
 
 	for (int i = 0; i < 6; i++)
 	{
 		myLights[0]->ClearShadowMap(i);
 		myLights[0]->SetShadowMapAsDepth(i);
-		myShadowRenderer.RenderPoint(myLights[0], mdlInstancesToRender, i);
+		myShadowRenderer.RenderPoint(myLights[0], meshes, i);
 	}
 
 	DX11::SetViewPort(static_cast<float>(DX11::ClientRect.right - DX11::ClientRect.left),
@@ -389,7 +367,7 @@ void GraphicsEngine::RenderFrame()
 	RenderStateManager::SetSamplerState(RenderStateManager::SamplerState::SS_Default, 1);
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
-	myDeferredRenderer.GenerateGBuffer(myCamera, mdlInstancesToRender, 
+	myDeferredRenderer.GenerateGBuffer(myCamera, meshes,
 		Timer::GetDeltaTime(), static_cast<float>(Timer::GetTotalTime()));
 	
 	if (enableSSAO)
@@ -415,10 +393,10 @@ void GraphicsEngine::RenderFrame()
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::TextBlend);
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadOnly);
-	myTextRenderer.Render(camera, SceneHandler::GetActiveScene()->GetTexts());
+	//myTextRenderer.Render(camera, SceneHandler::GetActiveScene()->GetTexts());
 
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Additive);
-	myForwardRenderer.RenderParticles(camera, SceneHandler::GetActiveScene()->GetParticleSystems());
+	//myForwardRenderer.RenderParticles(camera, SceneHandler::GetActiveScene()->GetParticleSystems());
 
 	RenderStateManager::SetDepthStencilState(RenderStateManager::DepthStencilState::ReadWrite);
 	RenderStateManager::SetBlendState(RenderStateManager::BlendState::Opaque);

@@ -14,10 +14,10 @@
 #include <filesystem>
 #include "Editor/EditorInterface.h"
 
-std::unordered_map<std::wstring, std::shared_ptr<Model>> ModelAssetHandler::myModelRegistry;
-std::unordered_map<std::wstring, std::shared_ptr<Material>> ModelAssetHandler::myMaterialRegistry;
+std::unordered_map<std::string, std::shared_ptr<Model>> ModelAssetHandler::myModelRegistry;
+std::unordered_map<std::string, std::shared_ptr<Material>> ModelAssetHandler::myMaterialRegistry;
 
-std::shared_ptr<ModelInstance> ModelAssetHandler::CreateCube(const std::wstring& aName)
+std::shared_ptr<Model> ModelAssetHandler::CreateCube(const std::string& aName)
 {
 	std::vector<Vertex> mdlVertices = {
 		// Front Face
@@ -297,17 +297,17 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::CreateCube(const std::wstring&
 
 	std::shared_ptr<Material> meshMaterial = std::make_shared<Material>();
 
-	if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_C.dds"))
+	if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_C.dds"))
 	{
-		meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_C.dds"));
+		meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_C.dds"));
 	}
-	if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_N.dds"))
+	if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_N.dds"))
 	{
-		meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_N.dds"));
+		meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_N.dds"));
 	}
-	if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_M.dds"))
+	if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_M.dds"))
 	{
-		meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_M.dds"));
+		meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_M.dds"));
 	}
 
 	modelData.myMaterial = meshMaterial;
@@ -326,14 +326,10 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::CreateCube(const std::wstring&
 	mdl->Init(modelData, aName);
 	myModelRegistry.insert({ aName, mdl });
 
-	std::shared_ptr<ModelInstance> mdlInstance;
-	mdlInstance = std::make_shared<ModelInstance>();
-	mdlInstance->Init(myModelRegistry[aName]);
-	mdlInstance->SetId(SceneHandler::GetActiveScene()->GetNextId());
-	return mdlInstance;
+	return mdl;
 }
 
-std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModel(const std::wstring& someFilePath)
+std::shared_ptr<Model> ModelAssetHandler::LoadModel(const std::string& someFilePath)
 {
 	const std::string ansiFileName = std::string(someFilePath.begin(), someFilePath.end());
 
@@ -368,10 +364,10 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModel(const std::wstring& 
 			TGA::FBXModel::FBXMesh& mesh = tgaModel.Meshes[i];
 
 			std::filesystem::path fileName(someFilePath);
-			const std::wstring baseName = fileName.filename().replace_extension("");
-			const std::wstring albedoFileName = L"Models/Textures/T_" + baseName + L"_C.dds";
-			const std::wstring normalFileName = L"Models/Textures/T_" + baseName + L"_N.dds";
-			const std::wstring materialFileName = L"Models/Textures/T_" + baseName + L"_M.dds";
+			const std::string baseName = fileName.filename().replace_extension("").string();
+			const std::string albedoFileName = "Models/Textures/T_" + baseName + "_C.dds";
+			const std::string normalFileName = "Models/Textures/T_" + baseName + "_N.dds";
+			const std::string materialFileName = "Models/Textures/T_" + baseName + "_M.dds";
 
 			std::shared_ptr<Material> meshMaterial = std::make_shared<Material>();
 
@@ -379,27 +375,27 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModel(const std::wstring& 
 			{
 				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(albedoFileName));
 			}
-			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_C.dds"))
+			else if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_C.dds"))
 			{
-				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_C.dds"));
+				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_C.dds"));
 			}
 
 			if (TextureAssetHandler::LoadTexture(normalFileName))
 			{
 				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(normalFileName));
 			}
-			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_N.dds"))
+			else if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_N.dds"))
 			{
-				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_N.dds"));
+				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_N.dds"));
 			}
 
 			if (TextureAssetHandler::LoadTexture(materialFileName))
 			{
 				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(materialFileName));
 			}
-			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_M.dds"))
+			else if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_M.dds"))
 			{
-				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_M.dds"));
+				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_M.dds"));
 			}
 
 			mdlMeshData[i].myMaterial = meshMaterial;
@@ -560,24 +556,19 @@ std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModel(const std::wstring& 
 		}
 		myModelRegistry.insert({ someFilePath, mdl });
 
-		std::shared_ptr<ModelInstance> mdlInstance;
-		mdlInstance = std::make_shared<ModelInstance>();
-		mdlInstance->Init(myModelRegistry[someFilePath]);
-		mdlInstance->SetId(SceneHandler::GetActiveScene()->GetNextId());
-		return mdlInstance;
+		return mdl;
 	}
 	return nullptr;
 }
 
-std::shared_ptr<ModelInstance> ModelAssetHandler::LoadModelWithAnimation(const std::wstring& aModelPath, const std::wstring& aAnimationPath)
+std::shared_ptr<Model> ModelAssetHandler::LoadModelWithAnimation(const std::string& aModelPath, const std::string& aAnimationPath)
 {
-	LoadModel(aModelPath);
+	auto mdl = LoadModel(aModelPath);
 	LoadAnimation(aModelPath, aAnimationPath);
-	std::shared_ptr<ModelInstance> modelInstance = GetModelInstance(aModelPath);
-	return modelInstance;
+	return mdl;
 }
 
-bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std::wstring& someFilePath)
+bool ModelAssetHandler::LoadAnimation(const std::string& aModelName, const std::string& someFilePath)
 {
 	std::string fileName = std::string(someFilePath.begin(), someFilePath.end());
 	size_t index = fileName.find("Animations\\");
@@ -599,7 +590,7 @@ bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std:
 	if (TGA::FBXImporter::LoadAnimation(ansiFileName, myBoneNames, tgaAnimation))
 	{
 		Animation result;
-		result.myName = std::wstring(tgaAnimation.Name.begin(), tgaAnimation.Name.end());
+		result.myName = tgaAnimation.Name;
 		result.myDuration = static_cast<float>(tgaAnimation.Duration);
 		result.myFPS = tgaAnimation.FramesPerSecond;
 		result.myLength = tgaAnimation.Length;
@@ -618,17 +609,16 @@ bool ModelAssetHandler::LoadAnimation(const std::wstring& aModelName, const std:
 			result.myFrames.push_back(animFrame);
 		}
 
-		std::wstring name = std::wstring(std::wstring(ansiFileName.begin(), ansiFileName.end()));
-		model->GetSkeleton()->myName = name;
+		model->GetSkeleton()->myName = ansiFileName;
 		model->AddAnimation(result);
 		for (size_t i = 0; i < model->GetAnimNames().size(); i++)
 		{
-			if (model->GetAnimNames()[i] == name)
+			if (model->GetAnimNames()[i] == ansiFileName)
 			{
 				return true;
 			}
 		}
-		model->AddAnimName(name);
+		model->AddAnimName(ansiFileName);
 		return true;
 	}
 	return false;
@@ -639,18 +629,15 @@ bool ModelAssetHandler::Initialize() const
 	return true;
 }
 
-std::shared_ptr<Model> ModelAssetHandler::GetModel(const std::wstring& someFilePath) const
+std::shared_ptr<Model> ModelAssetHandler::GetModel(const std::string& someFilePath) const
 {
 	return myModelRegistry[someFilePath];
 }
 
-std::shared_ptr<ModelInstance> ModelAssetHandler::GetModelInstance(const std::wstring& someFilePath)
+std::shared_ptr<Model> ModelAssetHandler::GetModelInstance(const std::string& someFilePath)
 {
-	std::shared_ptr<ModelInstance> mdlInstance;
-	mdlInstance = std::make_shared<ModelInstance>();
-	mdlInstance->Init(myModelRegistry[someFilePath]);
-	mdlInstance->SetId(SceneHandler::GetActiveScene()->GetNextId());
-	return mdlInstance;
+	someFilePath;
+	return nullptr;
 }
 
 HRESULT ModelAssetHandler::CreateInputLayout(std::string* aVSData, ComPtr<ID3D11InputLayout>& outInputLayout)
@@ -676,61 +663,61 @@ HRESULT ModelAssetHandler::CreateInputLayout(std::string* aVSData, ComPtr<ID3D11
 	return DX11::Device->CreateInputLayout(layout, sizeof(layout) / sizeof(D3D11_INPUT_ELEMENT_DESC), aVSData->data(), aVSData->size(), outInputLayout.GetAddressOf());
 }
 
-void ModelAssetHandler::SetModelTexture(std::shared_ptr<ModelInstance> aMdl, const std::wstring& aName)
+void ModelAssetHandler::SetModelTexture(std::shared_ptr<Model> aMdl, const std::string& aName)
 {
 	for (unsigned i = 0; i < aMdl->GetNumMeshes(); ++i)
 	{
 		std::filesystem::path fileName(aName);
-		std::wstring baseName = fileName.filename().replace_extension("");
-		std::wstring nameWithoutNumbers = baseName;
-		std::wstring undefiledName = baseName;
+		std::string baseName = fileName.filename().replace_extension("").string();
+		std::string nameWithoutNumbers = baseName;
+		std::string undefiledName = baseName;
 
 		baseName = baseName.substr(2, baseName.size());
-		size_t index = baseName.find(L"_C");
+		size_t index = baseName.find("_C");
 		if (index > baseName.size())
-			index = baseName.find(L"_N");
+			index = baseName.find("_N");
 		if (index > baseName.size())
-			index = baseName.find(L"_M");
+			index = baseName.find("_M");
 
 		nameWithoutNumbers = nameWithoutNumbers.substr(0, index + 4);
 
 		std::shared_ptr<Material> meshMaterial = aMdl->GetMeshData(i).myMaterial;
 		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'C')
 		{
-			undefiledName = aName + L".dds";
+			undefiledName = aName + ".dds";
 			if (TextureAssetHandler::LoadTexture(undefiledName))
 			{
 				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(undefiledName));
 			}
-			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_C.dds"))
+			else if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_C.dds"))
 			{
-				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_C.dds"));
+				meshMaterial->SetAlbedoTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_C.dds"));
 			}
 		}
 
-		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'N')
+		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == 'N')
 		{
-			undefiledName = aName + L".dds";
+			undefiledName = aName + ".dds";
 			if (TextureAssetHandler::LoadTexture(undefiledName))
 			{
 				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(undefiledName));
 			}
-			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_N.dds"))
+			else if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_N.dds"))
 			{
-				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_N.dds"));
+				meshMaterial->SetNormalTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_N.dds"));
 			}
 		}
 
-		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == L'M')
+		if (nameWithoutNumbers.at(nameWithoutNumbers.size() - 1) == 'M')
 		{
-			undefiledName = aName + L".dds";
+			undefiledName = aName + ".dds";
 			if (TextureAssetHandler::LoadTexture(undefiledName))
 			{
 				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(undefiledName));
 			}
-			else if (TextureAssetHandler::LoadTexture(L"Models/Textures/T_Default_M.dds"))
+			else if (TextureAssetHandler::LoadTexture("Models/Textures/T_Default_M.dds"))
 			{
-				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture(L"Models/Textures/T_Default_M.dds"));
+				meshMaterial->SetMaterialTexture(TextureAssetHandler::GetTexture("Models/Textures/T_Default_M.dds"));
 			}
 		}
 	}

@@ -29,7 +29,6 @@ bool TextRenderer::Initialize()
 		return false;
 	}
 
-
 	std::ifstream vsFile;
 	vsFile.open("Shaders/TextVS.cso", std::ios::binary);
 	std::string vsData = { std::istreambuf_iterator<char>(vsFile), std::istreambuf_iterator<char>() };
@@ -54,7 +53,7 @@ bool TextRenderer::Initialize()
 		return false;
 	}
 
-	result = ModelAssetHandler::CreateInputLayout(&vsData, myInputLayout);
+	//result = ModelAssetHandler::CreateInputLayout(&vsData, myInputLayout);
 
 	if(FAILED(result))
 	{

@@ -36,7 +36,5 @@ std::shared_ptr<ParticleSystem> ParticleAssetHandler::CreateParticleSystem(const
 	std::shared_ptr<ParticleSystem> system = std::make_shared<ParticleSystem>();
 	LoadSystemTemplate(aSystemName);
 	system->myEmitters.push_back(mySystemTemplates[std::to_wstring(id)].Emitter);
-	system->SetId(SceneHandler::GetActiveScene()->GetNextId());
-	id++;
 	return system;
 }

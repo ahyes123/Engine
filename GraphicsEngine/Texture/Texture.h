@@ -11,7 +11,7 @@ class Texture
 	friend class TextureAssetHandler;
 
 	protected:
-		std::wstring myName;
+		std::string myName;
 		ComPtr<ID3D11Resource> myTexture;
 		ComPtr<ID3D11ShaderResourceView> mySRV;
 
